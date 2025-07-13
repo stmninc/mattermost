@@ -1,0 +1,21 @@
+# This GitHub Actions workflow customizes server-ci-artifacts.yml.
+# The differences from server-ci-artifacts.yml are as follows:
+# - It uploads container images to Google Cloud Artifact Registry instead of Docker Hub.
+# - It does not upload build artifacts to S3.
+# - It is triggered by pushes to Git tags that start with 'v'.
+name: Custom Ci Artifacts
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'main'
+      tag:
+        description: 'Tag to build'
+        required: false
+        default: ''
