@@ -14,6 +14,7 @@ ARG PGID=2000
 ARG MM_PACKAGE="https://latest.mattermost.com/mattermost-enterprise-linux"
 
 # Note: In the original implementation, it downloads the uploaded artifacts. In the customized version, it uses local artifacts instead.
+ARG MM_CUSTOM_PACKAGE="mattermost-team-linux-amd64.tar.gz"
 COPY ${MM_CUSTOM_PACKAGE} /tmp/app_package.tar.gz
 
 # # Install needed packages and indirect dependencies
