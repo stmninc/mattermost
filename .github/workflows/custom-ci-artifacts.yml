@@ -128,6 +128,6 @@ jobs:
             --platform linux/amd64 \
             --no-cache \
             --push \
-            --build-arg MM_PACKAGE=mattermost-team-linux-amd64.tar.gz \
+            --build-arg MM_CUSTOM_PACKAGE=mattermost-team-linux-amd64.tar.gz \
             ${{ steps.docker_meta.outputs.tags }} \
             server/build
