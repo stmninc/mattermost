@@ -1911,6 +1911,7 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 	mfaToken := props["token"]
 	deviceId := props["device_id"]
 	ldapOnly := props["ldap_only"] == "true"
+	voipDeviceId := props["voip_device_id"]
 
 	if *c.App.Config().ExperimentalSettings.ClientSideCertEnable {
 		if license := c.App.Channels().License(); license == nil || !*license.Features.FutureFeatures {
@@ -1965,7 +1966,7 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.LogAuditWithUserId(user.Id, "authenticated")
 
 	isMobileDevice := utils.IsMobileRequest(r)
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, isMobileDevice, false, false)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, voipDeviceId, isMobileDevice, false, false)
 	if err != nil {
 		c.Err = err
 		return
@@ -2016,7 +2017,7 @@ func loginWithDesktopToken(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, false, isOAuthUser, isSamlUser)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, "", false, isOAuthUser, isSamlUser)
 	if err != nil {
 		c.Err = err
 		return
@@ -2072,7 +2073,7 @@ func loginCWS(c *Context, w http.ResponseWriter, r *http.Request) {
 	audit.AddEventParameterAuditable(auditRec, "user", user)
 	c.LogAuditWithUserId(user.Id, "authenticated")
 	isMobileDevice := utils.IsMobileRequest(r)
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, "", isMobileDevice, false, false)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, "", "", isMobileDevice, false, false)
 	if err != nil {
 		c.LogErrorByCode(err)
 		http.Redirect(w, r, *c.App.Config().ServiceSettings.SiteURL, http.StatusFound)

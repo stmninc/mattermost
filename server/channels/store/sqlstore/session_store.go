@@ -49,8 +49,8 @@ func (me SqlSessionStore) Save(c request.CTX, session *model.Session) (*model.Se
 
 	query, args, err := me.getQueryBuilder().
 		Insert("Sessions").
-		Columns("Id", "Token", "CreateAt", "ExpiresAt", "LastActivityAt", "UserId", "DeviceId", "Roles", "IsOAuth", "ExpiredNotify", "Props").
-		Values(session.Id, session.Token, session.CreateAt, session.ExpiresAt, session.LastActivityAt, session.UserId, session.DeviceId, session.Roles, session.IsOAuth, session.ExpiredNotify, jsonProps).
+		Columns("Id", "Token", "CreateAt", "ExpiresAt", "LastActivityAt", "UserId", "DeviceId", "VoipDeviceId", "Roles", "IsOAuth", "ExpiredNotify", "Props").
+		Values(session.Id, session.Token, session.CreateAt, session.ExpiresAt, session.LastActivityAt, session.UserId, session.DeviceId, session.VoipDeviceId, session.Roles, session.IsOAuth, session.ExpiredNotify, jsonProps).
 		ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "sessions_tosql")
