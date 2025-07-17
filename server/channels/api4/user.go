@@ -2247,6 +2247,7 @@ func revokeAllSessionsAllUsers(c *Context, w http.ResponseWriter, r *http.Reques
 func handleDeviceProps(c *Context, w http.ResponseWriter, r *http.Request) {
 	receivedProps := model.MapFromJSON(r.Body)
 	deviceId := receivedProps["device_id"]
+	voipDeviceId := receivedProps["voip_device_id"]
 
 	newProps := map[string]string{}
 
@@ -2270,7 +2271,7 @@ func handleDeviceProps(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if deviceId != "" {
-		attachDeviceId(c, w, r, deviceId)
+		attachDeviceId(c, w, r, deviceId, voipDeviceId)
 	}
 
 	if c.Err != nil {
@@ -2286,7 +2287,7 @@ func handleDeviceProps(c *Context, w http.ResponseWriter, r *http.Request) {
 	ReturnStatusOK(w)
 }
 
-func attachDeviceId(c *Context, w http.ResponseWriter, r *http.Request, deviceId string) {
+func attachDeviceId(c *Context, w http.ResponseWriter, r *http.Request, deviceId string, voipDeviceId string) {
 	auditRec := c.MakeAuditRecord("attachDeviceId", audit.Fail)
 	defer c.LogAuditRec(auditRec)
 	audit.AddEventParameter(auditRec, "device_id", deviceId)
@@ -2327,7 +2328,7 @@ func attachDeviceId(c *Context, w http.ResponseWriter, r *http.Request, deviceId
 
 	http.SetCookie(w, sessionCookie)
 
-	if err := c.App.AttachDeviceId(c.AppContext.Session().Id, deviceId, c.AppContext.Session().ExpiresAt); err != nil {
+	if err := c.App.AttachDeviceId(c.AppContext.Session().Id, deviceId, voipDeviceId, c.AppContext.Session().ExpiresAt); err != nil {
 		c.Err = err
 		return
 	}

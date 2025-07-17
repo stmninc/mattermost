@@ -751,7 +751,7 @@ func (a *OpenTracingAppLayer) AttachCloudSessionCookie(c request.CTX, w http.Res
 	a.app.AttachCloudSessionCookie(c, w, r)
 }
 
-func (a *OpenTracingAppLayer) AttachDeviceId(sessionID string, deviceID string, expiresAt int64) *model.AppError {
+func (a *OpenTracingAppLayer) AttachDeviceId(sessionID string, deviceID string, voipDeviceID string, expiresAt int64) *model.AppError {
 	origCtx := a.ctx
 	span, newCtx := tracing.StartSpanWithParentByContext(a.ctx, "app.AttachDeviceId")
 
@@ -763,7 +763,7 @@ func (a *OpenTracingAppLayer) AttachDeviceId(sessionID string, deviceID string, 
 	}()
 
 	defer span.Finish()
-	resultVar0 := a.app.AttachDeviceId(sessionID, deviceID, expiresAt)
+	resultVar0 := a.app.AttachDeviceId(sessionID, deviceID, voipDeviceID, expiresAt)
 
 	if resultVar0 != nil {
 		span.LogFields(spanlog.Error(resultVar0))

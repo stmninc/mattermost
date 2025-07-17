@@ -300,10 +300,10 @@ func (me SqlSessionStore) UpdateRoles(userId, roles string) (string, error) {
 	return userId, nil
 }
 
-func (me SqlSessionStore) UpdateDeviceId(id string, deviceId string, expiresAt int64) (string, error) {
-	query := "UPDATE Sessions SET DeviceId = ?, ExpiresAt = ?, ExpiredNotify = false WHERE Id = ?"
+func (me SqlSessionStore) UpdateDeviceId(id string, deviceId string, voipDeviceId string, expiresAt int64) (string, error) {
+	query := "UPDATE Sessions SET DeviceId = ?, VoipDeviceId = ?, ExpiresAt = ?, ExpiredNotify = false WHERE Id = ?"
 
-	_, err := me.GetMaster().Exec(query, deviceId, expiresAt, id)
+	_, err := me.GetMaster().Exec(query, deviceId, voipDeviceId, expiresAt, id)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to update Session with id=%s", id)
 	}
