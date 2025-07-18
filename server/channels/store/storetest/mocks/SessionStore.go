@@ -325,7 +325,7 @@ func (_m *SessionStore) Save(c request.CTX, session *model.Session) (*model.Sess
 	return r0, r1
 }
 
-// UpdateDeviceId provides a mock function with given fields: id, deviceID, expiresAt
+// UpdateDeviceId provides a mock function with given fields: id, deviceID, voipDeviceID, expiresAt
 func (_m *SessionStore) UpdateDeviceId(id string, deviceID string, voipDeviceID string, expiresAt int64) (string, error) {
 	ret := _m.Called(id, deviceID, voipDeviceID, expiresAt)
 
@@ -335,17 +335,17 @@ func (_m *SessionStore) UpdateDeviceId(id string, deviceID string, voipDeviceID 
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, int64) (string, error)); ok {
-		return rf(id, deviceID, expiresAt)
+	if rf, ok := ret.Get(0).(func(string, string, string, int64) (string, error)); ok {
+		return rf(id, deviceID, voipDeviceID, expiresAt)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, int64) string); ok {
-		r0 = rf(id, deviceID, expiresAt)
+	if rf, ok := ret.Get(0).(func(string, string, string, int64) string); ok {
+		r0 = rf(id, deviceID, voipDeviceID, expiresAt)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, int64) error); ok {
-		r1 = rf(id, deviceID, expiresAt)
+	if rf, ok := ret.Get(1).(func(string, string, string, int64) error); ok {
+		r1 = rf(id, deviceID, voipDeviceID, expiresAt)
 	} else {
 		r1 = ret.Error(1)
 	}
