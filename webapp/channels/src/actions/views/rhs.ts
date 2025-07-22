@@ -224,9 +224,10 @@ export function performSearch(terms: string, teamId: string, isMentionSearch?: b
         if (isMentionSearch) {
             // For mentions, perform a specific search by quoting all terms.
             // This ensures terms split by dashes or other symbols are treated as a single unit.
+            // Escape quotes with backslashes to ensure proper JSON serialization.
             const termsArr = searchTerms.split(' ').filter((t) => Boolean(t && t.trim()));
             for (let i = 0; i < termsArr.length; i++) {
-                termsArr[i] = `"${termsArr[i]}"`;
+                termsArr[i] = `\\"${termsArr[i]}\\"`;
             }
             searchTerms = termsArr.join(' ');
         }
