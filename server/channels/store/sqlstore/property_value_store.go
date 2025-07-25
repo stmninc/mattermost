@@ -4,6 +4,8 @@
 package sqlstore
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	sq "github.com/mattermost/squirrel"
@@ -12,6 +14,89 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/v8/channels/store"
 )
+
+func (s *SqlPropertyValueStore) propertyValueToInsertMap(value *model.PropertyValue) (map[string]any, error) {
+	valueJSON, err := json.Marshal(value.Value)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_to_insert_map_marshal_value")
+	}
+	if s.IsBinaryParamEnabled() {
+		valueJSON = AppendBinaryFlag(valueJSON)
+	}
+
+	return map[string]any{
+		"ID":         value.ID,
+		"TargetID":   value.TargetID,
+		"TargetType": value.TargetType,
+		"GroupID":    value.GroupID,
+		"FieldID":    value.FieldID,
+		"Value":      valueJSON,
+		"CreateAt":   value.CreateAt,
+		"UpdateAt":   value.UpdateAt,
+		"DeleteAt":   value.DeleteAt,
+	}, nil
+}
+
+func (s *SqlPropertyValueStore) propertyValueToUpdateMap(value *model.PropertyValue) (map[string]any, error) {
+	valueJSON, err := json.Marshal(value.Value)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_to_udpate_map_marshal_value")
+	}
+	if s.IsBinaryParamEnabled() {
+		valueJSON = AppendBinaryFlag(valueJSON)
+	}
+
+	return map[string]any{
+		"Value":    valueJSON,
+		"UpdateAt": value.UpdateAt,
+		"DeleteAt": value.DeleteAt,
+	}, nil
+}
+
+func propertyValuesFromRows(rows *sql.Rows) ([]*model.PropertyValue, error) {
+	results := []*model.PropertyValue{}
+
+	for rows.Next() {
+		var value model.PropertyValue
+		var valueJSON string
+
+		err := rows.Scan(
+			&value.ID,
+			&value.TargetID,
+			&value.TargetType,
+			&value.GroupID,
+			&value.FieldID,
+			&valueJSON,
+			&value.CreateAt,
+			&value.UpdateAt,
+			&value.DeleteAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal([]byte(valueJSON), &value.Value); err != nil {
+			return nil, errors.Wrap(err, "property_values_from_rows_unmarshal_value")
+		}
+
+		results = append(results, &value)
+	}
+
+	return results, nil
+}
+
+func propertyValueFromRows(rows *sql.Rows) (*model.PropertyValue, error) {
+	values, err := propertyValuesFromRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(values) > 0 {
+		return values[0], nil
+	}
+
+	return nil, sql.ErrNoRows
+}
 
 type SqlPropertyValueStore struct {
 	*SqlStore
@@ -40,15 +125,15 @@ func (s *SqlPropertyValueStore) Create(value *model.PropertyValue) (*model.Prope
 		return nil, errors.Wrap(err, "property_value_create_isvalid")
 	}
 
-	valueJSON := value.Value
-	if s.IsBinaryParamEnabled() {
-		valueJSON = AppendBinaryFlag(valueJSON)
+	insertMap, err := s.propertyValueToInsertMap(value)
+	if err != nil {
+		return nil, err
 	}
 
 	builder := s.getQueryBuilder().
 		Insert("PropertyValues").
-		Columns("ID", "TargetID", "TargetType", "GroupID", "FieldID", "Value", "CreateAt", "UpdateAt", "DeleteAt").
-		Values(value.ID, value.TargetID, value.TargetType, value.GroupID, value.FieldID, valueJSON, value.CreateAt, value.UpdateAt, value.DeleteAt)
+		SetMap(insertMap)
+
 	if _, err := s.GetMaster().ExecBuilder(builder); err != nil {
 		return nil, errors.Wrap(err, "property_value_create_insert")
 	}
@@ -57,22 +142,44 @@ func (s *SqlPropertyValueStore) Create(value *model.PropertyValue) (*model.Prope
 }
 
 func (s *SqlPropertyValueStore) Get(id string) (*model.PropertyValue, error) {
-	builder := s.tableSelectQuery.Where(sq.Eq{"id": id})
-
-	var value model.PropertyValue
-	if err := s.GetReplica().GetBuilder(&value, builder); err != nil {
-		return nil, errors.Wrap(err, "property_value_get_select")
+	queryString, args, err := s.tableSelectQuery.
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_get_tosql")
 	}
 
-	return &value, nil
+	rows, err := s.GetReplica().Query(queryString, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_get_select")
+	}
+	defer rows.Close()
+
+	value, err := propertyValueFromRows(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_get_propertyvaluefromrows")
+	}
+
+	return value, nil
 }
 
 func (s *SqlPropertyValueStore) GetMany(ids []string) ([]*model.PropertyValue, error) {
-	builder := s.tableSelectQuery.Where(sq.Eq{"id": ids})
+	queryString, args, err := s.tableSelectQuery.
+		Where(sq.Eq{"id": ids}).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_get_many_tosql")
+	}
 
-	var values []*model.PropertyValue
-	if err := s.GetReplica().SelectBuilder(&values, builder); err != nil {
+	rows, err := s.GetReplica().Query(queryString, args...)
+	if err != nil {
 		return nil, errors.Wrap(err, "property_value_get_many_query")
+	}
+	defer rows.Close()
+
+	values, err := propertyValuesFromRows(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_get_many_propertyvaluesfromrows")
 	}
 
 	if len(values) < len(ids) {
@@ -91,34 +198,45 @@ func (s *SqlPropertyValueStore) SearchPropertyValues(opts model.PropertyValueSea
 		return nil, errors.New("per page must be positive integer greater than zero")
 	}
 
-	builder := s.tableSelectQuery.
+	query := s.tableSelectQuery.
 		OrderBy("CreateAt ASC").
 		Offset(uint64(opts.Page * opts.PerPage)).
 		Limit(uint64(opts.PerPage))
 
 	if !opts.IncludeDeleted {
-		builder = builder.Where(sq.Eq{"DeleteAt": 0})
+		query = query.Where(sq.Eq{"DeleteAt": 0})
 	}
 
 	if opts.GroupID != "" {
-		builder = builder.Where(sq.Eq{"GroupID": opts.GroupID})
+		query = query.Where(sq.Eq{"GroupID": opts.GroupID})
 	}
 
 	if opts.TargetType != "" {
-		builder = builder.Where(sq.Eq{"TargetType": opts.TargetType})
+		query = query.Where(sq.Eq{"TargetType": opts.TargetType})
 	}
 
 	if opts.TargetID != "" {
-		builder = builder.Where(sq.Eq{"TargetID": opts.TargetID})
+		query = query.Where(sq.Eq{"TargetID": opts.TargetID})
 	}
 
 	if opts.FieldID != "" {
-		builder = builder.Where(sq.Eq{"FieldID": opts.FieldID})
+		query = query.Where(sq.Eq{"FieldID": opts.FieldID})
 	}
 
-	var values []*model.PropertyValue
-	if err := s.GetReplica().SelectBuilder(&values, builder); err != nil {
+	queryString, args, err := query.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_search_tosql")
+	}
+
+	rows, err := s.GetReplica().Query(queryString, args...)
+	if err != nil {
 		return nil, errors.Wrap(err, "property_value_search_query")
+	}
+	defer rows.Close()
+
+	values, err := propertyValuesFromRows(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_value_search_propertyvaluesfromrows")
 	}
 
 	return values, nil
@@ -143,16 +261,14 @@ func (s *SqlPropertyValueStore) Update(values []*model.PropertyValue) (_ []*mode
 			return nil, errors.Wrap(err, "property_value_update_isvalid")
 		}
 
-		valueJSON := value.Value
-		if s.IsBinaryParamEnabled() {
-			valueJSON = AppendBinaryFlag(valueJSON)
+		updateMap, err := s.propertyValueToUpdateMap(value)
+		if err != nil {
+			return nil, err
 		}
 
 		queryString, args, err := s.getQueryBuilder().
 			Update("PropertyValues").
-			Set("Value", valueJSON).
-			Set("UpdateAt", value.UpdateAt).
-			Set("DeleteAt", value.DeleteAt).
+			SetMap(updateMap).
 			Where(sq.Eq{"id": value.ID}).
 			ToSql()
 		if err != nil {

@@ -1325,7 +1325,7 @@ export function restorePostVersion(postId: string, restoreVersionId: string, con
         } catch (error) {
             // Send to error bar if it's an edit post error about time limit.
             if (error.server_error_id === 'api.post.update_post.permissions_time_limit.app_error') {
-                dispatch(logError({type: 'announcement', message: error.message}, {errorBarMode: LogErrorBarMode.Always}));
+                dispatch(logError({type: 'announcement', message: error.message}, true));
             } else {
                 dispatch(logError(error));
             }

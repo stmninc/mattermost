@@ -30,7 +30,7 @@ function mapStateToProps(state: GlobalState) {
         canUploadFiles: canUploadFiles(config),
         locale: getCurrentLocale(state),
         pluginFileUploadMethods: state.plugins.components.FileUploadMethod,
-        pluginFilesWillUploadHooks: state.plugins.components.FilesWillUploadHook,
+        pluginFilesWillUploadHooks: state.plugins.components.FilesWillUploadHook as unknown as FilesWillUploadHook[],
         centerChannelPostBeingEdited,
         rhsPostBeingEdited,
     };

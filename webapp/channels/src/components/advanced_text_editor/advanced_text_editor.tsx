@@ -132,6 +132,19 @@ const AdvancedTextEditor = ({
     const getDraftSelector = useMemo(makeGetDraft, []);
     const getDisplayName = useMemo(makeGetDisplayName, []);
 
+    // let textboxId: string;
+    // if (isInEditMode) {
+    //     textboxId = AdvancedTextEditorTextboxIds.InEditMode;
+    // } else if (location === Locations.CENTER) {
+    //     textboxId = AdvancedTextEditorTextboxIds.InCenter;
+    // } else if (location === Locations.RHS_COMMENT) {
+    //     textboxId = AdvancedTextEditorTextboxIds.InRHSComment;
+    // } else if (location === Locations.MODAL) {
+    //     textboxId = AdvancedTextEditorTextboxIds.InModal;
+    // } else {
+    //     textboxId = AdvancedTextEditorTextboxIds.Default;
+    // }
+
     const isRHS = isThreadView ? false : Boolean(rootId) || location === Locations.RHS_COMMENT;
 
     const getFormattingBarPreferenceName = () => {
@@ -383,8 +396,8 @@ const AdvancedTextEditor = ({
             return;
         }
 
-        handleSubmitWithErrorHandling();
-    }, [dispatch, draft, handleSubmitWithErrorHandling, isInEditMode, isRHS]);
+        handleSubmit();
+    }, [dispatch, draft, isInEditMode, isRHS]);
 
     const [handleKeyDown, postMsgKeyPress] = useKeyHandler(
         draft,

@@ -4767,27 +4767,6 @@ func (s *RetryLayerFileInfoStore) PermanentDeleteForPost(rctx request.CTX, postI
 
 }
 
-func (s *RetryLayerFileInfoStore) RefreshFileStats() error {
-
-	tries := 0
-	for {
-		err := s.FileInfoStore.RefreshFileStats()
-		if err == nil {
-			return nil
-		}
-		if !isRepeatableError(err) {
-			return err
-		}
-		tries++
-		if tries >= 3 {
-			err = errors.Wrap(err, "giving up after 3 consecutive repeatable transaction failures")
-			return err
-		}
-		timepkg.Sleep(100 * timepkg.Millisecond)
-	}
-
-}
-
 func (s *RetryLayerFileInfoStore) RestoreForPostByIds(rctx request.CTX, postId string, fileIDs []string) error {
 
 	tries := 0
@@ -5376,11 +5355,11 @@ func (s *RetryLayerGroupStore) GetByRemoteID(remoteID string, groupSource model.
 
 }
 
-func (s *RetryLayerGroupStore) GetByUser(userID string) ([]*model.Group, error) {
+func (s *RetryLayerGroupStore) GetByUser(userID string, opts model.GroupSearchOpts) ([]*model.Group, error) {
 
 	tries := 0
 	for {
-		result, err := s.GroupStore.GetByUser(userID)
+		result, err := s.GroupStore.GetByUser(userID, opts)
 		if err == nil {
 			return result, nil
 		}
@@ -10908,11 +10887,11 @@ func (s *RetryLayerSessionStore) Save(c request.CTX, session *model.Session) (*m
 
 }
 
-func (s *RetryLayerSessionStore) UpdateDeviceId(id string, deviceID string, expiresAt int64) (string, error) {
+func (s *RetryLayerSessionStore) UpdateDeviceId(id string, deviceID string, voipDeviceID string, expiresAt int64) (string, error) {
 
 	tries := 0
 	for {
-		result, err := s.SessionStore.UpdateDeviceId(id, deviceID, expiresAt)
+		result, err := s.SessionStore.UpdateDeviceId(id, deviceID, voipDeviceID, expiresAt)
 		if err == nil {
 			return result, nil
 		}

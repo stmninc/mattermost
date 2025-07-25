@@ -80,7 +80,6 @@ type Channels struct {
 	postReminderMut  sync.Mutex
 	postReminderTask *model.ScheduledTask
 
-	interruptQuitChan     chan struct{}
 	scheduledPostMut      sync.Mutex
 	scheduledPostTask     *model.ScheduledTask
 	emailLoginAttemptsMut sync.Mutex

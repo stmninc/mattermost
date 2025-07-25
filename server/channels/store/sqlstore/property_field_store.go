@@ -4,6 +4,8 @@
 package sqlstore
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	sq "github.com/mattermost/squirrel"
@@ -12,6 +14,103 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/v8/channels/store"
 )
+
+func (s *SqlPropertyFieldStore) propertyFieldToInsertMap(field *model.PropertyField) (map[string]any, error) {
+	if field.Attrs == nil {
+		field.Attrs = make(map[string]any)
+	}
+
+	attrsJSON, err := json.Marshal(field.Attrs)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_to_insert_map_marshal_attrs")
+	}
+	if s.IsBinaryParamEnabled() {
+		attrsJSON = AppendBinaryFlag(attrsJSON)
+	}
+
+	return map[string]any{
+		"ID":         field.ID,
+		"GroupID":    field.GroupID,
+		"Name":       field.Name,
+		"Type":       field.Type,
+		"Attrs":      attrsJSON,
+		"TargetID":   field.TargetID,
+		"TargetType": field.TargetType,
+		"CreateAt":   field.CreateAt,
+		"UpdateAt":   field.UpdateAt,
+		"DeleteAt":   field.DeleteAt,
+	}, nil
+}
+
+func (s *SqlPropertyFieldStore) propertyFieldToUpdateMap(field *model.PropertyField) (map[string]any, error) {
+	if field.Attrs == nil {
+		field.Attrs = make(map[string]any)
+	}
+
+	attrsJSON, err := json.Marshal(field.Attrs)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_to_update_map_marshal_attrs")
+	}
+	if s.IsBinaryParamEnabled() {
+		attrsJSON = AppendBinaryFlag(attrsJSON)
+	}
+
+	return map[string]any{
+		"Name":       field.Name,
+		"Type":       field.Type,
+		"Attrs":      attrsJSON,
+		"TargetID":   field.TargetID,
+		"TargetType": field.TargetType,
+		"UpdateAt":   field.UpdateAt,
+		"DeleteAt":   field.DeleteAt,
+	}, nil
+}
+
+func propertyFieldsFromRows(rows *sql.Rows) ([]*model.PropertyField, error) {
+	results := []*model.PropertyField{}
+
+	for rows.Next() {
+		var field model.PropertyField
+		var attrsJSON string
+
+		err := rows.Scan(
+			&field.ID,
+			&field.GroupID,
+			&field.Name,
+			&field.Type,
+			&attrsJSON,
+			&field.TargetID,
+			&field.TargetType,
+			&field.CreateAt,
+			&field.UpdateAt,
+			&field.DeleteAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal([]byte(attrsJSON), &field.Attrs); err != nil {
+			return nil, errors.Wrap(err, "property_fields_from_rows_unmarshal_attrs")
+		}
+
+		results = append(results, &field)
+	}
+
+	return results, nil
+}
+
+func propertyFieldFromRows(rows *sql.Rows) (*model.PropertyField, error) {
+	fields, err := propertyFieldsFromRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(fields) > 0 {
+		return fields[0], nil
+	}
+
+	return nil, sql.ErrNoRows
+}
 
 type SqlPropertyFieldStore struct {
 	*SqlStore
@@ -40,10 +139,14 @@ func (s *SqlPropertyFieldStore) Create(field *model.PropertyField) (*model.Prope
 		return nil, errors.Wrap(err, "property_field_create_isvalid")
 	}
 
+	insertMap, err := s.propertyFieldToInsertMap(field)
+	if err != nil {
+		return nil, err
+	}
+
 	builder := s.getQueryBuilder().
 		Insert("PropertyFields").
-		Columns("ID", "GroupID", "Name", "Type", "Attrs", "TargetID", "TargetType", "CreateAt", "UpdateAt", "DeleteAt").
-		Values(field.ID, field.GroupID, field.Name, field.Type, field.Attrs, field.TargetID, field.TargetType, field.CreateAt, field.UpdateAt, field.DeleteAt)
+		SetMap(insertMap)
 
 	if _, err := s.GetMaster().ExecBuilder(builder); err != nil {
 		return nil, errors.Wrap(err, "property_field_create_insert")
@@ -53,22 +156,44 @@ func (s *SqlPropertyFieldStore) Create(field *model.PropertyField) (*model.Prope
 }
 
 func (s *SqlPropertyFieldStore) Get(id string) (*model.PropertyField, error) {
-	builder := s.tableSelectQuery.Where(sq.Eq{"id": id})
-
-	var field model.PropertyField
-	if err := s.GetReplica().GetBuilder(&field, builder); err != nil {
-		return nil, errors.Wrap(err, "property_field_get_select")
+	queryString, args, err := s.tableSelectQuery.
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_get_tosql")
 	}
 
-	return &field, nil
+	rows, err := s.GetReplica().Query(queryString, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_get_select")
+	}
+	defer rows.Close()
+
+	field, err := propertyFieldFromRows(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_get_propertyfieldfromrows")
+	}
+
+	return field, nil
 }
 
 func (s *SqlPropertyFieldStore) GetMany(ids []string) ([]*model.PropertyField, error) {
-	builder := s.tableSelectQuery.Where(sq.Eq{"id": ids})
+	queryString, args, err := s.tableSelectQuery.
+		Where(sq.Eq{"id": ids}).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_get_many_tosql")
+	}
 
-	fields := []*model.PropertyField{}
-	if err := s.GetReplica().SelectBuilder(&fields, builder); err != nil {
+	rows, err := s.GetReplica().Query(queryString, args...)
+	if err != nil {
 		return nil, errors.Wrap(err, "property_field_get_many_query")
+	}
+	defer rows.Close()
+
+	fields, err := propertyFieldsFromRows(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_get_many_propertyfieldfromrows")
 	}
 
 	if len(fields) < len(ids) {
@@ -87,30 +212,41 @@ func (s *SqlPropertyFieldStore) SearchPropertyFields(opts model.PropertyFieldSea
 		return nil, errors.New("per page must be positive integer greater than zero")
 	}
 
-	builder := s.tableSelectQuery.
+	query := s.tableSelectQuery.
 		OrderBy("CreateAt ASC").
 		Offset(uint64(opts.Page * opts.PerPage)).
 		Limit(uint64(opts.PerPage))
 
 	if !opts.IncludeDeleted {
-		builder = builder.Where(sq.Eq{"DeleteAt": 0})
+		query = query.Where(sq.Eq{"DeleteAt": 0})
 	}
 
 	if opts.GroupID != "" {
-		builder = builder.Where(sq.Eq{"GroupID": opts.GroupID})
+		query = query.Where(sq.Eq{"GroupID": opts.GroupID})
 	}
 
 	if opts.TargetType != "" {
-		builder = builder.Where(sq.Eq{"TargetType": opts.TargetType})
+		query = query.Where(sq.Eq{"TargetType": opts.TargetType})
 	}
 
 	if opts.TargetID != "" {
-		builder = builder.Where(sq.Eq{"TargetID": opts.TargetID})
+		query = query.Where(sq.Eq{"TargetID": opts.TargetID})
 	}
 
-	fields := []*model.PropertyField{}
-	if err := s.GetReplica().SelectBuilder(&fields, builder); err != nil {
+	queryString, args, err := query.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_search_tosql")
+	}
+
+	rows, err := s.GetReplica().Query(queryString, args...)
+	if err != nil {
 		return nil, errors.Wrap(err, "property_field_search_query")
+	}
+	defer rows.Close()
+
+	fields, err := propertyFieldsFromRows(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "property_field_search_propertyfieldfromrows")
 	}
 
 	return fields, nil
@@ -135,15 +271,14 @@ func (s *SqlPropertyFieldStore) Update(fields []*model.PropertyField) (_ []*mode
 			return nil, errors.Wrap(vErr, "property_field_update_isvalid")
 		}
 
+		updateMap, err := s.propertyFieldToUpdateMap(field)
+		if err != nil {
+			return nil, err
+		}
+
 		queryString, args, err := s.getQueryBuilder().
 			Update("PropertyFields").
-			Set("Name", field.Name).
-			Set("Type", field.Type).
-			Set("Attrs", field.Attrs).
-			Set("TargetID", field.TargetID).
-			Set("TargetType", field.TargetType).
-			Set("UpdateAt", field.UpdateAt).
-			Set("DeleteAt", field.DeleteAt).
+			SetMap(updateMap).
 			Where(sq.Eq{"id": field.ID}).
 			ToSql()
 		if err != nil {

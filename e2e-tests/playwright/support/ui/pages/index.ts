@@ -21,5 +21,4 @@ const pages = {
     DraftPage,
 };
 
-export {ChannelsPage, LandingLoginPage, LoginPage, SignupPage, ScheduledDraftPage, DraftPage};
-export default pages;
+export {pages, ChannelsPage, LandingLoginPage, LoginPage, SignupPage, ScheduledDraftPage, DraftPage, SystemConsolePage};

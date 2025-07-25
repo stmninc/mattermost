@@ -11,8 +11,6 @@ import type {UserPropertyField} from '@mattermost/types/properties';
 import type {UserProfile} from '@mattermost/types/users';
 import type {IDMappedObjects} from '@mattermost/types/utilities';
 
-import type {LogErrorOptions} from 'mattermost-redux/actions/errors';
-import {LogErrorBarMode} from 'mattermost-redux/actions/errors';
 import {Client4} from 'mattermost-redux/client';
 import type {ActionResult} from 'mattermost-redux/types/actions';
 import {isEmail} from 'mattermost-redux/utils/helpers';

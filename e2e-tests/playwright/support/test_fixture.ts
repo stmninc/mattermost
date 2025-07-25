@@ -43,7 +43,7 @@ export const test = base.extend<ExtendedFixtures>({
     },
 });
 
-class PlaywrightExtended {
+export class PlaywrightExtended {
     // ./browser_context
     readonly testBrowser;
 
