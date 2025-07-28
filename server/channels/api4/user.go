@@ -1917,6 +1917,7 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 	mfaToken := props["token"]
 	deviceId := props["device_id"]
 	ldapOnly := props["ldap_only"] == "true"
+	voipDeviceId := props["voip_device_id"]
 
 	if *c.App.Config().ExperimentalSettings.ClientSideCertEnable {
 		if license := c.App.Channels().License(); license == nil || !*license.Features.FutureFeatures {
@@ -1971,7 +1972,7 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.LogAuditWithUserId(user.Id, "authenticated")
 
 	isMobileDevice := utils.IsMobileRequest(r)
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, isMobileDevice, false, false)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, voipDeviceId, isMobileDevice, false, false)
 	if err != nil {
 		c.Err = err
 		return
@@ -2022,7 +2023,7 @@ func loginWithDesktopToken(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, false, isOAuthUser, isSamlUser)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, deviceId, "", false, isOAuthUser, isSamlUser)
 	if err != nil {
 		c.Err = err
 		return
@@ -2078,7 +2079,7 @@ func loginCWS(c *Context, w http.ResponseWriter, r *http.Request) {
 	audit.AddEventParameterAuditable(auditRec, "user", user)
 	c.LogAuditWithUserId(user.Id, "authenticated")
 	isMobileDevice := utils.IsMobileRequest(r)
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, "", isMobileDevice, false, false)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, "", "", isMobileDevice, false, false)
 	if err != nil {
 		c.LogErrorByCode(err)
 		http.Redirect(w, r, *c.App.Config().ServiceSettings.SiteURL, http.StatusFound)
@@ -2252,6 +2253,7 @@ func revokeAllSessionsAllUsers(c *Context, w http.ResponseWriter, r *http.Reques
 func handleDeviceProps(c *Context, w http.ResponseWriter, r *http.Request) {
 	receivedProps := model.MapFromJSON(r.Body)
 	deviceId := receivedProps["device_id"]
+	voipDeviceId := receivedProps["voip_device_id"]
 
 	newProps := map[string]string{}
 
@@ -2275,7 +2277,7 @@ func handleDeviceProps(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if deviceId != "" {
-		attachDeviceId(c, w, r, deviceId)
+		attachDeviceId(c, w, r, deviceId, voipDeviceId)
 	}
 
 	if c.Err != nil {
@@ -2291,7 +2293,7 @@ func handleDeviceProps(c *Context, w http.ResponseWriter, r *http.Request) {
 	ReturnStatusOK(w)
 }
 
-func attachDeviceId(c *Context, w http.ResponseWriter, r *http.Request, deviceId string) {
+func attachDeviceId(c *Context, w http.ResponseWriter, r *http.Request, deviceId string, voipDeviceId string) {
 	auditRec := c.MakeAuditRecord("attachDeviceId", audit.Fail)
 	defer c.LogAuditRec(auditRec)
 	audit.AddEventParameter(auditRec, "device_id", deviceId)
@@ -2332,7 +2334,7 @@ func attachDeviceId(c *Context, w http.ResponseWriter, r *http.Request, deviceId
 
 	http.SetCookie(w, sessionCookie)
 
-	if err := c.App.AttachDeviceId(c.AppContext.Session().Id, deviceId, c.AppContext.Session().ExpiresAt); err != nil {
+	if err := c.App.AttachDeviceId(c.AppContext.Session().Id, deviceId, voipDeviceId, c.AppContext.Session().ExpiresAt); err != nil {
 		c.Err = err
 		return
 	}
