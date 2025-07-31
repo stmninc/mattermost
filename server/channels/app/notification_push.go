@@ -169,7 +169,7 @@ func (a *App) sendPushNotificationToAllSessions(rctx request.CTX, msg *model.Pus
 			deviceID = session.VoipDeviceId
 		}
 		// deviceID, SubType, VoipDeviceIdの値をログに出力する
-		rctx.Logger().Debug("Sending push notification",
+		rctx.Logger().Info("Sending push notification",
 			mlog.String("type", model.NotificationTypePush),
 			mlog.String("ack_id", tmpMessage.AckId),
 			mlog.String("push_type", tmpMessage.Type),
