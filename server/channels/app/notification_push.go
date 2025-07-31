@@ -168,6 +168,19 @@ func (a *App) sendPushNotificationToAllSessions(rctx request.CTX, msg *model.Pus
 		if msg.SubType == model.PushSubTypeCalls && session.VoipDeviceId != "" {
 			deviceID = session.VoipDeviceId
 		}
+		// deviceID, SubType, VoipDeviceIdの値をログに出力する
+		rctx.Logger().Debug("Sending push notification",
+			mlog.String("type", model.NotificationTypePush),
+			mlog.String("ack_id", tmpMessage.AckId),
+			mlog.String("push_type", tmpMessage.Type),
+			mlog.String("user_id", session.UserId),
+			mlog.String("post_id", tmpMessage.PostId),
+			mlog.String("channel_id", tmpMessage.ChannelId),
+			mlog.String("device_id", deviceID),
+			mlog.String("sub_type", string(tmpMessage.SubType)),
+			mlog.String("voip_device_id", session.VoipDeviceId),
+			mlog.String("status", model.PushSendPrepare),
+		)
 		tmpMessage.SetDeviceIdAndPlatform(deviceID)
 		tmpMessage.AckId = model.NewId()
 		signature, err := jwt.NewWithClaims(jwt.SigningMethodES256, pushJWTClaims{
