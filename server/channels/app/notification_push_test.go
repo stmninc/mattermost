@@ -1791,12 +1791,12 @@ func TestGetMobileAppSessions(t *testing.T) {
 		defer th.TearDown()
 
 		_, err := th.App.CreateSession(th.Context, &model.Session{
-			UserId:    th.BasicUser.Id,
-			DeviceId:  "DeviceId",
+			UserId:       th.BasicUser.Id,
+			DeviceId:     "DeviceId",
 			VoipDeviceId: "VoipDeviceId",
-			ExpiresAt: model.GetMillis() + 100000,
-	  })
-	  require.Nil(t, err)
+			ExpiresAt:    model.GetMillis() + 100000,
+		})
+		require.Nil(t, err)
 
 		sessions, err := th.App.getMobileAppSessions(th.BasicUser.Id)
 		require.Nil(t, err)
