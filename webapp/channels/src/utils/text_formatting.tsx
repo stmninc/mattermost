@@ -18,6 +18,13 @@ import * as Markdown from './markdown';
 
 const punctuationRegex = /[^\p{L}\d]/u;
 const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
+
+// Matches @mentions with exactly two words (firstname lastname)
+// (?:\B|\b_+) - word boundary or underscore prefix
+// @ - literal @ symbol
+// ([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by space
+// (?=\s|$|[.,!?;:]) - positive lookahead for word ending
+const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:])/gi;
 const UNICODE_EMOJI_REGEX = emojiRegex();
 const htmlEmojiPattern = /^<p>\s*(?:<img class="emoticon"[^>]*>|<span data-emoticon[^>]*>[^<]*<\/span>\s*|<span class="emoticon emoticon--unicode">[^<]*<\/span>\s*)+<\/p>$/;
 
