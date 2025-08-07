@@ -6,6 +6,7 @@ import React, {lazy, useCallback, useEffect, useMemo, useRef, useState} from 're
 import {FormattedMessage, useIntl} from 'react-intl';
 import {useDispatch, useSelector} from 'react-redux';
 
+import useEditorEmojiPicker from './use_editor_emoji_picker';
 import {useFullnameMentionKeys} from './use_fullname_mention_keys';
 
 import type {ServerError} from '@mattermost/types/errors';
@@ -15,7 +16,6 @@ import {savePreferences} from 'mattermost-redux/actions/preferences';
 import {Permissions} from 'mattermost-redux/constants';
 import {getChannel, makeGetChannel, getDirectChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig, getFeatureFlagValue} from 'mattermost-redux/selectors/entities/general';
-import {getMyGroupMentionKeysForChannel} from 'mattermost-redux/selectors/entities/groups';
 import {get, getBool, getInt, getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentUserId, isCurrentUserGuestUser, getStatusForUserId, makeGetDisplayName, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
@@ -79,7 +79,6 @@ import SendButton from './send_button';
 import ShowFormat from './show_formatting';
 import TexteditorActions from './texteditor_actions';
 import ToggleFormattingBar from './toggle_formatting_bar';
-import useEditorEmojiPicker from './use_editor_emoji_picker';
 import useKeyHandler from './use_key_handler';
 import useOrientationHandler from './use_orientation_handler';
 import usePluginItems from './use_plugin_items';
@@ -385,7 +384,7 @@ const AdvancedTextEditor = ({
         }
 
         handleSubmit(finalDraft, schedulingInfo, options);
-        
+
         if (!errorClass) {
             const messageStatusElement = messageStatusRef.current;
             const messageStatusInnerText = messageStatusElement?.textContent;

@@ -202,10 +202,10 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
             const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`@${escapedDisplayName}(?=\\s|$|[^\\w])`, 'g');
 
-            result = result.replace(regex, (match) => {
+            result = result.replace(regex, () => {
                 if (selectedMentions[displayName]) {
                     return `@${selectedMentions[displayName]}`;
-                }                
+                }
                 const usernames = displayNameToUsername[displayName];
                 return `@${usernames[0]}`;
             });
@@ -376,7 +376,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         // since we do only handle the sending when in preview mode this is fine to be casted
         this.props.onBlur?.(e as FocusEvent<TextboxElement>);
     };
-    
+
     /**
      * Handles when a mention suggestion is selected
      * Stores information about mentions explicitly selected by the user
@@ -386,13 +386,13 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         if (item && item.username && item.type !== 'mention_groups') {
             const displayName = displayUsername(item, this.props.teammateNameDisplay || Preferences.DISPLAY_PREFER_USERNAME, false);
             const username = item.username;
-            
+
             // Save the selected mention information to state
             this.setState((prevState) => ({
                 selectedMentions: {
                     ...prevState.selectedMentions,
-                    [displayName]: username
-                }
+                    [displayName]: username,
+                },
             }));
         }
     };

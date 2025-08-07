@@ -4,12 +4,11 @@
 import {useSelector} from 'react-redux';
 
 import {
-    getCurrentUser,
     getCurrentUserMentionKeys,
     getUsersByUsername,
 } from 'mattermost-redux/selectors/entities/users';
-import {getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {getMyGroupMentionKeysForChannel, getMyGroupMentionKeys} from 'mattermost-redux/selectors/entities/groups';
+import {getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
 import type {GlobalState} from 'types/store';
@@ -23,12 +22,12 @@ export const useFullnameMentionKeys = (channelId?: string, teamId?: string) => {
     return useSelector((state: GlobalState) => {
         // Get base mention keys
         const mentionKeysWithoutGroups = getCurrentUserMentionKeys(state);
-        
+
         // Get group mention keys (channel specific if channelId is provided)
-        const groupMentionKeys = channelId && teamId 
-            ? getMyGroupMentionKeysForChannel(state, teamId, channelId) 
-            : getMyGroupMentionKeys(state, false);
-        
+        const groupMentionKeys = channelId && teamId ?
+            getMyGroupMentionKeysForChannel(state, teamId, channelId) :
+            getMyGroupMentionKeys(state, false);
+
         const baseMentionKeys = mentionKeysWithoutGroups.concat(groupMentionKeys);
 
         // Get all users and display settings
