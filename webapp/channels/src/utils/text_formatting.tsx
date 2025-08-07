@@ -24,7 +24,7 @@ const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
 // ([a-z0-9.\-_]+:[a-z0-9.\-_]+) - user:org format
 const AT_REMOTE_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+:[a-z0-9.\-_]+)/gi;
 
-// Matches @mentions with exactly two words (firstname lastname)  
+// Matches @mentions with exactly two words (firstname lastname)
 // (?:\B|\b_+) - word boundary or underscore prefix
 // @ - literal @ symbol
 // ([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by space
