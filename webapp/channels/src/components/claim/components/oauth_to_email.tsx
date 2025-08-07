@@ -123,7 +123,7 @@ const OAuthToEmail = (props: Props) => {
                     />
                 </div>
                 <ErrorLabel errorText={error}/>
-                <button
+                {/* <button
                     type='submit'
                     className='btn btn-primary'
                 >
@@ -132,7 +132,7 @@ const OAuthToEmail = (props: Props) => {
                         defaultMessage='Switch {type} to Email and Password'
                         values={{type: uiType}}
                     />
-                </button>
+                </button> */}
             </form>
         </>
     );
