@@ -3,13 +3,12 @@
 
 import emojiRegex from 'emoji-regex';
 import type {Renderer} from 'marked';
+import {formatWithRenderer} from 'utils/markdown';
 
 import type {SystemEmoji} from '@mattermost/types/emojis';
 import {isRecordOf} from '@mattermost/types/utilities';
 
 import type {HighlightWithoutNotificationKey} from 'mattermost-redux/selectors/entities/users';
-
-import {formatWithRenderer} from 'utils/markdown';
 
 import Constants from './constants';
 import type EmojiMap from './emoji_map.js';
@@ -19,12 +18,18 @@ import * as Markdown from './markdown';
 const punctuationRegex = /[^\p{L}\d]/u;
 const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
 
-// Matches @mentions with exactly two words (firstname lastname)
+// Matches remote @mentions with user:org format
+// (?:\B|\b_+) - word boundary or underscore prefix
+// @ - literal @ symbol
+// ([a-z0-9.\-_]+:[a-z0-9.\-_]+) - user:org format
+const AT_REMOTE_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+:[a-z0-9.\-_]+)/gi;
+
+// Matches @mentions with exactly two words (firstname lastname)  
 // (?:\B|\b_+) - word boundary or underscore prefix
 // @ - literal @ symbol
 // ([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by space
-// (?=\s|$|[.,!?;:]) - positive lookahead for word ending
-const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:])/gi;
+// (?=\s|$|[.,!?;:]|@) - positive lookahead for word ending or @ symbol
+const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:]|@)/gi;
 const UNICODE_EMOJI_REGEX = emojiRegex();
 const htmlEmojiPattern = /^<p>\s*(?:<img class="emoticon"[^>]*>|<span data-emoticon[^>]*>[^<]*<\/span>\s*|<span class="emoticon emoticon--unicode">[^<]*<\/span>\s*)+<\/p>$/;
 
@@ -311,6 +316,16 @@ export function formatText(
         output = formatWithRenderer(output, options.renderer);
         output = doFormatText(output, options, emojiMap);
     } else if (!('markdown' in options) || options.markdown) {
+        // Pre-process remote mentions to prevent them from being interpreted as URLs
+        if (options.atMentions) {
+            // Handle remote mentions (@user:org) before Markdown processing
+            // Use safe placeholder instead of HTML to avoid HTML escaping
+            output = output.replace(AT_REMOTE_MENTION_PATTERN, (fullMatch: string, username: string) => {
+                // Use $ delimiters to avoid Markdown interpretation
+                return `$REMOTE_MENTION_${username.replace(':', '_COLON_')}$`;
+            });
+        }
+
         // the markdown renderer will call doFormatText as necessary
         output = Markdown.format(output, options, emojiMap);
         if (output.includes('class="markdown-inline-img"')) {
@@ -344,8 +359,16 @@ export function formatText(
              * the replacer is not ideal, since it replaces every occurence with a new div
              * It would be better to more accurately match only the element in question
              * and replace it with an inlione-version
-             */
+            */
             output = output.replace(/<p>|<\/p>/g, replacer);
+        }
+
+        // Convert remote mention placeholders back to proper HTML after Markdown processing
+        if (options.atMentions) {
+            output = output.replace(/\$REMOTE_MENTION_([^_]+)_COLON_([^$]+)\$/g, (match, user, org) => {
+                const username = `${user}:${org}`;
+                return `<span data-mention="${username}">@${username}</span>`;
+            });
         }
     } else {
         output = sanitizeHtml(output);
@@ -550,19 +573,19 @@ export function autolinkAtMentions(text: string, tokens: Tokens): string {
         replaceAtMentionWithToken,
     );
 
-    // handle all standard mentions first (supports trailing punctuation)
-    let match = output.match(AT_MENTION_PATTERN);
-    while (match && match.length > 0) {
-        output = output.replace(AT_MENTION_PATTERN, replaceAtMentionWithToken);
-        match = output.match(AT_MENTION_PATTERN);
-    }
-
-    // handle fullname mentions ONLY for remaining text (supports trailing punctuation)
-    // This ensures existing single-word mentions are not affected
+    // handle fullname mentions BEFORE standard mentions to prevent conflicts
+    // This ensures fullnames like "@john smith" are processed before "@john" alone
     let fullnameMatch = output.match(AT_MENTION_FULLNAME_PATTERN);
     while (fullnameMatch && fullnameMatch.length > 0) {
         output = output.replace(AT_MENTION_FULLNAME_PATTERN, replaceAtMentionWithToken);
         fullnameMatch = output.match(AT_MENTION_FULLNAME_PATTERN);
+    }
+
+    // handle remaining standard mentions (supports trailing punctuation)
+    let match = output.match(AT_MENTION_PATTERN);
+    while (match && match.length > 0) {
+        output = output.replace(AT_MENTION_PATTERN, replaceAtMentionWithToken);
+        match = output.match(AT_MENTION_PATTERN);
     }
 
     return output;
