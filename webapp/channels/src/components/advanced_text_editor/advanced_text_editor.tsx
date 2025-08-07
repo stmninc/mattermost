@@ -6,9 +6,6 @@ import React, {lazy, useCallback, useEffect, useMemo, useRef, useState} from 're
 import {FormattedMessage, useIntl} from 'react-intl';
 import {useDispatch, useSelector} from 'react-redux';
 
-import useEditorEmojiPicker from './use_editor_emoji_picker';
-import {useFullnameMentionKeys} from './use_fullname_mention_keys';
-
 import type {ServerError} from '@mattermost/types/errors';
 import type {SchedulingInfo} from '@mattermost/types/schedule_post';
 
@@ -79,6 +76,8 @@ import SendButton from './send_button';
 import ShowFormat from './show_formatting';
 import TexteditorActions from './texteditor_actions';
 import ToggleFormattingBar from './toggle_formatting_bar';
+import useEditorEmojiPicker from './use_editor_emoji_picker';
+import {useFullnameMentionKeys} from './use_fullname_mention_keys';
 import useKeyHandler from './use_key_handler';
 import useOrientationHandler from './use_orientation_handler';
 import usePluginItems from './use_plugin_items';
@@ -208,7 +207,7 @@ const AdvancedTextEditor = ({
     // Get user information and mention keys
     const usersByUsername = useSelector((state: GlobalState) => getUsersByUsername(state));
     const teammateNameDisplay = useSelector((state: GlobalState) => getTeammateNameDisplaySetting(state));
-    
+
     // Use the custom hook to get mention keys including fullname format
     const mentionKeys = useFullnameMentionKeys(channelId, channel?.team_id);
 

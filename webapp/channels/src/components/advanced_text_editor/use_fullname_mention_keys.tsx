@@ -3,11 +3,11 @@
 
 import {useSelector} from 'react-redux';
 
+import {getMyGroupMentionKeysForChannel, getMyGroupMentionKeys} from 'mattermost-redux/selectors/entities/groups';
 import {
     getCurrentUserMentionKeys,
     getUsersByUsername,
 } from 'mattermost-redux/selectors/entities/users';
-import {getMyGroupMentionKeysForChannel, getMyGroupMentionKeys} from 'mattermost-redux/selectors/entities/groups';
 import {getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
@@ -36,7 +36,7 @@ export const useFullnameMentionKeys = (channelId?: string, teamId?: string) => {
 
         // Generate fullname mention keys for all users (including current user)
         const fullnameMentionKeys = [];
-        
+
         for (const user of Object.values(users)) {
             const displayName = displayUsername(user, nameDisplaySetting, false);
             if (displayName !== user.username) {
