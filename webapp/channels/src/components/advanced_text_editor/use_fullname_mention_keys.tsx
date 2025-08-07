@@ -4,11 +4,11 @@
 import {useSelector} from 'react-redux';
 
 import {getMyGroupMentionKeysForChannel, getMyGroupMentionKeys} from 'mattermost-redux/selectors/entities/groups';
+import {getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {
     getCurrentUserMentionKeys,
     getUsersByUsername,
 } from 'mattermost-redux/selectors/entities/users';
-import {getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
 import type {GlobalState} from 'types/store';
