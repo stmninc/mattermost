@@ -26,13 +26,12 @@ const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
 const AT_REMOTE_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+:[a-z0-9.\-_]+)/gi;
 
 // Matches @mentions with exactly two words (firstname lastname)
-// VERY STRICT pattern to prevent false positives:
+// Pattern to match fullname mentions while preventing false positives:
 // (?:\B|\b_+) - word boundary or underscore prefix
 // @ - literal @ symbol
-// ([A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*\s[A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*) - two capitalized words, each at least 3 letters with exactly one space between
-// (?=[.,!?;:]|\s|$) - must be followed by punctuation, whitespace, or end of string
-// (?!\S) - negative lookahead to ensure no non-whitespace character follows (except punctuation above)
-const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*\s[A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*)(?=[.,!?;:]|\s|$)(?!\S)/g;
+// ([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by single space, each starting with letter
+// (?=\s|$|[.,!?;:]) - must be followed by whitespace, end of string, or punctuation
+const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:])/g;
 const UNICODE_EMOJI_REGEX = emojiRegex();
 const htmlEmojiPattern = /^<p>\s*(?:<img class="emoticon"[^>]*>|<span data-emoticon[^>]*>[^<]*<\/span>\s*|<span class="emoticon emoticon--unicode">[^<]*<\/span>\s*)+<\/p>$/;
 
