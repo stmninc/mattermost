@@ -26,11 +26,13 @@ const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
 const AT_REMOTE_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+:[a-z0-9.\-_]+)/gi;
 
 // Matches @mentions with exactly two words (firstname lastname)
+// VERY STRICT pattern to prevent false positives:
 // (?:\B|\b_+) - word boundary or underscore prefix
 // @ - literal @ symbol
-// ([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by space
-// (?=\s|$|[.,!?;:]|@) - positive lookahead for word ending or @ symbol
-const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s+[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:]|@)/gi;
+// ([A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*\s[A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*) - two capitalized words, each at least 3 letters with exactly one space between
+// (?=[.,!?;:]|\s|$) - must be followed by punctuation, whitespace, or end of string
+// (?!\S) - negative lookahead to ensure no non-whitespace character follows (except punctuation above)
+const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*\s[A-Z][a-zA-Z]{2,}[a-zA-Z0-9.\-_]*)(?=[.,!?;:]|\s|$)(?!\S)/g;
 const UNICODE_EMOJI_REGEX = emojiRegex();
 const htmlEmojiPattern = /^<p>\s*(?:<img class="emoticon"[^>]*>|<span data-emoticon[^>]*>[^<]*<\/span>\s*|<span class="emoticon emoticon--unicode">[^<]*<\/span>\s*)+<\/p>$/;
 
@@ -407,7 +409,7 @@ export function doFormatText(text: string, options: TextFormattingOptions, emoji
     try {
         // replace important words and phrases with tokens
         if (options.atMentions) {
-            output = autolinkAtMentions(output, tokens);
+            output = autolinkAtMentions(output, tokens, options.disableGroupHighlight);
         }
 
         if (options.atSumOfMembersMentions) {
@@ -546,7 +548,7 @@ export function autoPlanMentions(text: string, tokens: Tokens): string {
     return output;
 }
 
-export function autolinkAtMentions(text: string, tokens: Tokens): string {
+export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHighlight?: boolean): string {
     function replaceAtMentionWithToken(fullMatch: string, username: string) {
         let originalText = fullMatch;
 
@@ -576,10 +578,14 @@ export function autolinkAtMentions(text: string, tokens: Tokens): string {
 
     // handle fullname mentions BEFORE standard mentions to prevent conflicts
     // This ensures fullnames like "@john smith" are processed before "@john" alone
-    let fullnameMatch = output.match(AT_MENTION_FULLNAME_PATTERN);
-    while (fullnameMatch && fullnameMatch.length > 0) {
-        output = output.replace(AT_MENTION_FULLNAME_PATTERN, replaceAtMentionWithToken);
-        fullnameMatch = output.match(AT_MENTION_FULLNAME_PATTERN);
+    // Using more restrictive pattern to prevent false positives
+    // Skip fullname mentions processing if disableGroupHighlight is true
+    if (!disableGroupHighlight) {
+        let fullnameMatch = output.match(AT_MENTION_FULLNAME_PATTERN);
+        while (fullnameMatch && fullnameMatch.length > 0) {
+            output = output.replace(AT_MENTION_FULLNAME_PATTERN, replaceAtMentionWithToken);
+            fullnameMatch = output.match(AT_MENTION_FULLNAME_PATTERN);
+        }
     }
 
     // handle remaining standard mentions (supports trailing punctuation)
