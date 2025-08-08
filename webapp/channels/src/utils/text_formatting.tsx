@@ -3,12 +3,13 @@
 
 import emojiRegex from 'emoji-regex';
 import type {Renderer} from 'marked';
-import {formatWithRenderer} from 'utils/markdown';
 
 import type {SystemEmoji} from '@mattermost/types/emojis';
 import {isRecordOf} from '@mattermost/types/utilities';
 
 import type {HighlightWithoutNotificationKey} from 'mattermost-redux/selectors/entities/users';
+
+import {formatWithRenderer} from 'utils/markdown';
 
 import Constants from './constants';
 import type EmojiMap from './emoji_map.js';
