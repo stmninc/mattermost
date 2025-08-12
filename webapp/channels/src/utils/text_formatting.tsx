@@ -30,9 +30,9 @@ const AT_REMOTE_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+:[a-z0-9.\-_]+)/gi;
 // (?:\B|\b_+) - word boundary or underscore prefix
 // @ - literal @ symbol
 // ([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by single space, each starting with letter
-// (?=\s|$|[.,!?;:\)]) - must be followed by whitespace, end of string, punctuation, or closing paren
+// (?=\s|$|[.,!?;:)]) - must be followed by whitespace, end of string, punctuation, or closing paren
 // Note: Validation against actual user database is done in processing function
-const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:\)])/g;
+const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:)])/g;
 const UNICODE_EMOJI_REGEX = emojiRegex();
 const htmlEmojiPattern = /^<p>\s*(?:<img class="emoticon"[^>]*>|<span data-emoticon[^>]*>[^<]*<\/span>\s*|<span class="emoticon emoticon--unicode">[^<]*<\/span>\s*)+<\/p>$/;
 
@@ -566,27 +566,28 @@ function isValidFullnameFromUsers(fullname: string, users?: Record<string, any>)
         // fallback to allowing the mention to prevent breaking functionality
         return true;
     }
-    
+
     const names = fullname.toLowerCase().split(' ');
     if (names.length !== 2) {
         return false;
     }
-    
+
     const [firstName, lastName] = names;
-    
+
     // Search through all users to find a match
     for (const userId in users) {
-        const user = users[userId];
-        if (user && user.first_name && user.last_name) {
-            const userFirstName = user.first_name.toLowerCase();
-            const userLastName = user.last_name.toLowerCase();
-            
-            if (userFirstName === firstName && userLastName === lastName) {
-                return true;
+        if (Object.prototype.hasOwnProperty.call(users, userId)) {
+            const user = users[userId];
+            if (user && user.first_name && user.last_name) {
+                const userFirstName = user.first_name.toLowerCase();
+                const userLastName = user.last_name.toLowerCase();
+
+                if (userFirstName === firstName && userLastName === lastName) {
+                    return true;
+                }
             }
         }
     }
-    
     return false;
 }
 
@@ -633,21 +634,21 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
             username: string;
             replacement: string;
         }> = [];
-        
+
         // Reset regex for consistent behavior
         AT_MENTION_FULLNAME_PATTERN.lastIndex = 0;
         let match;
-        
+
         while ((match = AT_MENTION_FULLNAME_PATTERN.exec(processedOutput)) !== null) {
             const fullMatch = match[0];
             const username = match[1];
-            
+
             // Validate against actual user database instead of hardcoded word list
             if (!isValidFullnameFromUsers(username, users)) {
                 // Skip this match, let standard mention processing handle it
                 continue;
             }
-            
+
             // This is a valid fullname mention, prepare for replacement
             const replacement = replaceAtMentionWithToken(fullMatch, username);
             replacements.push({
@@ -658,16 +659,17 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
                 replacement,
             });
         }
-        
+
         // Apply replacements in reverse order to maintain correct indices
         for (let i = replacements.length - 1; i >= 0; i--) {
             const r = replacements[i];
-            processedOutput = processedOutput.substring(0, r.start) + 
-                            r.replacement + 
+            processedOutput = processedOutput.substring(0, r.start) +
+                            r.replacement +
                             processedOutput.substring(r.end);
         }
-        
+
         output = processedOutput;
+
         // Reset regex for future use
         AT_MENTION_FULLNAME_PATTERN.lastIndex = 0;
     }
