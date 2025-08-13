@@ -562,7 +562,7 @@ function isValidFullnameFromUsers(fullname: string, users?: Record<string, any>)
         // be more conservative and only allow basic patterns to prevent false positives
         // Allow only if it looks like a reasonable fullname (two words, no trailing alphanumeric)
         const names = fullname.split(' ');
-        return names.length === 2 && names.every(name => name.length > 0 && /^[a-zA-Z\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+$/.test(name));
+        return names.length === 2 && names.every((name) => name.length > 0 && (/^[a-zA-Z\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+$/).test(name));
     }
 
     const names = fullname.toLowerCase().split(' ');
@@ -635,11 +635,11 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
 
         // Process both ASCII and CJK patterns separately
         const patterns = [
-            { regex: AT_MENTION_FULLNAME_PATTERN_ASCII, type: 'ASCII' },
-            { regex: AT_MENTION_FULLNAME_PATTERN_CJK, type: 'CJK' }
+            {regex: AT_MENTION_FULLNAME_PATTERN_ASCII, type: 'ASCII'},
+            {regex: AT_MENTION_FULLNAME_PATTERN_CJK, type: 'CJK'},
         ];
 
-        for (const { regex, type } of patterns) {
+        for (const {regex, type} of patterns) {
             // Reset regex for consistent behavior
             regex.lastIndex = 0;
             let match;
@@ -659,23 +659,22 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
                 if (type === 'CJK') {
                     // Only allow space, punctuation, or end of string as valid boundaries
                     // Japanese characters (CJK) should NOT be considered valid boundaries
-                    isValidBoundary = !nextChar || /\s/.test(nextChar) || punctuationRegex.test(nextChar);
-                    
+                    isValidBoundary = !nextChar || (/\s/).test(nextChar) || punctuationRegex.test(nextChar);
+
                     // Additional check: if nextChar is a CJK character, it's NOT a valid boundary
-                    if (nextChar && /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(nextChar)) {
+                    if (nextChar && (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(nextChar)) {
                         isValidBoundary = false;
                     }
-                    
                 } else if (type === 'ASCII') {
                     // For ASCII patterns, also check for CJK characters as invalid boundaries
-                    isValidBoundary = !nextChar || /\s/.test(nextChar) || punctuationRegex.test(nextChar);
-                    
+                    isValidBoundary = !nextChar || (/\s/).test(nextChar) || punctuationRegex.test(nextChar);
+
                     // Additional check: if nextChar is a CJK character, it's NOT a valid boundary
-                    if (nextChar && /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(nextChar)) {
+                    if (nextChar && (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(nextChar)) {
                         isValidBoundary = false;
                     }
                 }
-                
+
                 if (!isValidBoundary) {
                     // Skip this match if it's followed by alphanumeric or CJK characters
                     continue;
@@ -683,7 +682,7 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
 
                 // Validate against actual user database instead of hardcoded word list
                 const isValidUser = isValidFullnameFromUsers(username, users);
-                
+
                 if (!isValidUser) {
                     // Skip this match, let standard mention processing handle it
                     continue;
@@ -713,7 +712,6 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
         }
 
         output = processedOutput;
-
     }
 
     // handle remaining standard mentions (supports trailing punctuation)
@@ -907,15 +905,15 @@ export function highlightCurrentMentions(
         // Additional boundary check: don't highlight if mention is followed by alphanumeric or CJK characters
         const mentionEndIndex = output.indexOf(fullMatch) + fullMatch.length;
         const nextChar = output[mentionEndIndex];
-        
+
         // Apply unified boundary check for all mentions
         // Invalid boundary if characters (alphanumeric or CJK) follow without space
         // Punctuation is treated as valid boundary
         // Japanese characters (CJK) are treated as invalid boundary
-        const isValidBoundary = !nextChar || /\s/.test(nextChar) || punctuationRegex.test(nextChar);
-        
+        const isValidBoundary = !nextChar || (/\s/).test(nextChar) || punctuationRegex.test(nextChar);
+
         // Additional check: if nextChar is a CJK character, it's NOT a valid boundary
-        if (nextChar && /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(nextChar)) {
+        if (nextChar && (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(nextChar)) {
             return fullMatch;
         }
 
@@ -923,7 +921,7 @@ export function highlightCurrentMentions(
             // Don't highlight if boundary is invalid
             return fullMatch;
         }
-        
+
         const index = tokens.size;
         const alias = `$MM_SELFMENTION${index}$`;
         tokens.set(alias, {
@@ -932,7 +930,7 @@ export function highlightCurrentMentions(
         });
         return prefix + alias;
     }
-    
+
     for (const mention of mentionKeys) {
         if (!mention || !mention.key) {
             continue;
@@ -1007,25 +1005,23 @@ export function highlightWithoutNotificationKeywords(
         return prefix + alias + suffix;
     }
 
-    highlightKeys.
-        sort((a, b) => b.key.length - a.key.length).
-        forEach(({key}) => {
-            if (!key) {
-                return;
-            }
+    highlightKeys.sort((a, b) => b.key.length - a.key.length).forEach(({key}) => {
+        if (!key) {
+            return;
+        }
 
-            let pattern;
-            if (cjkrPattern.test(key)) {
+        let pattern;
+        if (cjkrPattern.test(key)) {
             // If the key contains Chinese, Japanese, Korean or Russian characters, don't mark word boundaries
-                pattern = new RegExp(`()(${escapeRegex(key)})()`, 'gi');
-            } else {
+            pattern = new RegExp(`()(${escapeRegex(key)})()`, 'gi');
+        } else {
             // If the key contains only English characters, mark word boundaries
-                pattern = new RegExp(`(^|\\W)(${escapeRegex(key)})(\\b|_+\\b)`, 'gi');
-            }
+            pattern = new RegExp(`(^|\\W)(${escapeRegex(key)})(\\b|_+\\b)`, 'gi');
+        }
 
-            // Replace the key with the token for each occurrence of the key
-            output = output.replace(pattern, replaceHighlightKeywordsWithToken);
-        });
+        // Replace the key with the token for each occurrence of the key
+        output = output.replace(pattern, replaceHighlightKeywordsWithToken);
+    });
 
     return output;
 }
