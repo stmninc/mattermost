@@ -17,7 +17,7 @@ import * as Emoticons from './emoticons';
 import * as Markdown from './markdown';
 
 const punctuationRegex = /[^\p{L}\d]/u;
-const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
+const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)(?=\s|[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]|$)/gi;
 
 // Matches remote @mentions with user:org format
 // (?:\B|\b_+) - word boundary or underscore prefix
@@ -26,13 +26,9 @@ const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
 const AT_REMOTE_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+:[a-z0-9.\-_]+)/gi;
 
 // Matches @mentions with exactly two words (firstname lastname)
-// Pattern to match fullname mentions while preventing false positives:
-// (?:\B|\b_+) - word boundary or underscore prefix
-// @ - literal @ symbol
-// ([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by single space, each starting with letter
-// (?=\s|$|[.,!?;:)]) - must be followed by whitespace, end of string, punctuation, or closing paren
-// Note: Validation against actual user database is done in processing function
-const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:)])/g;
+// Separate patterns for ASCII and CJK characters to handle boundaries correctly
+const AT_MENTION_FULLNAME_PATTERN_ASCII = /(?:\B|\b_+)@([a-zA-Z]+)\s([a-zA-Z]+)\b/g;
+const AT_MENTION_FULLNAME_PATTERN_CJK = /(?:\B|\b_+)@([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+)\s([\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+)(?=\s|$)/g;
 const UNICODE_EMOJI_REGEX = emojiRegex();
 const htmlEmojiPattern = /^<p>\s*(?:<img class="emoticon"[^>]*>|<span data-emoticon[^>]*>[^<]*<\/span>\s*|<span class="emoticon emoticon--unicode">[^<]*<\/span>\s*)+<\/p>$/;
 
@@ -563,8 +559,10 @@ export function autoPlanMentions(text: string, tokens: Tokens): string {
 function isValidFullnameFromUsers(fullname: string, users?: Record<string, any>): boolean {
     if (!users || typeof users !== 'object') {
         // If users data is not available (e.g., in tests or non-Redux contexts),
-        // fallback to allowing the mention to prevent breaking functionality
-        return true;
+        // be more conservative and only allow basic patterns to prevent false positives
+        // Allow only if it looks like a reasonable fullname (two words, no trailing alphanumeric)
+        const names = fullname.split(' ');
+        return names.length === 2 && names.every(name => name.length > 0 && /^[a-zA-Z\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]+$/.test(name));
     }
 
     const names = fullname.toLowerCase().split(' ');
@@ -635,29 +633,75 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
             replacement: string;
         }> = [];
 
-        // Reset regex for consistent behavior
-        AT_MENTION_FULLNAME_PATTERN.lastIndex = 0;
-        let match;
+        // Process both ASCII and CJK patterns separately
+        const patterns = [
+            { regex: AT_MENTION_FULLNAME_PATTERN_ASCII, type: 'ASCII' },
+            { regex: AT_MENTION_FULLNAME_PATTERN_CJK, type: 'CJK' }
+        ];
 
-        while ((match = AT_MENTION_FULLNAME_PATTERN.exec(processedOutput)) !== null) {
-            const fullMatch = match[0];
-            const username = match[1];
+        for (const { regex, type } of patterns) {
+            // Reset regex for consistent behavior
+            regex.lastIndex = 0;
+            let match;
 
-            // Validate against actual user database instead of hardcoded word list
-            if (!isValidFullnameFromUsers(username, users)) {
-                // Skip this match, let standard mention processing handle it
-                continue;
+            while ((match = regex.exec(processedOutput)) !== null) {
+                const fullMatch = match[0];
+                const firstName = match[1];
+                const lastName = match[2];
+                const username = `${firstName} ${lastName}`;
+                const matchEnd = match.index + fullMatch.length;
+                const nextChar = processedOutput[matchEnd];
+
+                // For ASCII patterns, \b already handles boundaries, so we trust the regex
+                // For CJK patterns, we need explicit boundary checking - only allow space, punctuation, or end of string
+                // Japanese characters (CJK) should NOT be considered valid boundaries
+                let isValidBoundary = true;
+                if (type === 'CJK') {
+                    // Only allow space, punctuation, or end of string as valid boundaries
+                    // Japanese characters (CJK) should NOT be considered valid boundaries
+                    isValidBoundary = !nextChar || /\s/.test(nextChar) || punctuationRegex.test(nextChar);
+                    
+                    // Additional check: if nextChar is a CJK character, it's NOT a valid boundary
+                    if (nextChar && /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(nextChar)) {
+                        isValidBoundary = false;
+                    }
+                    
+                } else if (type === 'ASCII') {
+                    // For ASCII patterns, also check for CJK characters as invalid boundaries
+                    isValidBoundary = !nextChar || /\s/.test(nextChar) || punctuationRegex.test(nextChar);
+                    
+                    // Additional check: if nextChar is a CJK character, it's NOT a valid boundary
+                    if (nextChar && /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(nextChar)) {
+                        isValidBoundary = false;
+                    }
+                }
+                
+                if (!isValidBoundary) {
+                    // Skip this match if it's followed by alphanumeric or CJK characters
+                    continue;
+                }
+
+                // Validate against actual user database instead of hardcoded word list
+                const isValidUser = isValidFullnameFromUsers(username, users);
+                
+                if (!isValidUser) {
+                    // Skip this match, let standard mention processing handle it
+                    continue;
+                }
+
+                // This is a valid fullname mention, prepare for replacement
+                const replacement = replaceAtMentionWithToken(fullMatch, username);
+                replacements.push({
+                    start: match.index,
+                    end: match.index + fullMatch.length,
+                    fullMatch,
+                    username,
+                    replacement,
+                });
             }
 
-            // This is a valid fullname mention, prepare for replacement
-            const replacement = replaceAtMentionWithToken(fullMatch, username);
-            replacements.push({
-                start: match.index,
-                end: match.index + fullMatch.length,
-                fullMatch,
-                username,
-                replacement,
-            });
+            // Reset regex for future use
+            regex.lastIndex = 0;
         }
 
         // Apply replacements in reverse order to maintain correct indices
@@ -670,8 +714,6 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
 
         output = processedOutput;
 
-        // Reset regex for future use
-        AT_MENTION_FULLNAME_PATTERN.lastIndex = 0;
     }
 
     // handle remaining standard mentions (supports trailing punctuation)
@@ -861,19 +903,36 @@ export function highlightCurrentMentions(
         fullMatch: string,
         prefix: string,
         mention: string,
-        suffix = '',
     ) {
+        // Additional boundary check: don't highlight if mention is followed by alphanumeric or CJK characters
+        const mentionEndIndex = output.indexOf(fullMatch) + fullMatch.length;
+        const nextChar = output[mentionEndIndex];
+        
+        // Apply unified boundary check for all mentions
+        // Invalid boundary if characters (alphanumeric or CJK) follow without space
+        // Punctuation is treated as valid boundary
+        // Japanese characters (CJK) are treated as invalid boundary
+        const isValidBoundary = !nextChar || /\s/.test(nextChar) || punctuationRegex.test(nextChar);
+        
+        // Additional check: if nextChar is a CJK character, it's NOT a valid boundary
+        if (nextChar && /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(nextChar)) {
+            return fullMatch;
+        }
+
+        if (!isValidBoundary) {
+            // Don't highlight if boundary is invalid
+            return fullMatch;
+        }
+        
         const index = tokens.size;
         const alias = `$MM_SELFMENTION${index}$`;
-
         tokens.set(alias, {
             value: `<span class="mention--highlight">${mention}</span>`,
             originalText: mention,
         });
-
-        return prefix + alias + suffix;
+        return prefix + alias;
     }
-
+    
     for (const mention of mentionKeys) {
         if (!mention || !mention.key) {
             continue;
@@ -886,13 +945,11 @@ export function highlightCurrentMentions(
 
         let pattern;
         if (cjkrPattern.test(mention.key)) {
-            // In the case of CJK mention key, even if there's no delimiters (such as spaces) at both ends of a word, it is recognized as a mention key
-            pattern = new RegExp(`()(${escapeRegex(mention.key)})()`, flags);
+            // Perform strict boundary check for CJK characters - don't match if followed by alphanumeric or CJK characters (unified behavior)
+            pattern = new RegExp(`(^|\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF])(${escapeRegex(mention.key)})(?=\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF]|$)`, flags);
         } else {
-            pattern = new RegExp(
-                `(^|\\W)(${escapeRegex(mention.key)})(\\b|_+\\b)`,
-                flags,
-            );
+            // Apply same strict boundary check for ASCII characters
+            pattern = new RegExp(`(^|\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF])(${escapeRegex(mention.key)})(?=\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF]|$)`, flags);
         }
         output = output.replace(pattern, replaceCurrentMentionWithToken);
     }
