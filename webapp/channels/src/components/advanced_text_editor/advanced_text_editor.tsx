@@ -13,9 +13,9 @@ import {savePreferences} from 'mattermost-redux/actions/preferences';
 import {Permissions} from 'mattermost-redux/constants';
 import {getChannel, makeGetChannel, getDirectChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig, getFeatureFlagValue} from 'mattermost-redux/selectors/entities/general';
-import {get, getBool, getInt} from 'mattermost-redux/selectors/entities/preferences';
+import {get, getBool, getInt, getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
-import {getCurrentUserId, isCurrentUserGuestUser, getStatusForUserId, makeGetDisplayName} from 'mattermost-redux/selectors/entities/users';
+import {getCurrentUserId, isCurrentUserGuestUser, getStatusForUserId, makeGetDisplayName, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
 
 import * as GlobalActions from 'actions/global_actions';
 import type {CreatePostOptions} from 'actions/post_actions';
@@ -77,6 +77,7 @@ import ShowFormat from './show_formatting';
 import TexteditorActions from './texteditor_actions';
 import ToggleFormattingBar from './toggle_formatting_bar';
 import useEditorEmojiPicker from './use_editor_emoji_picker';
+import {useFullnameMentionKeys} from './use_fullname_mention_keys';
 import useKeyHandler from './use_key_handler';
 import useOrientationHandler from './use_orientation_handler';
 import usePluginItems from './use_plugin_items';
@@ -202,6 +203,13 @@ const AdvancedTextEditor = ({
 
         return enableTutorial && (tutorialStep === tourStep);
     });
+
+    // Get user information and mention keys
+    const usersByUsername = useSelector((state: GlobalState) => getUsersByUsername(state));
+    const teammateNameDisplay = useSelector((state: GlobalState) => getTeammateNameDisplaySetting(state));
+
+    // Use the custom hook to get mention keys including fullname format
+    const mentionKeys = useFullnameMentionKeys(channelId, channel?.team_id);
 
     const editorActionsRef = useRef<HTMLDivElement>(null);
     const editorBodyRef = useRef<HTMLDivElement>(null);
@@ -363,7 +371,19 @@ const AdvancedTextEditor = ({
     );
 
     const handleSubmitWithErrorHandling = useCallback((submittingDraft?: PostDraft, schedulingInfo?: SchedulingInfo, options?: CreatePostOptions) => {
-        handleSubmit(submittingDraft, schedulingInfo, options);
+        // Get raw value (username format) from Textbox on submission
+        let finalDraft = submittingDraft || draft;
+
+        if (textboxRef.current && typeof textboxRef.current.getRawValue === 'function') {
+            const rawValue = textboxRef.current.getRawValue();
+            finalDraft = {
+                ...finalDraft,
+                message: rawValue,
+            };
+        }
+
+        handleSubmit(finalDraft, schedulingInfo, options);
+
         if (!errorClass) {
             const messageStatusElement = messageStatusRef.current;
             const messageStatusInnerText = messageStatusElement?.textContent;
@@ -373,7 +393,7 @@ const AdvancedTextEditor = ({
                 messageStatusElement!.textContent = 'Message Sent';
             }
         }
-    }, [errorClass, handleSubmit]);
+    }, [errorClass, handleSubmit, draft, textboxRef]);
 
     const handleCancel = useCallback(() => {
         handleDraftChange({
@@ -798,6 +818,9 @@ const AdvancedTextEditor = ({
                             disabled={isDisabled}
                             characterLimit={maxPostSize}
                             preview={showPreview}
+                            usersByUsername={usersByUsername}
+                            teammateNameDisplay={teammateNameDisplay}
+                            mentionKeys={mentionKeys}
                             badConnection={badConnection}
                             useChannelMentions={useChannelMentions}
                             rootId={rootId}
