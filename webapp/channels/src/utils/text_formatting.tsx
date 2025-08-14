@@ -902,24 +902,88 @@ export function highlightCurrentMentions(
         prefix: string,
         mention: string,
     ) {
-        // Additional boundary check: don't highlight if mention is followed by alphanumeric or CJK characters
-        const mentionEndIndex = output.indexOf(fullMatch) + fullMatch.length;
-        const nextChar = output[mentionEndIndex];
+        // For CJK mention keys, use manual boundary checking
+        if (cjkrPattern.test(mention)) {
+            // Find the actual position of this match in the output text
+            const matchIndex = output.indexOf(fullMatch);
+            if (matchIndex === -1) {
+                return fullMatch; // Should not happen, but safety check
+            }
+            
+            // Check if this is a valid boundary for CJK mentions
+            const beforeChar = matchIndex > 0 ? output[matchIndex - 1] : '';
+            const afterChar = matchIndex + fullMatch.length < output.length ? output[matchIndex + fullMatch.length] : '';
+            
+            // For CJK mentions, use more appropriate boundary checking
+            // We want to highlight CJK mentions but not when they're part of a larger word
+            // Similar to how ASCII mentions work
+            let isValidBoundary = true;
+            
+            // Check if this is part of a larger word
+            if (beforeChar && cjkrPattern.test(beforeChar)) {
+                // If the character before is CJK, it should be a valid separator
+                // Valid separators: whitespace, punctuation, or non-CJK characters
+                isValidBoundary = (/\s/).test(beforeChar) || punctuationRegex.test(beforeChar);
+            }
+            
+            if (afterChar && cjkrPattern.test(afterChar)) {
+                // If the character after is CJK, it should be a valid separator
+                // Valid separators: whitespace, punctuation, or non-CJK characters
+                isValidBoundary = isValidBoundary && ((/\s/).test(afterChar) || punctuationRegex.test(afterChar));
+            } else if (afterChar && !cjkrPattern.test(afterChar)) {
+                // If the character after is non-CJK (like ASCII), it should be a valid separator
+                // Valid separators: whitespace or punctuation
+                isValidBoundary = isValidBoundary && ((/\s/).test(afterChar) || punctuationRegex.test(afterChar));
+            }
+            
+            // Special case: if the mention is at the beginning or end of the text, it's always valid
+            if (matchIndex === 0 || matchIndex + fullMatch.length === output.length) {
+                // For mentions at the beginning, we still need to check if the character after is a valid boundary
+                if (matchIndex === 0 && afterChar) {
+                    // If there's a character after, it should be a valid separator
+                    isValidBoundary = (/\s/).test(afterChar) || punctuationRegex.test(afterChar);
+                } else if (matchIndex + fullMatch.length === output.length) {
+                    // For mentions at the end, they're always valid
+                    isValidBoundary = true;
+                }
+            }
+            
+            // Additional check: for CJK mentions, we want to be more lenient
+            // Allow highlighting when CJK characters are adjacent, as long as they're not part of a larger word
+            if (!isValidBoundary && cjkrPattern.test(beforeChar) && cjkrPattern.test(afterChar)) {
+                // If both before and after are CJK characters, allow highlighting
+                // This is a special case for CJK text where adjacent characters don't necessarily form words
+                isValidBoundary = true;
+            }
+            
+            // Additional check: for CJK mentions at the beginning of text, allow highlighting even with CJK characters after
+            if (!isValidBoundary && matchIndex === 0 && cjkrPattern.test(afterChar)) {
+                // If the mention is at the beginning and followed by CJK characters, allow highlighting
+                // This is a special case for CJK text where we want to highlight mentions at the start
+                isValidBoundary = true;
+            }
+            
+            if (!isValidBoundary) {
+                return fullMatch; // Invalid boundary, don't highlight
+            }
+        } else {
+            // Apply strict boundary check for ASCII characters
+            const mentionEndIndex = output.indexOf(fullMatch) + fullMatch.length;
+            const nextChar = output[mentionEndIndex];
 
-        // Apply unified boundary check for all mentions
-        // Invalid boundary if characters (alphanumeric or CJK) follow without space
-        // Punctuation is treated as valid boundary
-        // Japanese characters (CJK) are treated as invalid boundary
-        const isValidBoundary = !nextChar || (/\s/).test(nextChar) || punctuationRegex.test(nextChar);
+            // Invalid boundary if characters (alphanumeric or CJK) follow without space
+            // Punctuation is treated as valid boundary
+            const isValidBoundary = !nextChar || (/\s/).test(nextChar) || punctuationRegex.test(nextChar);
 
-        // Additional check: if nextChar is a CJK character, it's NOT a valid boundary
-        if (nextChar && (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(nextChar)) {
-            return fullMatch;
-        }
+            // Additional check: if nextChar is a CJK character, it's NOT a valid boundary for ASCII mentions
+            if (nextChar && (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(nextChar)) {
+                return fullMatch;
+            }
 
-        if (!isValidBoundary) {
-            // Don't highlight if boundary is invalid
-            return fullMatch;
+            if (!isValidBoundary) {
+                // Don't highlight if boundary is invalid
+                return fullMatch;
+            }
         }
 
         const index = tokens.size;
@@ -930,6 +994,7 @@ export function highlightCurrentMentions(
         });
         return prefix + alias;
     }
+
 
     for (const mention of mentionKeys) {
         if (!mention || !mention.key) {
@@ -943,12 +1008,12 @@ export function highlightCurrentMentions(
 
         let pattern;
         if (cjkrPattern.test(mention.key)) {
-            // Perform strict boundary check for CJK characters - don't match if followed by alphanumeric or CJK characters (unified behavior)
-            pattern = new RegExp(`(^|\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF])(${escapeRegex(mention.key)})(?=\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF]|$)`, flags);
+            pattern = new RegExp(`()(${escapeRegex(mention.key)})`, flags);
         } else {
             // Apply same strict boundary check for ASCII characters
             pattern = new RegExp(`(^|\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF])(${escapeRegex(mention.key)})(?=\\s|[^\\w\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF]|$)`, flags);
         }
+        
         output = output.replace(pattern, replaceCurrentMentionWithToken);
     }
 

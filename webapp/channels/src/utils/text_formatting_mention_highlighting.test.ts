@@ -48,6 +48,16 @@ describe('TextFormatting.mentionHighlighting', () => {
         mentionKeys: [{key: '石橋'}],
         expected: '<p><span class="mention--highlight">石橋</span>さんが<span class="mention--highlight">石橋</span>を渡る</p>',
     }, {
+        name: 'multibyte mentions without space (should not highlight)',
+        input: 'テスト管理者aaa',
+        mentionKeys: [{key: 'テスト管理者'}],
+        expected: '<p>テスト管理者aaa</p>',
+    }, {
+        name: 'multibyte mentions without space mixed (should not highlight)',
+        input: 'テスト次郎aaa',
+        mentionKeys: [{key: 'テスト次郎'}],
+        expected: '<p>テスト次郎aaa</p>',
+    }, {
         name: 'combine multibyte and ascii mentions key',
         input: '３words 3words',
         mentionKeys: [{key: 'words'}],
