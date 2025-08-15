@@ -8,6 +8,7 @@ import type {PostPriorityMetadata} from '@mattermost/types/posts';
 import type {UserProfile, UserStatus} from '@mattermost/types/users';
 
 import {getCurrentRelativeTeamUrl} from 'mattermost-redux/selectors/entities/teams';
+import {getUsers} from 'mattermost-redux/selectors/entities/users';
 
 import PriorityLabels from 'components/advanced_text_editor/priority_labels';
 import FilePreview from 'components/file_preview';
@@ -50,6 +51,7 @@ function PanelBody({
     username,
 }: Props) {
     const currentRelativeTeamUrl = useSelector(getCurrentRelativeTeamUrl);
+    const users = useSelector(getUsers);
 
     const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         handleFormattedTextClick(e, currentRelativeTeamUrl);
@@ -90,7 +92,10 @@ function PanelBody({
                             </div>
                             <div className='post__body'>
                                 <Markdown
-                                    options={OPTIONS}
+                                    options={{
+                                        ...OPTIONS,
+                                        users,
+                                    }}
                                     message={message}
                                 />
                             </div>
