@@ -5,13 +5,13 @@ import {useSelector} from 'react-redux';
 
 import type {UserProfile} from '@mattermost/types/users';
 
+import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {getMyGroupMentionKeysForChannel, getMyGroupMentionKeys} from 'mattermost-redux/selectors/entities/groups';
 import {getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {
     getCurrentUserMentionKeys,
     getUsersByUsername,
 } from 'mattermost-redux/selectors/entities/users';
-import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
 import type {MentionKey} from 'utils/text_formatting';
@@ -75,9 +75,9 @@ export const useFullnameMentionKeys = (channelId?: string, teamId?: string): Men
             // Use memoized selector for channel-specific case
             const selector = makeGetFullnameMentionKeysForChannel();
             return selector(state, teamId, channelId);
-        } else {
-            // Use memoized selector for base case
-            return getFullnameMentionKeysBase(state);
         }
+
+        // Use memoized selector for base case
+        return getFullnameMentionKeysBase(state);
     });
 };

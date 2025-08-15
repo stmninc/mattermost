@@ -105,11 +105,11 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         map: Record<string, string[]>;
         sortedDisplayNames: string[];
     } = {
-        usersByUsername: null,
-        teammateNameDisplay: null,
-        map: {},
-        sortedDisplayNames: [],
-    };
+            usersByUsername: null,
+            teammateNameDisplay: null,
+            map: {},
+            sortedDisplayNames: [],
+        };
 
     state: TextboxState = {
         displayValue: '', // UI display value (username→fullname converted)
