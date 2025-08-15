@@ -87,8 +87,9 @@ const HIDDEN = {visibility: 'hidden'};
 
 interface TextboxState {
     displayValue: string; // UI display value (username→fullname converted)
+    rawValueNew: string; // Server submission value (username format)
     rawValue: string; // Server submission value (username format)
-    selectedMentions: Record<string, string>; // Mapping: displayName -> username (mentions explicitly selected by user)
+    selectedMentions: Record<string, string>; // Mapping: @username -> @displayName (mentions explicitly selected by user)
 }
 
 export default class Textbox extends React.PureComponent<Props, TextboxState> {
@@ -113,6 +114,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
 
     state: TextboxState = {
         displayValue: '', // UI display value (username→fullname converted)
+        rawValueNew: '', // Server submission value (username format)
         rawValue: '', // Server submission value (username format)
         selectedMentions: {}, // Mapping: displayName -> username (mentions explicitly selected by user)
     };
@@ -168,6 +170,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         this.state = {
             displayValue: this.convertToDisplayName(props.value),
             rawValue: props.value,
+            rawValueNew: props.value,
             selectedMentions: {},
         };
     }
@@ -176,16 +179,41 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
      * Convert username (@user) to fullname/nickname (@Full Name)
      */
     convertToDisplayName = (text: string): string => {
+        // @John Doe Hi, How are you, @John Smith(user-5678)
+        // 上記のようなtextを受け取った場合は、@John Doe Hi, How are you, @John Smith Hi に変換する
+        // selectedMentionsを参照して、変換後のテキストを生成する
+        
         const {usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME} = this.props;
-
-        return text.replace(/@([a-zA-Z0-9.\-_]+)/g, (match, username) => {
+        const {selectedMentions = {}} = this.state;
+        
+        let result = text;
+        
+        // First, handle @displayName(username) patterns - remove the (username) part
+        result = result.replace(/@([^()]+)\(([^)]+)\)/g, (match, displayName, username) => {
+            return `@${displayName}`;
+        });
+        
+        // Then convert @username to @displayName using selectedMentions or usersByUsername
+        result = result.replace(/@([a-zA-Z0-9.\-_]+)/g, (match, username) => {
+            // First check selectedMentions
+            const selectedDisplayName = selectedMentions[`@${username}`];
+            if (selectedDisplayName) {
+                return selectedDisplayName; // selectedDisplayName already includes @
+            }
+            
+            // Then check usersByUsername
             const user = usersByUsername[username];
             if (user) {
                 const displayName = displayUsername(user, teammateNameDisplay, false);
-                return `@${displayName}`;
+                if (displayName && displayName !== username) {
+                    return `@${displayName}`;
+                }
             }
-            return match;
+            
+            return match; // Return original if no conversion found
         });
+        
+        return result;
     };
 
     /**
@@ -237,6 +265,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
      * Convert fullname/nickname (@Full Name) to username (@user)
      */
     convertToRawValue = (text: string): string => {
+        console.log('text:', text);
         const {selectedMentions = {}} = this.state;
 
         // Get memoized display name map
@@ -259,11 +288,78 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         return result;
     };
 
+    convertToRawValueNew = (inputValue: string, newRawValue: string): string => {
+        // inputValue = @John Doe Hi, How are you, @user-5678
+        // newRawValue = @John Doe(user-1234) Hi
+        // 上記のような入力を受け取った場合は、@John Doe Hi, How are you, @John Smith(user-5678) に変換する
+        // selectedMentions = {
+        //   'John Doe': 'user-1234',
+        //   'John Smith': 'user-5678'
+        // }
+        
+        const {usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME} = this.props;
+        const {selectedMentions = {}} = this.state;
+
+        console.log('Selected Mentions:', selectedMentions);
+
+        let result = inputValue;
+
+        // Handle mentions in the format @username by converting them to @displayname(username)
+        result = result.replace(/@([a-zA-Z0-9.\-_]+)/g, (match, username) => {
+            const user = usersByUsername[username];
+            if (user) {
+                const displayName = displayUsername(user, teammateNameDisplay, false);
+                // If the username and display name are different, use the format @displayname(username)
+                if (displayName && displayName !== username) {
+                    return `@${displayName}(${username})`;
+                }
+            }
+            return match;
+        });
+
+        // Handle mentions that are already in display name format by adding the username in parentheses
+        // Get memoized display name map
+        const {map: displayNameToUsername, sortedDisplayNames} = this.getDisplayNameMap();
+
+        for (const displayName of sortedDisplayNames) {
+            const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Match @displayName that is not already in the format @displayName(username)
+            const regex = new RegExp(`@${escapedDisplayName}(?!\\([^)]+\\))(?=\\s|$|[^\\w])`, 'g');
+
+            result = result.replace(regex, () => {
+                // Find the username from selectedMentions by looking for entries where the value matches this display name
+                let selectedUsername = null;
+                for (const [key, value] of Object.entries(selectedMentions)) {
+                    if (value === `@${displayName}`) {
+                        selectedUsername = key.replace('@', ''); // Remove @ prefix from key
+                        break;
+                    }
+                }
+                
+                if (selectedUsername) {
+                    return `@${displayName}(${selectedUsername})`;
+                }
+                // Otherwise, use the first username from the mapping
+                const usernames = displayNameToUsername[displayName];
+                if (usernames && usernames.length > 0) {
+                    return `@${displayName}(${usernames[0]})`;
+                }
+                return `@${displayName}`;
+            });
+        }
+
+        return result;
+    }
+
     /**
      * Get raw value for server submission (username format)
      */
     getRawValue = () => {
         return this.state.rawValue;
+    };
+
+    getRawValueNew = () => {
+        return this.state.rawValueNew;
     };
 
     /**
@@ -273,16 +369,34 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         return this.state.displayValue;
     };
 
+    // convertToRawValue
+    /// - inputValue を @displayname(username) に変換する。例: @john.doe Hi  → @John Doe(user-1234) Hi
+    /// - 引数は、inputValue と newRawValue を受け取る。差分を確認して、テキストのマージとメンションがあれば変換して追加する。
+    /// - newRawValue に値を格納する
+    /// - Submit 時に利用する。その際は、@username に変換する。例: @John Doe(user-1234) Hi → user-1234 Hi
+    // convertToDisplayName
+    /// - newRawValue を @displayname のみに変換する。例: @John Doe (user-1234) Hi → @John Doe Hi
+    /// - newDisplayValue に値を格納する
+    /// - PostMarkdown で利用する
+
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
 
+        const newRawValue = this.convertToRawValueNew(inputValue, this.getRawValueNew());
+
+        console.log('New Raw Value (username format):', newRawValue);
+
         // Update raw value (username format)
-        const newRawValue = this.convertToRawValue(inputValue);
+        const newRawValueNew = this.convertToRawValue(inputValue);
 
         // Update display value (fullname format)
         const newDisplayValue = this.convertToDisplayName(newRawValue);
 
+        console.log('Raw Value:', newRawValue);
+        console.log('Display Value:', newDisplayValue);
+
         this.setState({
+            rawValueNew: newRawValueNew,
             rawValue: newRawValue,
             displayValue: newDisplayValue,
         });
@@ -359,6 +473,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
 
             // Update state when props.value changes
             this.setState({
+                rawValueNew: this.props.value,
                 rawValue: this.props.value,
                 displayValue: this.convertToDisplayName(this.props.value),
             });
@@ -425,11 +540,11 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
             const displayName = displayUsername(item, this.props.teammateNameDisplay || Preferences.DISPLAY_PREFER_USERNAME, false);
             const username = item.username;
 
-            // Save the selected mention information to state
+            // Save the selected mention information to state (username -> displayName)
             this.setState((prevState) => ({
                 selectedMentions: {
                     ...prevState.selectedMentions,
-                    [displayName]: username,
+                    [`@${username}`]: `@${displayName}`,
                 },
             }));
         }
