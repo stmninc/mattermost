@@ -222,13 +222,6 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     };
 
     /**
-     * Get raw value for server submission (username format)
-     */
-    getValue = () => {
-        return this.state.rawValue;
-    };
-
-    /**
      * Get display value for UI (fullname format)
      */
     getDisplayValue = () => {
