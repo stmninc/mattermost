@@ -98,6 +98,19 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     private readonly preview: React.RefObject<HTMLDivElement>;
     private readonly textareaRef: React.RefObject<HTMLTextAreaElement>;
 
+    // Memoization cache for displayNameToUsername map
+    private displayNameMapCache: {
+        usersByUsername: Record<string, UserProfile> | null;
+        teammateNameDisplay: string | null;
+        map: Record<string, string[]>;
+        sortedDisplayNames: string[];
+    } = {
+        usersByUsername: null,
+        teammateNameDisplay: null,
+        map: {},
+        sortedDisplayNames: [],
+    };
+
     state: TextboxState = {
         displayValue: '', // UI display value (username→fullname converted)
         rawValue: '', // Server submission value (username format)
@@ -176,13 +189,22 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     };
 
     /**
-     * Convert fullname/nickname (@Full Name) to username (@user)
+     * Get memoized displayNameToUsername map and sorted display names
+     * Only rebuilds when usersByUsername or teammateNameDisplay changes
      */
-    convertToRawValue = (text: string): string => {
+    private getDisplayNameMap = (): {map: Record<string, string[]>; sortedDisplayNames: string[]} => {
         const {usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME} = this.props;
-        const {selectedMentions = {}} = this.state;
 
-        // Convert usersByUsername to reverse lookup map
+        // Check if cache is valid
+        if (this.displayNameMapCache.usersByUsername === usersByUsername &&
+            this.displayNameMapCache.teammateNameDisplay === teammateNameDisplay) {
+            return {
+                map: this.displayNameMapCache.map,
+                sortedDisplayNames: this.displayNameMapCache.sortedDisplayNames,
+            };
+        }
+
+        // Rebuild cache
         const displayNameToUsername: Record<string, string[]> = {};
         Object.entries(usersByUsername).forEach(([username, user]) => {
             const displayName = displayUsername(user, teammateNameDisplay, false);
@@ -196,6 +218,29 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         });
 
         const sortedDisplayNames = Object.keys(displayNameToUsername).sort((a, b) => b.length - a.length);
+
+        // Update cache
+        this.displayNameMapCache = {
+            usersByUsername,
+            teammateNameDisplay,
+            map: displayNameToUsername,
+            sortedDisplayNames,
+        };
+
+        return {
+            map: displayNameToUsername,
+            sortedDisplayNames,
+        };
+    };
+
+    /**
+     * Convert fullname/nickname (@Full Name) to username (@user)
+     */
+    convertToRawValue = (text: string): string => {
+        const {selectedMentions = {}} = this.state;
+
+        // Get memoized display name map
+        const {map: displayNameToUsername, sortedDisplayNames} = this.getDisplayNameMap();
 
         let result = text;
         for (const displayName of sortedDisplayNames) {
