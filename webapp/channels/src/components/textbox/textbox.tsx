@@ -26,7 +26,6 @@ import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
 
-import type {MentionKey} from 'utils/text_formatting';
 import * as Utils from 'utils/utils';
 
 import type {TextboxElement} from './index';
@@ -79,17 +78,15 @@ export type Props = {
     isInEditMode?: boolean;
     usersByUsername?: Record<string, UserProfile>;
     teammateNameDisplay?: string;
-    mentionKeys?: MentionKey[];
 };
 
 const VISIBLE = {visibility: 'visible'};
 const HIDDEN = {visibility: 'hidden'};
 
 interface TextboxState {
+    mapValue: string
     displayValue: string; // UI display value (username→fullname converted)
-    rawValueNew: string; // Server submission value (username format)
     rawValue: string; // Server submission value (username format)
-    selectedMentions: Record<string, string>; // Mapping: @username -> @displayName (mentions explicitly selected by user)
 }
 
 export default class Textbox extends React.PureComponent<Props, TextboxState> {
@@ -99,24 +96,10 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     private readonly preview: React.RefObject<HTMLDivElement>;
     private readonly textareaRef: React.RefObject<HTMLTextAreaElement>;
 
-    // Memoization cache for displayNameToUsername map
-    private displayNameMapCache: {
-        usersByUsername: Record<string, UserProfile> | null;
-        teammateNameDisplay: string | null;
-        map: Record<string, string[]>;
-        sortedDisplayNames: string[];
-    } = {
-            usersByUsername: null,
-            teammateNameDisplay: null,
-            map: {},
-            sortedDisplayNames: [],
-        };
-
     state: TextboxState = {
+        mapValue: '',
         displayValue: '', // UI display value (username→fullname converted)
-        rawValueNew: '', // Server submission value (username format)
         rawValue: '', // Server submission value (username format)
-        selectedMentions: {}, // Mapping: displayName -> username (mentions explicitly selected by user)
     };
 
     static defaultProps = {
@@ -167,199 +150,144 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         this.textareaRef = React.createRef();
 
         // Initialize state - set displayValue and rawValue from props.value
+        const mapValue = this.initializeToMapValue(props.value);
         this.state = {
-            displayValue: this.convertToDisplayName(props.value),
-            rawValue: props.value,
-            rawValueNew: props.value,
-            selectedMentions: {},
+            mapValue: mapValue,
+            displayValue: this.convertToDisplayName(mapValue),
+            rawValue: props.value
         };
     }
 
-    /**
-     * Convert username (@user) to fullname/nickname (@Full Name)
-     */
-    convertToDisplayName = (text: string): string => {
-        // @John Doe Hi, How are you, @John Smith(user-5678)
-        // 上記のようなtextを受け取った場合は、@John Doe Hi, How are you, @John Smith Hi に変換する
-        // selectedMentionsを参照して、変換後のテキストを生成する
-        
+    initializeToMapValue = (rawValue: string): string => {
         const {usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME} = this.props;
-        const {selectedMentions = {}} = this.state;
-        
-        let result = text;
-        
-        // First, handle @displayName(username) patterns - remove the (username) part
-        result = result.replace(/@([^()]+)\(([^)]+)\)/g, (match, displayName, username) => {
-            return `@${displayName}`;
-        });
-        
-        // Then convert @username to @displayName using selectedMentions or usersByUsername
-        result = result.replace(/@([a-zA-Z0-9.\-_]+)/g, (match, username) => {
-            // First check selectedMentions
-            const selectedDisplayName = selectedMentions[`@${username}`];
-            if (selectedDisplayName) {
-                return selectedDisplayName; // selectedDisplayName already includes @
-            }
-            
-            // Then check usersByUsername
+
+        return rawValue.replace(/@([a-zA-Z0-9.\-_]+)/g, (match, username) => {
             const user = usersByUsername[username];
             if (user) {
                 const displayName = displayUsername(user, teammateNameDisplay, false);
-                if (displayName && displayName !== username) {
-                    return `@${displayName}`;
-                }
-            }
-            
-            return match; // Return original if no conversion found
-        });
-        
-        return result;
-    };
-
-    /**
-     * Get memoized displayNameToUsername map and sorted display names
-     * Only rebuilds when usersByUsername or teammateNameDisplay changes
-     */
-    private getDisplayNameMap = (): {map: Record<string, string[]>; sortedDisplayNames: string[]} => {
-        const {usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME} = this.props;
-
-        // Check if cache is valid
-        if (this.displayNameMapCache.usersByUsername === usersByUsername &&
-            this.displayNameMapCache.teammateNameDisplay === teammateNameDisplay) {
-            return {
-                map: this.displayNameMapCache.map,
-                sortedDisplayNames: this.displayNameMapCache.sortedDisplayNames,
-            };
-        }
-
-        // Rebuild cache
-        const displayNameToUsername: Record<string, string[]> = {};
-        Object.entries(usersByUsername).forEach(([username, user]) => {
-            const displayName = displayUsername(user, teammateNameDisplay, false);
-
-            if (displayName && displayName !== username) {
-                if (!displayNameToUsername[displayName]) {
-                    displayNameToUsername[displayName] = [];
-                }
-                displayNameToUsername[displayName].push(username);
-            }
-        });
-
-        const sortedDisplayNames = Object.keys(displayNameToUsername).sort((a, b) => b.length - a.length);
-
-        // Update cache
-        this.displayNameMapCache = {
-            usersByUsername,
-            teammateNameDisplay,
-            map: displayNameToUsername,
-            sortedDisplayNames,
-        };
-
-        return {
-            map: displayNameToUsername,
-            sortedDisplayNames,
-        };
-    };
-
-    /**
-     * Convert fullname/nickname (@Full Name) to username (@user)
-     */
-    convertToRawValue = (text: string): string => {
-        console.log('text:', text);
-        const {selectedMentions = {}} = this.state;
-
-        // Get memoized display name map
-        const {map: displayNameToUsername, sortedDisplayNames} = this.getDisplayNameMap();
-
-        let result = text;
-        for (const displayName of sortedDisplayNames) {
-            const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`@${escapedDisplayName}(?=\\s|$|[^\\w])`, 'g');
-
-            result = result.replace(regex, () => {
-                if (selectedMentions[displayName]) {
-                    return `@${selectedMentions[displayName]}`;
-                }
-                const usernames = displayNameToUsername[displayName];
-                return `@${usernames[0]}`;
-            });
-        }
-
-        return result;
-    };
-
-    convertToRawValueNew = (inputValue: string, newRawValue: string): string => {
-        // inputValue = @John Doe Hi, How are you, @user-5678
-        // newRawValue = @John Doe(user-1234) Hi
-        // 上記のような入力を受け取った場合は、@John Doe Hi, How are you, @John Smith(user-5678) に変換する
-        // selectedMentions = {
-        //   'John Doe': 'user-1234',
-        //   'John Smith': 'user-5678'
-        // }
-        
-        const {usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME} = this.props;
-        const {selectedMentions = {}} = this.state;
-
-        console.log('Selected Mentions:', selectedMentions);
-
-        let result = inputValue;
-
-        // Handle mentions in the format @username by converting them to @displayname(username)
-        result = result.replace(/@([a-zA-Z0-9.\-_]+)/g, (match, username) => {
-            const user = usersByUsername[username];
-            if (user) {
-                const displayName = displayUsername(user, teammateNameDisplay, false);
-                // If the username and display name are different, use the format @displayname(username)
-                if (displayName && displayName !== username) {
-                    return `@${displayName}(${username})`;
+                if (displayName) {
+                    return `@${username}<x-name>@${displayName}</x-name>`;
                 }
             }
             return match;
         });
+    }
 
-        // Handle mentions that are already in display name format by adding the username in parentheses
-        // Get memoized display name map
-        const {map: displayNameToUsername, sortedDisplayNames} = this.getDisplayNameMap();
+    convertToDisplayName = (mapValue: string): string => {
+        const mentionRegex = /@([^<]+)<x-name>@([^<]+)<\/x-name>/g;
+        let result = mapValue.replace(mentionRegex, (_, username, displayName) => {
+            return `@${displayName}`;
+        });
+        return result;
+    };
 
-        for (const displayName of sortedDisplayNames) {
-            const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Match @displayName that is not already in the format @displayName(username)
-            const regex = new RegExp(`@${escapedDisplayName}(?!\\([^)]+\\))(?=\\s|$|[^\\w])`, 'g');
 
-            result = result.replace(regex, () => {
-                // Find the username from selectedMentions by looking for entries where the value matches this display name
-                let selectedUsername = null;
-                for (const [key, value] of Object.entries(selectedMentions)) {
-                    if (value === `@${displayName}`) {
-                        selectedUsername = key.replace('@', ''); // Remove @ prefix from key
-                        break;
-                    }
-                }
-                
-                if (selectedUsername) {
-                    return `@${displayName}(${selectedUsername})`;
-                }
-                // Otherwise, use the first username from the mapping
-                const usernames = displayNameToUsername[displayName];
-                if (usernames && usernames.length > 0) {
-                    return `@${displayName}(${usernames[0]})`;
-                }
-                return `@${displayName}`;
+    convertToMapValue = (inputValue: string, mapValue: string): string => {
+        console.log('inputValue', inputValue, 'mapValue', mapValue);
+
+        if (!mapValue) {
+            return inputValue;
+        }
+
+        const mentionMappings: Array<{
+            fullMatch: string;
+            username: string;
+            displayName: string;
+        }> = [];
+
+        const mentionRegex = /@([^<]+)<x-name>@([^<]+)<\/x-name>/g;
+        let match;
+        
+        while ((match = mentionRegex.exec(mapValue)) !== null) {
+            mentionMappings.push({
+                fullMatch: match[0],
+                username: match[1],
+                displayName: match[2],
             });
+        }
+
+        if (mentionMappings.length === 0) {
+            return inputValue;
+        }
+
+        let result = inputValue;
+        const replacedPositions = new Set<number>();
+        
+        for (const mapping of mentionMappings) {
+            const displayNamePattern = `@${mapping.displayName}`;
+            const replacement = `@${mapping.username}<x-name>@${mapping.displayName}</x-name>`;
+            
+            let searchIndex = 0;
+            let foundIndex = -1;
+            
+            while ((foundIndex = result.indexOf(displayNamePattern, searchIndex)) !== -1) {
+                if (!replacedPositions.has(foundIndex)) {
+                    result = result.slice(0, foundIndex) + replacement + result.slice(foundIndex + displayNamePattern.length);
+                    
+                    for (let i = foundIndex; i < foundIndex + replacement.length; i++) {
+                        replacedPositions.add(i);
+                    }
+                    
+                    searchIndex = foundIndex + replacement.length;
+                    break;
+                } else {
+                    searchIndex = foundIndex + 1;
+                }
+            }
         }
 
         return result;
     }
 
+    convertToRawValue = (mapValue: string): string => {
+        const mentionRegex = /@([^<]+)<x-name>@([^<]+)<\/x-name>/g;
+        let result = mapValue.replace(mentionRegex, (_, username) => {
+            return `@${username}`;
+        });
+        return result;
+    }
+
+    generateMapValue = (usernameMention: string, displayNameMention: string, mapValue: string, inputValue: string): string => {
+        const insertionPoint = inputValue.indexOf(usernameMention);
+
+        if (insertionPoint === -1) {
+            return mapValue;
+        }
+
+        const mapTextContent = mapValue.replace(/<x-name>.*?<\/x-name>/g, '');
+        if (mapTextContent.length < inputValue.length) {
+            const additionalText = inputValue.slice(mapTextContent.length);
+            mapValue = mapValue + additionalText;
+        }
+
+        let mapInsertionPoint = insertionPoint;
+        
+        const existingMentions = mapValue.match(/<x-name>.*?<\/x-name>/g) || [];
+        
+        let tagOffset = 0;
+        for (const existingMention of existingMentions) {
+            const mentionStart = mapValue.indexOf(existingMention, tagOffset);
+            if (mentionStart < mapInsertionPoint + tagOffset) {
+                tagOffset += existingMention.length - existingMention.replace(/<\/?x-name>/g, '').length;
+            } else {
+                break;
+            }
+        }
+        
+        mapInsertionPoint += tagOffset;
+
+        const before = mapValue.slice(0, mapInsertionPoint + usernameMention.length);
+        const after = mapValue.slice(mapInsertionPoint + usernameMention.length);
+        const nameTag = `<x-name>${displayNameMention}</x-name>`;
+
+        return before + nameTag + after;
+    }    
+    
     /**
      * Get raw value for server submission (username format)
      */
     getRawValue = () => {
         return this.state.rawValue;
-    };
-
-    getRawValueNew = () => {
-        return this.state.rawValueNew;
     };
 
     /**
@@ -369,34 +297,15 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         return this.state.displayValue;
     };
 
-    // convertToRawValue
-    /// - inputValue を @displayname(username) に変換する。例: @john.doe Hi  → @John Doe(user-1234) Hi
-    /// - 引数は、inputValue と newRawValue を受け取る。差分を確認して、テキストのマージとメンションがあれば変換して追加する。
-    /// - newRawValue に値を格納する
-    /// - Submit 時に利用する。その際は、@username に変換する。例: @John Doe(user-1234) Hi → user-1234 Hi
-    // convertToDisplayName
-    /// - newRawValue を @displayname のみに変換する。例: @John Doe (user-1234) Hi → @John Doe Hi
-    /// - newDisplayValue に値を格納する
-    /// - PostMarkdown で利用する
-
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
 
-        const newRawValue = this.convertToRawValueNew(inputValue, this.getRawValueNew());
-
-        console.log('New Raw Value (username format):', newRawValue);
-
-        // Update raw value (username format)
-        const newRawValueNew = this.convertToRawValue(inputValue);
-
-        // Update display value (fullname format)
-        const newDisplayValue = this.convertToDisplayName(newRawValue);
-
-        console.log('Raw Value:', newRawValue);
-        console.log('Display Value:', newDisplayValue);
+        const newMapValue = this.convertToMapValue(inputValue, this.state.mapValue);        
+        const newRawValue = this.convertToRawValue(newMapValue);
+        const newDisplayValue = this.convertToDisplayName(newMapValue);
 
         this.setState({
-            rawValueNew: newRawValueNew,
+            mapValue: newMapValue,
             rawValue: newRawValue,
             displayValue: newDisplayValue,
         });
@@ -471,19 +380,17 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         if (prevProps.value !== this.props.value) {
             this.checkMessageLength(this.props.value);
 
+            const mapValue = this.initializeToMapValue(this.props.value);
+
+            console.log('this.props.value', this.props.value);
+            console.log('mapValue', mapValue);
+            console.log('displayValue', this.convertToDisplayName(mapValue));
+
             // Update state when props.value changes
             this.setState({
-                rawValueNew: this.props.value,
                 rawValue: this.props.value,
-                displayValue: this.convertToDisplayName(this.props.value),
-            });
-        }
-
-        // Recalculate displayValue when usersByUsername or teammateNameDisplay changes
-        if (prevProps.usersByUsername !== this.props.usersByUsername ||
-            prevProps.teammateNameDisplay !== this.props.teammateNameDisplay) {
-            this.setState({
-                displayValue: this.convertToDisplayName(this.state.rawValue),
+                mapValue: mapValue,
+                displayValue: this.convertToDisplayName(mapValue),
             });
         }
     }
@@ -540,12 +447,12 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
             const displayName = displayUsername(item, this.props.teammateNameDisplay || Preferences.DISPLAY_PREFER_USERNAME, false);
             const username = item.username;
 
+            const newMapValue = this.generateMapValue(`@${username}`, `@${displayName}`, this.state.mapValue, this.getInputBox().value);
+
             // Save the selected mention information to state (username -> displayName)
-            this.setState((prevState) => ({
-                selectedMentions: {
-                    ...prevState.selectedMentions,
-                    [`@${username}`]: `@${displayName}`,
-                },
+            this.setState(() => ({
+                mapValue: newMapValue,
+                displayValue: this.convertToDisplayName(newMapValue),
             }));
         }
     };
@@ -613,11 +520,6 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
                     <PostMarkdown
                         message={this.state.displayValue}
                         channelId={this.props.channelId}
-                        options={{
-                            mentionHighlight: true,
-                            atMentions: true,
-                            mentionKeys: this.props.mentionKeys,
-                        }}
                         imageProps={{hideUtilities: true}}
                     />
                 </div>

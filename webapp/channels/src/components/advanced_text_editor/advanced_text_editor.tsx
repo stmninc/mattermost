@@ -820,7 +820,6 @@ const AdvancedTextEditor = ({
                             preview={showPreview}
                             usersByUsername={usersByUsername}
                             teammateNameDisplay={teammateNameDisplay}
-                            mentionKeys={mentionKeys}
                             badConnection={badConnection}
                             useChannelMentions={useChannelMentions}
                             rootId={rootId}
