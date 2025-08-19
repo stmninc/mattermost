@@ -109,7 +109,6 @@ function Markdown({
     team,
     minimumHashtagLength,
     managedResourcePaths,
-    users,
 }: Props) {
     if (message === '' || !enableFormatting) {
         return (
@@ -135,7 +134,6 @@ function Markdown({
         managedResourcePaths,
         editedAt,
         postId,
-        users,
     }, options);
 
     const htmlFormattedText = formatText(message, inputOptions, emojiMap);

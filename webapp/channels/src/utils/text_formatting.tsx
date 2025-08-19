@@ -17,22 +17,6 @@ import * as Emoticons from './emoticons';
 import * as Markdown from './markdown';
 
 const punctuationRegex = /[^\p{L}\d]/u;
-const AT_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+)/gi;
-
-// Matches remote @mentions with user:org format
-// (?:\B|\b_+) - word boundary or underscore prefix
-// @ - literal @ symbol
-// ([a-z0-9.\-_]+:[a-z0-9.\-_]+) - user:org format
-const AT_REMOTE_MENTION_PATTERN = /(?:\B|\b_+)@([a-z0-9.\-_]+:[a-z0-9.\-_]+)/gi;
-
-// Matches @mentions with exactly two words (firstname lastname)
-// Pattern to match fullname mentions while preventing false positives:
-// (?:\B|\b_+) - word boundary or underscore prefix
-// @ - literal @ symbol
-// ([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*) - two words separated by single space, each starting with letter
-// (?=\s|$|[.,!?;:)]) - must be followed by whitespace, end of string, punctuation, or closing paren
-// Note: Validation against actual user database is done in processing function
-const AT_MENTION_FULLNAME_PATTERN = /(?:\B|\b_+)@([a-zA-Z][a-zA-Z0-9.\-_]*\s[a-zA-Z][a-zA-Z0-9.\-_]*)(?=\s|$|[.,!?;:)])/g;
 const UNICODE_EMOJI_REGEX = emojiRegex();
 const htmlEmojiPattern = /^<p>\s*(?:<img class="emoticon"[^>]*>|<span data-emoticon[^>]*>[^<]*<\/span>\s*|<span class="emoticon emoticon--unicode">[^<]*<\/span>\s*)+<\/p>$/;
 
@@ -243,12 +227,6 @@ export interface TextFormattingOptionsBase {
      * Whether or not to render text emoticons (:D) as emojis
      */
     renderEmoticonsAsEmoji: boolean;
-
-    /**
-     * Users object from Redux state for fullname mention validation.
-     * If not provided, fullname mentions will be processed without database validation.
-     */
-    users: Record<string, any>;
 }
 
 export type TextFormattingOptions = Partial<TextFormattingOptionsBase>;
@@ -325,16 +303,6 @@ export function formatText(
         output = formatWithRenderer(output, options.renderer);
         output = doFormatText(output, options, emojiMap);
     } else if (!('markdown' in options) || options.markdown) {
-        // Pre-process remote mentions to prevent them from being interpreted as URLs
-        if (options.atMentions) {
-            // Handle remote mentions (@user:org) before Markdown processing
-            // Use safe placeholder instead of HTML to avoid HTML escaping
-            output = output.replace(AT_REMOTE_MENTION_PATTERN, (fullMatch: string, username: string) => {
-                // Use $ delimiters to avoid Markdown interpretation
-                return `$REMOTE_MENTION_${username.replace(':', '_COLON_')}$`;
-            });
-        }
-
         // the markdown renderer will call doFormatText as necessary
         output = Markdown.format(output, options, emojiMap);
         if (output.includes('class="markdown-inline-img"')) {
@@ -368,16 +336,8 @@ export function formatText(
              * the replacer is not ideal, since it replaces every occurence with a new div
              * It would be better to more accurately match only the element in question
              * and replace it with an inlione-version
-            */
+             */
             output = output.replace(/<p>|<\/p>/g, replacer);
-        }
-
-        // Convert remote mention placeholders back to proper HTML after Markdown processing
-        if (options.atMentions) {
-            output = output.replace(/\$REMOTE_MENTION_([^_]+)_COLON_([^$]+)\$/g, (match, user, org) => {
-                const username = `${user}:${org}`;
-                return `<span data-mention="${username}">@${username}</span>`;
-            });
         }
     } else {
         output = sanitizeHtml(output);
@@ -415,7 +375,7 @@ export function doFormatText(text: string, options: TextFormattingOptions, emoji
     try {
         // replace important words and phrases with tokens
         if (options.atMentions) {
-            output = autolinkAtMentions(output, tokens, options.disableGroupHighlight, options.users);
+            output = autolinkAtMentions(output, tokens);
         }
 
         if (options.atSumOfMembersMentions) {
@@ -554,44 +514,7 @@ export function autoPlanMentions(text: string, tokens: Tokens): string {
     return output;
 }
 
-/**
- * Checks if a fullname (firstname lastname) exists in the user database
- * @param fullname The fullname string to check (e.g., "john smith")
- * @param users Redux state users object or undefined if not available
- * @returns true if a user with matching first_name and last_name exists
- */
-function isValidFullnameFromUsers(fullname: string, users?: Record<string, any>): boolean {
-    if (!users || typeof users !== 'object') {
-        // If users data is not available (e.g., in tests or non-Redux contexts),
-        // fallback to allowing the mention to prevent breaking functionality
-        return true;
-    }
-
-    const names = fullname.toLowerCase().split(' ');
-    if (names.length !== 2) {
-        return false;
-    }
-
-    const [firstName, lastName] = names;
-
-    // Search through all users to find a match
-    for (const userId in users) {
-        if (Object.prototype.hasOwnProperty.call(users, userId)) {
-            const user = users[userId];
-            if (user && user.first_name && user.last_name) {
-                const userFirstName = user.first_name.toLowerCase();
-                const userLastName = user.last_name.toLowerCase();
-
-                if (userFirstName === firstName && userLastName === lastName) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHighlight?: boolean, users?: Record<string, any>): string {
+export function autolinkAtMentions(text: string, tokens: Tokens): string {
     function replaceAtMentionWithToken(fullMatch: string, username: string) {
         let originalText = fullMatch;
 
@@ -619,66 +542,11 @@ export function autolinkAtMentions(text: string, tokens: Tokens, disableGroupHig
         replaceAtMentionWithToken,
     );
 
-    // handle fullname mentions BEFORE standard mentions to prevent conflicts
-    // This ensures fullnames like "@john smith" are processed before "@john" alone
-    // Using more restrictive pattern to prevent false positives
-    // Skip fullname mentions processing if disableGroupHighlight is true
-    if (!disableGroupHighlight) {
-        // Use a more careful replacement approach to avoid infinite loops
-        // and ensure common words are not included in fullname mentions
-        let processedOutput = output;
-        const replacements: Array<{
-            start: number;
-            end: number;
-            fullMatch: string;
-            username: string;
-            replacement: string;
-        }> = [];
-
-        // Reset regex for consistent behavior
-        AT_MENTION_FULLNAME_PATTERN.lastIndex = 0;
-        let match;
-
-        while ((match = AT_MENTION_FULLNAME_PATTERN.exec(processedOutput)) !== null) {
-            const fullMatch = match[0];
-            const username = match[1];
-
-            // Validate against actual user database instead of hardcoded word list
-            if (!isValidFullnameFromUsers(username, users)) {
-                // Skip this match, let standard mention processing handle it
-                continue;
-            }
-
-            // This is a valid fullname mention, prepare for replacement
-            const replacement = replaceAtMentionWithToken(fullMatch, username);
-            replacements.push({
-                start: match.index,
-                end: match.index + fullMatch.length,
-                fullMatch,
-                username,
-                replacement,
-            });
-        }
-
-        // Apply replacements in reverse order to maintain correct indices
-        for (let i = replacements.length - 1; i >= 0; i--) {
-            const r = replacements[i];
-            processedOutput = processedOutput.substring(0, r.start) +
-                            r.replacement +
-                            processedOutput.substring(r.end);
-        }
-
-        output = processedOutput;
-
-        // Reset regex for future use
-        AT_MENTION_FULLNAME_PATTERN.lastIndex = 0;
-    }
-
-    // handle remaining standard mentions (supports trailing punctuation)
-    let match = output.match(AT_MENTION_PATTERN);
+    // handle all other mentions (supports trailing punctuation)
+    let match = output.match(Constants.MENTIONS_REGEX);
     while (match && match.length > 0) {
-        output = output.replace(AT_MENTION_PATTERN, replaceAtMentionWithToken);
-        match = output.match(AT_MENTION_PATTERN);
+        output = output.replace(Constants.MENTIONS_REGEX, replaceAtMentionWithToken);
+        match = output.match(Constants.MENTIONS_REGEX);
     }
 
     return output;

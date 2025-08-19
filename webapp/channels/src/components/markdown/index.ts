@@ -11,7 +11,6 @@ import {getPost} from 'mattermost-redux/selectors/entities/posts';
 import {getBool} from 'mattermost-redux/selectors/entities/preferences';
 import {getAllUserMentionKeys} from 'mattermost-redux/selectors/entities/search';
 import {getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
-import {getUsers} from 'mattermost-redux/selectors/entities/users';
 
 import {getEmojiMap} from 'selectors/emojis';
 
@@ -58,7 +57,6 @@ function makeMapStateToProps() {
             minimumHashtagLength: parseInt(config.MinimumHashtagLength || '', 10),
             emojiMap: getEmojiMap(state),
             channelId,
-            users: getUsers(state),
         };
     };
 }

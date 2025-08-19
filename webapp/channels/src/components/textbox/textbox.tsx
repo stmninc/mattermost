@@ -183,8 +183,6 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
 
 
     convertToMapValue = (inputValue: string, mapValue: string): string => {
-        console.log('inputValue', inputValue, 'mapValue', mapValue);
-
         if (!mapValue) {
             return inputValue;
         }
@@ -381,11 +379,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
             this.checkMessageLength(this.props.value);
 
             const mapValue = this.initializeToMapValue(this.props.value);
-
-            console.log('this.props.value', this.props.value);
-            console.log('mapValue', mapValue);
-            console.log('displayValue', this.convertToDisplayName(mapValue));
-
+            
             // Update state when props.value changes
             this.setState({
                 rawValue: this.props.value,

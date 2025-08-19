@@ -108,16 +108,6 @@ describe('TextFormatting.searchHighlighting', () => {
                 mentionHighlight: true,
                 searchMatches: testCase.searchMatches,
                 searchTerm: testCase.searchTerm || '',
-
-                // Provide mock users data for database validation
-                // This simulates a scenario where only specific fullnames exist in the database
-                users: {
-                    user1: {id: 'user1', username: 'words', first_name: 'Words', last_name: 'User'},
-                    user2: {id: 'user2', username: 'sentence', first_name: 'Sentence', last_name: 'User'},
-
-                    // Note: no user has first_name: 'words' and last_name: 'in',
-                    // so "@words in" should not be treated as a fullname mention
-                },
             };
             const output = TextFormatting.formatText(testCase.input, options, emojiMap).trim();
 

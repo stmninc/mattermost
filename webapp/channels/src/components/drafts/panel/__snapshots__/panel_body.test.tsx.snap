@@ -169,13 +169,6 @@ exports[`components/drafts/panel/panel_body should have called handleFormattedTe
                           Object {
                             "disableGroupHighlight": true,
                             "mentionHighlight": false,
-                            "users": Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
-                            },
                           }
                         }
                       >
@@ -198,13 +191,6 @@ exports[`components/drafts/panel/panel_body should have called handleFormattedTe
                             Object {
                               "disableGroupHighlight": true,
                               "mentionHighlight": false,
-                              "users": Object {
-                                "userid1": Object {
-                                  "id": "userid1",
-                                  "roles": "system_user",
-                                  "username": "username1",
-                                },
-                              },
                             }
                           }
                           siteURL="http://localhost:8065"
@@ -213,15 +199,6 @@ exports[`components/drafts/panel/panel_body should have called handleFormattedTe
                               "display_name": "Team ID",
                               "id": "team_id",
                               "name": "team-id",
-                            }
-                          }
-                          users={
-                            Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
                             }
                           }
                         >
@@ -414,13 +391,6 @@ exports[`components/drafts/panel/panel_body should match snapshot 1`] = `
                           Object {
                             "disableGroupHighlight": true,
                             "mentionHighlight": false,
-                            "users": Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
-                            },
                           }
                         }
                       >
@@ -443,13 +413,6 @@ exports[`components/drafts/panel/panel_body should match snapshot 1`] = `
                             Object {
                               "disableGroupHighlight": true,
                               "mentionHighlight": false,
-                              "users": Object {
-                                "userid1": Object {
-                                  "id": "userid1",
-                                  "roles": "system_user",
-                                  "username": "username1",
-                                },
-                              },
                             }
                           }
                           siteURL="http://localhost:8065"
@@ -458,15 +421,6 @@ exports[`components/drafts/panel/panel_body should match snapshot 1`] = `
                               "display_name": "Team ID",
                               "id": "team_id",
                               "name": "team-id",
-                            }
-                          }
-                          users={
-                            Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
                             }
                           }
                         >
@@ -725,13 +679,6 @@ exports[`components/drafts/panel/panel_body should match snapshot for priority 1
                           Object {
                             "disableGroupHighlight": true,
                             "mentionHighlight": false,
-                            "users": Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
-                            },
                           }
                         }
                       >
@@ -754,13 +701,6 @@ exports[`components/drafts/panel/panel_body should match snapshot for priority 1
                             Object {
                               "disableGroupHighlight": true,
                               "mentionHighlight": false,
-                              "users": Object {
-                                "userid1": Object {
-                                  "id": "userid1",
-                                  "roles": "system_user",
-                                  "username": "username1",
-                                },
-                              },
                             }
                           }
                           siteURL="http://localhost:8065"
@@ -769,15 +709,6 @@ exports[`components/drafts/panel/panel_body should match snapshot for priority 1
                               "display_name": "Team ID",
                               "id": "team_id",
                               "name": "team-id",
-                            }
-                          }
-                          users={
-                            Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
                             }
                           }
                         >
@@ -1013,13 +944,6 @@ exports[`components/drafts/panel/panel_body should match snapshot for requested_
                           Object {
                             "disableGroupHighlight": true,
                             "mentionHighlight": false,
-                            "users": Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
-                            },
                           }
                         }
                       >
@@ -1042,13 +966,6 @@ exports[`components/drafts/panel/panel_body should match snapshot for requested_
                             Object {
                               "disableGroupHighlight": true,
                               "mentionHighlight": false,
-                              "users": Object {
-                                "userid1": Object {
-                                  "id": "userid1",
-                                  "roles": "system_user",
-                                  "username": "username1",
-                                },
-                              },
                             }
                           }
                           siteURL="http://localhost:8065"
@@ -1057,15 +974,6 @@ exports[`components/drafts/panel/panel_body should match snapshot for requested_
                               "display_name": "Team ID",
                               "id": "team_id",
                               "name": "team-id",
-                            }
-                          }
-                          users={
-                            Object {
-                              "userid1": Object {
-                                "id": "userid1",
-                                "roles": "system_user",
-                                "username": "username1",
-                              },
                             }
                           }
                         >
