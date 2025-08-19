@@ -10,7 +10,9 @@ import type {Channel} from '@mattermost/types/channels';
 import type {Group} from '@mattermost/types/groups';
 import type {UserProfile} from '@mattermost/types/users';
 
+import {Preferences} from 'mattermost-redux/constants';
 import type {ActionResult} from 'mattermost-redux/types/actions';
+import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
 import AutosizeTextarea from 'components/autosize_textarea';
 import PostMarkdown from 'components/post_markdown';
@@ -23,6 +25,7 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
+import {convertToDisplayName, convertToRawValue, initializeToMapValue, generateMapValue, convertToMapValue} from 'components/textbox/util';
 
 import * as Utils from 'utils/utils';
 
@@ -74,16 +77,31 @@ export type Props = {
     hasLabels?: boolean;
     hasError?: boolean;
     isInEditMode?: boolean;
+    usersByUsername?: Record<string, UserProfile>;
+    teammateNameDisplay?: string;
 };
 
 const VISIBLE = {visibility: 'visible'};
 const HIDDEN = {visibility: 'hidden'};
 
-export default class Textbox extends React.PureComponent<Props> {
+interface TextboxState {
+    mapValue: string;
+    displayValue: string; // UI display value (username→fullname converted)
+    rawValue: string; // Server submission value (username format)
+}
+
+export default class Textbox extends React.PureComponent<Props, TextboxState> {
     private readonly suggestionProviders: Provider[];
     private readonly wrapper: React.RefObject<HTMLDivElement>;
     private readonly message: React.RefObject<SuggestionBoxComponent>;
     private readonly preview: React.RefObject<HTMLDivElement>;
+    private readonly textareaRef: React.RefObject<HTMLTextAreaElement>;
+
+    state: TextboxState = {
+        mapValue: '',
+        displayValue: '', // UI display value (username→fullname converted)
+        rawValue: '', // Server submission value (username format)
+    };
 
     static defaultProps = {
         supportsCommands: true,
@@ -131,10 +149,54 @@ export default class Textbox extends React.PureComponent<Props> {
         this.wrapper = React.createRef();
         this.message = React.createRef();
         this.preview = React.createRef();
+        this.textareaRef = React.createRef();
+
+        // Initialize state - set displayValue and rawValue from props.value
+        const mapValue = initializeToMapValue(props.value, props.usersByUsername, props.teammateNameDisplay);
+        this.state = {
+            mapValue,
+            displayValue: convertToDisplayName(mapValue),
+            rawValue: props.value,
+        };
     }
 
+    /**
+     * Get raw value for server submission (username format)
+     */
+    getRawValue = () => {
+        return this.state.rawValue;
+    };
+
+    /**
+     * Get display value for UI (fullname format)
+     */
+    getDisplayValue = () => {
+        return this.state.displayValue;
+    };
+
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.onChange(e);
+        const inputValue = e.target.value;
+
+        const newMapValue = convertToMapValue(inputValue, this.state.mapValue);
+        const newRawValue = convertToRawValue(newMapValue);
+        const newDisplayValue = convertToDisplayName(newMapValue);
+
+        this.setState({
+            mapValue: newMapValue,
+            rawValue: newRawValue,
+            displayValue: newDisplayValue,
+        });
+
+        // Pass raw value (username format) to parent component
+        const syntheticEvent = {
+            ...e,
+            target: {
+                ...e.target,
+                value: newRawValue,
+            },
+        } as React.ChangeEvent<HTMLInputElement>;
+
+        this.props.onChange(syntheticEvent);
     };
 
     updateSuggestions(prevProps: Props) {
@@ -195,6 +257,15 @@ export default class Textbox extends React.PureComponent<Props> {
 
         if (prevProps.value !== this.props.value) {
             this.checkMessageLength(this.props.value);
+
+            const mapValue = initializeToMapValue(this.props.value, this.props.usersByUsername, this.props.teammateNameDisplay);
+
+            // Update state when props.value changes
+            this.setState({
+                rawValue: this.props.value,
+                mapValue,
+                displayValue: convertToDisplayName(mapValue),
+            });
         }
     }
 
@@ -240,8 +311,33 @@ export default class Textbox extends React.PureComponent<Props> {
         this.props.onBlur?.(e as FocusEvent<TextboxElement>);
     };
 
+    /**
+     * Handles when a mention suggestion is selected
+     * Stores information about mentions explicitly selected by the user
+     */
+    handleSuggestionSelected = (item: any) => {
+        // Only process items from AtMentionProvider
+        if (item && item.username && item.type !== 'mention_groups') {
+            const displayName = displayUsername(item, this.props.teammateNameDisplay || Preferences.DISPLAY_PREFER_USERNAME, false);
+            const username = item.username;
+
+            const newMapValue = generateMapValue(`@${username}`, `@${displayName}`, this.state.mapValue, this.getInputBox().value);
+
+            // Save the selected mention information to state (username -> displayName)
+            this.setState(() => ({
+                mapValue: newMapValue,
+                displayValue: convertToDisplayName(newMapValue),
+            }));
+        }
+    };
+
     getInputBox = () => {
-        return this.message.current?.getTextbox();
+        const textbox = this.message.current?.getTextbox();
+        if (textbox && this.textareaRef.current !== textbox) {
+            // Update textareaRef
+            (this.textareaRef as any).current = textbox;
+        }
+        return textbox;
     };
 
     focus = () => {
@@ -296,7 +392,7 @@ export default class Textbox extends React.PureComponent<Props> {
                     onBlur={this.handleBlur}
                 >
                     <PostMarkdown
-                        message={this.props.value}
+                        message={this.state.displayValue}
                         channelId={this.props.channelId}
                         imageProps={{hideUtilities: true}}
                     />
@@ -325,12 +421,13 @@ export default class Textbox extends React.PureComponent<Props> {
                     listComponent={this.props.suggestionList}
                     listPosition={this.props.suggestionListPosition}
                     providers={this.suggestionProviders}
-                    value={this.props.value}
+                    value={this.state.displayValue}
                     renderDividers={ALL}
                     disabled={this.props.disabled}
                     contextId={this.props.channelId}
                     openWhenEmpty={this.props.openWhenEmpty}
                     alignWithTextbox={this.props.alignWithTextbox}
+                    onItemSelected={this.handleSuggestionSelected}
                 />
             </div>
         );
