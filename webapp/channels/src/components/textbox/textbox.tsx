@@ -25,7 +25,7 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
-import {convertToDisplayName, convertToRawValue, initializeToMapValue, generateMapValue, convertToMapValue} from 'components/textbox/util';
+import {convertToDisplayName, convertToRawValue, generateRawValue} from 'components/textbox/util';
 
 import * as Utils from 'utils/utils';
 
@@ -85,7 +85,7 @@ const VISIBLE = {visibility: 'visible'};
 const HIDDEN = {visibility: 'hidden'};
 
 interface TextboxState {
-    mapValue: string;
+    // mapValue: string;
     displayValue: string; // UI display value (username→fullname converted)
     rawValue: string; // Server submission value (username format)
 }
@@ -98,7 +98,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     private readonly textareaRef: React.RefObject<HTMLTextAreaElement>;
 
     state: TextboxState = {
-        mapValue: '',
+        // mapValue: '',
         displayValue: '', // UI display value (username→fullname converted)
         rawValue: '', // Server submission value (username format)
     };
@@ -151,10 +151,9 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         this.textareaRef = React.createRef();
 
         // Initialize state - set displayValue and rawValue from props.value
-        const mapValue = initializeToMapValue(props.value, props.usersByUsername, props.teammateNameDisplay);
+        // const mapValue = initializeToMapValue(props.value, props.usersByUsername, props.teammateNameDisplay);
         this.state = {
-            mapValue,
-            displayValue: convertToDisplayName(mapValue),
+            displayValue: convertToDisplayName(props.value, props.usersByUsername, props.teammateNameDisplay),
             rawValue: props.value,
         };
     }
@@ -176,12 +175,14 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
 
-        const newMapValue = convertToMapValue(inputValue, this.state.mapValue);
-        const newRawValue = convertToRawValue(newMapValue);
-        const newDisplayValue = convertToDisplayName(newMapValue);
+        // console.log('inputValue', inputValue, 'mapValue', this.state.mapValue, 'rawValue', this.state.rawValue);
+        // console.log('convertedMapValue', initializeToMapValue(this.state.rawValue, this.props.usersByUsername, this.props.teammateNameDisplay));
+        // const newMapValue = convertToMapValue(inputValue, this.state.mapValue);
+        const newRawValue = generateRawValue(this.state.rawValue, inputValue, this.props.usersByUsername, this.props.teammateNameDisplay);
+        const newDisplayValue = convertToDisplayName(newRawValue, this.props.usersByUsername, this.props.teammateNameDisplay);
 
         this.setState({
-            mapValue: newMapValue,
+            // mapValue: newMapValue,
             rawValue: newRawValue,
             displayValue: newDisplayValue,
         });
@@ -255,14 +256,31 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
 
         if (prevProps.value !== this.props.value) {
             this.checkMessageLength(this.props.value);
+        }
 
-            const mapValue = initializeToMapValue(this.props.value, this.props.usersByUsername, this.props.teammateNameDisplay);
+                if (prevProps.channelId !== this.props.channelId) {
+            this.setState({
+                rawValue: "",
+                // mapValue: "",
+                displayValue: "",
+            });
+        }
 
-            // Update state when props.value changes
+        if (prevProps.value !== this.props.value && this.props.value.length > 0 && prevProps.value.length === 0) {
+            // const mapValue = initializeToMapValue(this.props.value, this.props.usersByUsername, this.props.teammateNameDisplay);
+
             this.setState({
                 rawValue: this.props.value,
-                mapValue,
-                displayValue: convertToDisplayName(mapValue),
+                // mapValue: mapValue,
+                displayValue: convertToDisplayName(this.props.value, this.props.usersByUsername, this.props.teammateNameDisplay),
+            });
+        }
+
+        if (prevProps.value !== this.props.value && this.props.value.length === 0 && prevProps.value.length > 0) {
+            this.setState({
+                rawValue: "",
+                // mapValue: "",
+                displayValue: "",
             });
         }
     }
@@ -316,16 +334,61 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     handleSuggestionSelected = (item: any) => {
         // Only process items from AtMentionProvider
         if (item && item.username && item.type !== 'mention_groups') {
-            const displayName = displayUsername(item, this.props.teammateNameDisplay || Preferences.DISPLAY_PREFER_USERNAME, false);
-            const username = item.username;
 
-            const newMapValue = generateMapValue(`@${username}`, `@${displayName}`, this.state.mapValue, this.getInputBox().value);
+            const { usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME } = this.props;
 
-            // Save the selected mention information to state (username -> displayName)
+            const textBox = this.getInputBox();
+            // 現在のカーソルの位置を取得
+            let cursorPosition = textBox?.selectionStart || 0;
+            console.log('cursorPosition: before', cursorPosition)
+            // item.usernameとdisplayNameの文字数の差異に応じて、cursorPositionを調整
+            const displayName = displayUsername(item, teammateNameDisplay, false);
+            cursorPosition += item.username.length - displayName.length;
+
+            console.log('cursorPosition: after', cursorPosition)
+
+            const newRawValue = generateRawValue(this.state.rawValue, textBox.value, usersByUsername, teammateNameDisplay);
+
+            // console.log('newRawValue', newRawValue)
+            // console.log('newDisplayValue', convertToDisplayName(newRawValue, this.props.usersByUsername, this.props.teammateNameDisplay))
+            const newDisplayValue = convertToDisplayName(newRawValue, usersByUsername, teammateNameDisplay);
+
+            // カーソルの位置を更新
+            // Utils.setCaretPosition(textbox, prefix.length + term.length + 1);
+            Utils.setCaretPosition(textBox, cursorPosition);
+
+    //         const textbox = this.getInputBox();
+    //          const currentValue = textbox?.value || '';
+    //     const cursorPosition = textbox?.selectionEnd || 0;
+    //     const textAfterCursor = currentValue.substring(cursorPosition);
+    //     if (textAfterCursor.startsWith(' ')) {
+    //            if (this.message.current) {
+    //     this.message.current.clear();
+    // }
+
+        // }
+
             this.setState(() => ({
-                mapValue: newMapValue,
-                displayValue: convertToDisplayName(newMapValue),
+                rawValue: newRawValue,
+                displayValue: newDisplayValue
             }));
+        }
+    };
+
+    handleSuggestionsReceived = (suggestions: any[]) => {
+
+        // Use type assertion to access matchedPretext
+        const matchedPretext = (suggestions as any).matchedPretext;
+
+        if (suggestions && matchedPretext) {
+            const convertedDisplayValue = convertToDisplayName(this.state.rawValue, this.props.usersByUsername, this.props.teammateNameDisplay);
+
+            // 表示値が変換済みの値と一致し、かつmatchedPretextがスペースで終わっている場合
+            if (convertedDisplayValue === this.state.displayValue && matchedPretext.endsWith(' ')) {
+                if (this.message.current) {
+                    this.message.current.handleEmitClearSuggestions();
+                }
+            }
         }
     };
 
@@ -339,6 +402,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     };
 
     focus = () => {
+        console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
         const textbox = this.getInputBox();
         if (textbox) {
             textbox.focus();
@@ -426,6 +490,7 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
                     openWhenEmpty={this.props.openWhenEmpty}
                     alignWithTextbox={this.props.alignWithTextbox}
                     onItemSelected={this.handleSuggestionSelected}
+                    onSuggestionsReceived={this.handleSuggestionsReceived}
                 />
             </div>
         );

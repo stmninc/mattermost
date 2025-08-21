@@ -6,28 +6,42 @@ import type {UserProfile} from '@mattermost/types/users';
 import {Preferences} from 'mattermost-redux/constants';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
-const MENTION_REGEX = /@([^<]+)<x-name>@([^<]+)<\/x-name>/g;
+// const MENTION_REGEX = /@([^<]+)<x-name>@([^<]+)<\/x-name>/g;
 const USERNAME_REGEX = /@([a-zA-Z0-9.\-_]+)/g;
 const TAG_REGEX = /<x-name>.*?<\/x-name>/g;
 
-export const convertToDisplayName = (mapValue: string): string => {
-    return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username, displayName) => {
-        return `@${displayName}`;
-    });
-};
-
-export const convertToRawValue = (mapValue: string): string => {
-    return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username) => {
-        return `@${username}`;
-    });
-};
-
-export const initializeToMapValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
+// export const convertToDisplayName = (mapValue: string): string => {
+//     return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username, displayName) => {
+//         return `@${displayName}`;
+//     });
+// };
+export const convertToDisplayName = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     return rawValue.replace(USERNAME_REGEX, (match, username) => {
         const displayName = getUserDisplayName(username, usersByUsername, teammateNameDisplay);
-        return displayName ? createMentionTag(username, displayName) : match;
+        return displayName ? `@${displayName}` : match;
     });
-};
+}
+
+// export const convertToRawValue = (mapValue: string): string => {
+//     return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username) => {
+//         return `@${username}`;
+//     });
+// };
+
+export const convertToRawValue = (rawValue: string, inputValue: string): string => {
+    return rawValue.replace(USERNAME_REGEX, (match, username) => {
+        return `@${username}`;
+    });
+}
+
+// export const initializeToMapValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
+//     return rawValue.replace(USERNAME_REGEX, (match, username) => {
+//         // const displayName = getUserDisplayName(username, usersByUsername, teammateNameDisplay);
+//         const user = usersByUsername[username];
+//         const displayName = displayUsername(user, teammateNameDisplay, false);
+//         return displayName ? createMentionTag(username, displayName) : match;
+//     });
+// };
 
 const getUserDisplayName = (username: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     const user = usersByUsername[username];
@@ -40,53 +54,53 @@ const getUserDisplayName = (username: string, usersByUsername: Record<string, Us
     return username;
 };
 
-const createMentionTag = (username: string, displayName: string): string => {
-    return `@${username}<x-name>@${displayName}</x-name>`;
-};
+// const createMentionTag = (username: string, displayName: string): string => {
+//     return `@${username}<x-name>@${displayName}</x-name>`;
+// };
 
-export const convertToMapValue = (inputValue: string, mapValue: string): string => {
-    if (!mapValue) {
-        return inputValue;
-    }
+// export const convertToMapValue = (inputValue: string, mapValue: string): string => {
+//     if (!mapValue) {
+//         return inputValue;
+//     }
 
-    const mentionMappings = extractMentionMappings(mapValue);
+//     const mentionMappings = extractMentionMappings(mapValue);
 
-    if (mentionMappings.length === 0) {
-        return inputValue;
-    }
+//     if (mentionMappings.length === 0) {
+//         return inputValue;
+//     }
 
-    return applyMentionMappings(inputValue, mentionMappings);
-};
+//     return applyMentionMappings(inputValue, mentionMappings);
+// };
 
-const extractMentionMappings = (mapValue: string): Array<{ fullMatch: string; username: string; displayName: string }> => {
-    const mappings: Array<{ fullMatch: string; username: string; displayName: string }> = [];
-    const regex = new RegExp(MENTION_REGEX.source, 'g');
-    let match;
+// const extractMentionMappings = (mapValue: string): Array<{ fullMatch: string; username: string; displayName: string }> => {
+//     const mappings: Array<{ fullMatch: string; username: string; displayName: string }> = [];
+//     const regex = new RegExp(MENTION_REGEX.source, 'g');
+//     let match;
 
-    while ((match = regex.exec(mapValue)) !== null) {
-        mappings.push({
-            fullMatch: match[0],
-            username: match[1],
-            displayName: match[2],
-        });
-    }
+//     while ((match = regex.exec(mapValue)) !== null) {
+//         mappings.push({
+//             fullMatch: match[0],
+//             username: match[1],
+//             displayName: match[2],
+//         });
+//     }
 
-    return mappings;
-};
+//     return mappings;
+// };
 
-const applyMentionMappings = (inputValue: string, mappings: Array<{ username: string; displayName: string }>): string => {
-    let result = inputValue;
-    const replacedPositions = new Set<number>();
+// const applyMentionMappings = (inputValue: string, mappings: Array<{ username: string; displayName: string }>): string => {
+//     let result = inputValue;
+//     const replacedPositions = new Set<number>();
 
-    for (const mapping of mappings) {
-        const displayNamePattern = `@${mapping.displayName}`;
-        const replacement = createMentionTag(mapping.username, mapping.displayName);
+//     for (const mapping of mappings) {
+//         const displayNamePattern = `@${mapping.displayName}`;
+//         const replacement = createMentionTag(mapping.username, mapping.displayName);
 
-        result = replaceFirstUnprocessed(result, displayNamePattern, replacement, replacedPositions);
-    }
+//         result = replaceFirstUnprocessed(result, displayNamePattern, replacement, replacedPositions);
+//     }
 
-    return result;
-};
+//     return result;
+// };
 
 const replaceFirstUnprocessed = (
     text: string,
@@ -114,53 +128,59 @@ const replaceFirstUnprocessed = (
     return text;
 };
 
-export const generateMapValue = (usernameMention: string, displayNameMention: string, mapValue: string, inputValue: string): string => {
-    const insertionPoint = inputValue.indexOf(usernameMention);
+// export const generateMapValue = (username: string, displayName: string, mapValue: string, inputValue: string): string => {
+//     console.log('generateMapValue called with:', {username, displayName, mapValue, inputValue});
+//     let result = inputValue.replace(`@${username}`, createMentionTag(username, displayName));
 
-    if (insertionPoint === -1) {
-        return mapValue;
-    }
+//     const mentionMappings = extractMentionMappings(mapValue);
+    
+//     const replacedPositions = new Set<number>();
+    
+//     for (const mapping of mentionMappings) {
+//         const displayNamePattern = `@${mapping.displayName}`;
+//         const replacement = createMentionTag(mapping.username, mapping.displayName);
+        
+//         result = replaceFirstUnprocessed(result, displayNamePattern, replacement, replacedPositions);
+//     }
 
-    // Sync mapValue with inputValue if needed
-    const syncedMapValue = syncMapValueWithInput(mapValue, inputValue);
-    const adjustedInsertionPoint = calculateInsertionPoint(insertionPoint, syncedMapValue);
+//     console.log('Final result after generateMapValue:', result);
+    
+//     return result;
+// };
 
-    return insertMentionTag(syncedMapValue, adjustedInsertionPoint, usernameMention, displayNameMention);
-};
+export const generateRawValue = (rawValue: string, inputValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
+    const mentionMappings = extractMentionRawMappings(rawValue);
 
-const syncMapValueWithInput = (mapValue: string, inputValue: string): string => {
-    const mapTextContent = mapValue.replace(TAG_REGEX, '');
+    let result = inputValue
+    const replacedPositions = new Set<number>();
 
-    if (mapTextContent.length < inputValue.length) {
-        const additionalText = inputValue.slice(mapTextContent.length);
-        return mapValue + additionalText;
-    }
+    for (const mapping of mentionMappings) {
+        const user = usersByUsername[mapping.username];
+        const displayName = displayUsername(user, teammateNameDisplay, false);
+        const replacement = mapping.username
 
-    return mapValue;
-};
-
-const calculateInsertionPoint = (baseInsertionPoint: number, mapValue: string): number => {
-    const adjustedPoint = baseInsertionPoint;
-    const existingMentions = mapValue.match(TAG_REGEX) || [];
-
-    let tagOffset = 0;
-    for (const mention of existingMentions) {
-        const mentionStart = mapValue.indexOf(mention, tagOffset);
-        if (mentionStart < adjustedPoint + tagOffset) {
-            tagOffset += mention.length - mention.replace(/<\/?x-name>/g, '').length;
-        } else {
-            break;
+        // userが存在しない場合はなにもしない
+        if (!user) {
+            continue;
         }
+
+        result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
     }
 
-    return adjustedPoint + tagOffset;
+    return result;
 };
 
-const insertMentionTag = (mapValue: string, insertionPoint: number, usernameMention: string, displayNameMention: string): string => {
-    const before = mapValue.slice(0, insertionPoint + usernameMention.length);
-    const after = mapValue.slice(insertionPoint + usernameMention.length);
-    const nameTag = `<x-name>${displayNameMention}</x-name>`;
+const extractMentionRawMappings = (rawValue: string): Array<{ fullMatch: string; username: string; }> => {
+    const mappings: Array<{ fullMatch: string; username: string; }> = [];
+    const regex = new RegExp(USERNAME_REGEX.source, 'g');
+    let match;
 
-    return before + nameTag + after;
+    while ((match = regex.exec(rawValue)) !== null) {
+        mappings.push({
+            fullMatch: match[0],
+            username: match[1]
+        });
+    }
+
+    return mappings;
 };
-
