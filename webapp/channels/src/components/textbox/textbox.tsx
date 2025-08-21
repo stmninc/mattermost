@@ -21,7 +21,7 @@ import ChannelMentionProvider from 'components/suggestion/channel_mention_provid
 import AppCommandProvider from 'components/suggestion/command_provider/app_provider';
 import CommandProvider from 'components/suggestion/command_provider/command_provider';
 import EmoticonProvider from 'components/suggestion/emoticon_provider';
-import type Provider from 'components/suggestion/provider';
+import Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
@@ -176,9 +176,12 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
 
-        const newMapValue = convertToMapValue(inputValue, this.state.mapValue);
+        const newMapValue = convertToMapValue(inputValue, this.state.mapValue, this.props.usersByUsername, this.props.teammateNameDisplay);
+        console.log('handleChange', 'newMapValue:', newMapValue);
         const newRawValue = convertToRawValue(newMapValue);
+        console.log('handleChange', 'newRawValue:', newRawValue);
         const newDisplayValue = convertToDisplayName(newMapValue);
+        console.log('handleChange', 'newDisplayValue:', newDisplayValue);
 
         this.setState({
             mapValue: newMapValue,
@@ -255,16 +258,34 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
 
         if (prevProps.value !== this.props.value) {
             this.checkMessageLength(this.props.value);
+        }
 
+        if (prevProps.channelId !== this.props.channelId) {
+            this.setState({
+                rawValue: "",
+                mapValue: "",
+                displayValue: "",
+            });
+        }
+
+        if (prevProps.value !== this.props.value && this.props.value.length > 0 && prevProps.value.length === 0) {
             const mapValue = initializeToMapValue(this.props.value, this.props.usersByUsername, this.props.teammateNameDisplay);
 
-            // Update state when props.value changes
             this.setState({
                 rawValue: this.props.value,
-                mapValue,
+                mapValue: mapValue,
                 displayValue: convertToDisplayName(mapValue),
             });
         }
+
+        if (prevProps.value !== this.props.value && this.props.value.length === 0 && prevProps.value.length > 0) {
+            this.setState({
+                rawValue: "",
+                mapValue: "",
+                displayValue: "",
+            });
+        }
+
     }
 
     componentDidUpdate(prevProps: Props) {
@@ -318,7 +339,6 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
         if (item && item.username && item.type !== 'mention_groups') {
             const displayName = displayUsername(item, this.props.teammateNameDisplay || Preferences.DISPLAY_PREFER_USERNAME, false);
             const username = item.username;
-
             const newMapValue = generateMapValue(`@${username}`, `@${displayName}`, this.state.mapValue, this.getInputBox().value);
 
             // Save the selected mention information to state (username -> displayName)

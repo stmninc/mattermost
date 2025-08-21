@@ -8,7 +8,6 @@ import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
 const MENTION_REGEX = /@([^<]+)<x-name>@([^<]+)<\/x-name>/g;
 const USERNAME_REGEX = /@([a-zA-Z0-9.\-_]+)/g;
-const TAG_REGEX = /<x-name>.*?<\/x-name>/g;
 
 export const convertToDisplayName = (mapValue: string): string => {
     return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username, displayName) => {
@@ -17,7 +16,7 @@ export const convertToDisplayName = (mapValue: string): string => {
 };
 
 export const convertToRawValue = (mapValue: string): string => {
-    return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username) => {
+        return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username) => {
         return `@${username}`;
     });
 };
@@ -44,18 +43,75 @@ const createMentionTag = (username: string, displayName: string): string => {
     return `@${username}<x-name>@${displayName}</x-name>`;
 };
 
-export const convertToMapValue = (inputValue: string, mapValue: string): string => {
-    if (!mapValue) {
-        return inputValue;
-    }
+export const convertToMapValue = (inputValue: string, mapValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
+    // if (!mapValue && mapValue.length !== 0) {
+    //     return inputValue;
+    // }
+
+    // inputValueとmapValueの差分を取得する
+    // const diff = 
+
+    // // ユーザー名をアルファベット順にソートする
+    // let sortedUsersByUsername = Object.values(usersByUsername).sort((a, b) => a.username.localeCompare(b.username));
+    // // displayNameの重複を除去
+    // const seenDisplayNames = new Set<string>();
+    // sortedUsersByUsername = sortedUsersByUsername.filter(user => {
+    //     const displayName = displayUsername(user, teammateNameDisplay, false);
+    //     if (seenDisplayNames.has(displayName)) {
+    //         return false;
+    //     }
+    //     seenDisplayNames.add(displayName);
+    //     return true;
+    // });
+
+    // console.log('mapValue', mapValue)
+
+    // for (const user of sortedUsersByUsername) {
+    //     const displayName = displayUsername(user, teammateNameDisplay, false);
+    //     // mapValueにdisplayNameが含まれる場合は、userNameに置換する
+    //         const displayNameWithSpace = '@' + displayName + ' ';
+    //         if (inputValue.includes(displayNameWithSpace)) {
+    //             console.log('inputValue', inputValue, 'mapValue', mapValue, 'displayName', displayName);
+    //             mapValue = mapValue.replace(`@${displayName}`, createMentionTag(user.username, displayName) + ' ');
+    //         }
+    // }
+
+    console.log('convertToMapValue', 'mapValue', mapValue, 'inputValue', inputValue);
 
     const mentionMappings = extractMentionMappings(mapValue);
+
+    console.log('mentionMappings', mentionMappings)
+
 
     if (mentionMappings.length === 0) {
         return inputValue;
     }
 
-    return applyMentionMappings(inputValue, mentionMappings);
+    const appliedMapValue = applyMentionMappings(inputValue, mentionMappings);
+
+    console.log('applyMentionMappings', appliedMapValue);
+
+    return appliedMapValue;
+};
+
+export const generateMapValue = (usernameMention: string, displayNameMention: string, mapValue: string, inputValue: string): string => {
+    const mentionMappings = extractMentionMappings(mapValue);
+
+    let result = inputValue;
+
+    for (const mapping of mentionMappings) {
+        const displayNamePattern = `@${mapping.displayName}`;
+        if (result.includes(displayNamePattern)) {
+            result = result.replace(displayNamePattern, mapping.fullMatch);
+        }
+    }
+
+    if (result.includes(usernameMention)) {
+        const newMentionTag = `${usernameMention}<x-name>${displayNameMention}</x-name>`;
+        result = result.replace(new RegExp(`${usernameMention}(?!<x-name>)`, 'g'), newMentionTag);
+    }
+
+    return result;
 };
 
 const extractMentionMappings = (mapValue: string): Array<{ fullMatch: string; username: string; displayName: string }> => {
@@ -64,6 +120,11 @@ const extractMentionMappings = (mapValue: string): Array<{ fullMatch: string; us
     let match;
 
     while ((match = regex.exec(mapValue)) !== null) {
+        const endIndex = regex.lastIndex;
+        const nextChar = mapValue[endIndex] || '';
+        if (nextChar !== ' ') {
+            continue;
+        }
         mappings.push({
             fullMatch: match[0],
             username: match[1],
@@ -101,7 +162,6 @@ const replaceFirstUnprocessed = (
         if (!processedPositions.has(foundIndex)) {
             const result = text.slice(0, foundIndex) + replacement + text.slice(foundIndex + pattern.length);
 
-            // Mark processed positions
             for (let i = foundIndex; i < foundIndex + replacement.length; i++) {
                 processedPositions.add(i);
             }
@@ -113,54 +173,3 @@ const replaceFirstUnprocessed = (
 
     return text;
 };
-
-export const generateMapValue = (usernameMention: string, displayNameMention: string, mapValue: string, inputValue: string): string => {
-    const insertionPoint = inputValue.indexOf(usernameMention);
-
-    if (insertionPoint === -1) {
-        return mapValue;
-    }
-
-    // Sync mapValue with inputValue if needed
-    const syncedMapValue = syncMapValueWithInput(mapValue, inputValue);
-    const adjustedInsertionPoint = calculateInsertionPoint(insertionPoint, syncedMapValue);
-
-    return insertMentionTag(syncedMapValue, adjustedInsertionPoint, usernameMention, displayNameMention);
-};
-
-const syncMapValueWithInput = (mapValue: string, inputValue: string): string => {
-    const mapTextContent = mapValue.replace(TAG_REGEX, '');
-
-    if (mapTextContent.length < inputValue.length) {
-        const additionalText = inputValue.slice(mapTextContent.length);
-        return mapValue + additionalText;
-    }
-
-    return mapValue;
-};
-
-const calculateInsertionPoint = (baseInsertionPoint: number, mapValue: string): number => {
-    const adjustedPoint = baseInsertionPoint;
-    const existingMentions = mapValue.match(TAG_REGEX) || [];
-
-    let tagOffset = 0;
-    for (const mention of existingMentions) {
-        const mentionStart = mapValue.indexOf(mention, tagOffset);
-        if (mentionStart < adjustedPoint + tagOffset) {
-            tagOffset += mention.length - mention.replace(/<\/?x-name>/g, '').length;
-        } else {
-            break;
-        }
-    }
-
-    return adjustedPoint + tagOffset;
-};
-
-const insertMentionTag = (mapValue: string, insertionPoint: number, usernameMention: string, displayNameMention: string): string => {
-    const before = mapValue.slice(0, insertionPoint + usernameMention.length);
-    const after = mapValue.slice(insertionPoint + usernameMention.length);
-    const nameTag = `<x-name>${displayNameMention}</x-name>`;
-
-    return before + nameTag + after;
-};
-
