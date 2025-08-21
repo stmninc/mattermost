@@ -328,6 +328,28 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
     };
 
     /**
+     * Calculate cursor position after mention replacement
+     */
+    private calculateCursorPositionAfterMention = (
+        textValue: string,
+        username: string,
+        displayName: string
+    ): number => {
+        const usernameIndex = textValue.indexOf(username);
+        if (usernameIndex === -1) {
+            return textValue.length;
+        }
+        
+        // Position after username + space character
+        const basePosition = usernameIndex + username.length + 1;
+        
+        // Adjust for the difference in length between username and display name
+        const lengthDifference = displayName.length - username.length;
+        
+        return basePosition + lengthDifference;
+    };
+
+    /**
      * Handles when a mention suggestion is selected
      * Stores information about mentions explicitly selected by the user
      */
@@ -338,24 +360,26 @@ export default class Textbox extends React.PureComponent<Props, TextboxState> {
             const { usersByUsername = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME } = this.props;
 
             const textBox = this.getInputBox();
-            // 現在のカーソルの位置を取得
-            let cursorPosition = textBox?.selectionStart || 0;
-            console.log('cursorPosition: before', cursorPosition)
-            // item.usernameとdisplayNameの文字数の差異に応じて、cursorPositionを調整
-            const displayName = displayUsername(item, teammateNameDisplay, false);
-            cursorPosition += item.username.length - displayName.length;
+            const textBoxValue = textBox.value;
+            
+            // Calculate cursor position after mention replacement
+            const cursorPosition = this.calculateCursorPositionAfterMention(
+                textBoxValue,
+                item.username,
+                displayUsername(item, teammateNameDisplay, false)
+            );
 
-            console.log('cursorPosition: after', cursorPosition)
+            const newRawValue = generateRawValue(this.state.rawValue, textBoxValue, usersByUsername, teammateNameDisplay);
 
-            const newRawValue = generateRawValue(this.state.rawValue, textBox.value, usersByUsername, teammateNameDisplay);
-
-            // console.log('newRawValue', newRawValue)
             // console.log('newDisplayValue', convertToDisplayName(newRawValue, this.props.usersByUsername, this.props.teammateNameDisplay))
             const newDisplayValue = convertToDisplayName(newRawValue, usersByUsername, teammateNameDisplay);
 
             // カーソルの位置を更新
             // Utils.setCaretPosition(textbox, prefix.length + term.length + 1);
-            Utils.setCaretPosition(textBox, cursorPosition);
+            
+            window.requestAnimationFrame(() => {
+                Utils.setCaretPosition(textBox, cursorPosition);
+            });
 
     //         const textbox = this.getInputBox();
     //          const currentValue = textbox?.value || '';
