@@ -2,6 +2,7 @@
 // See LICENSE.txt for license information.
 
 import type {UserProfile} from '@mattermost/types/users';
+import { mapValues } from 'lodash';
 
 import {Preferences} from 'mattermost-redux/constants';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
@@ -148,8 +149,70 @@ const replaceFirstUnprocessed = (
 //     return result;
 // };
 
+export const extractMentionMapMappings = (mapValue: string): Array<{ fullMatch: string; username: string; }> => {
+    const mappings: Array<{ fullMatch: string; username: string; }> = [];
+    // mapValue = @user-123<x-name>@田中 太郎</x-name> こんにちは
+    // の場合は、{fullMatch: '@user-123<x-name>@田中 太郎</x-name>', username: 'user-123'}
+    const regex = /@([a-zA-Z0-9.\-_]+)<x-name>.*?<\/x-name>/g;
+    let match;
+
+    while ((match = regex.exec(mapValue)) !== null) {
+        console.log('matchMapValue', match);
+        mappings.push({
+            fullMatch: match[0],
+            username: match[1]
+        });
+    }
+
+    return mappings;
+}
+
+export const convertRawValue = (mapValue: string, inputValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
+    const mentionMappings = extractMentionMapMappings(mapValue);
+    console.log('convertRawValue called with:', 'mentionMappings', mentionMappings, 'mapValue', mapValue);
+
+    let result = inputValue
+    const replacedPositions = new Set<number>();
+
+    for (const mapping of mentionMappings) {
+        const user = usersByUsername[mapping.username];
+        const displayName = displayUsername(user, teammateNameDisplay, false);
+        const replacement = mapping.username
+
+        // userが存在しない場合はなにもしない
+        if (!user) {
+            continue;
+        }
+
+        // メンションの前後にスペースまたは日本語文字があるかチェック
+        const mentionPattern = `@${displayName}`;
+        const mentionIndex = result.indexOf(mentionPattern);
+        
+        if (mentionIndex !== -1) {
+            const beforeMentionIndex = mentionIndex - 1;
+            const afterMentionIndex = mentionIndex + mentionPattern.length;
+            const charBeforeMention = result.charAt(beforeMentionIndex);
+            const charAfterMention = result.charAt(afterMentionIndex);
+            
+            // メンションの前が文字列の開始またはスペース・改行・日本語文字で、
+            // かつメンションの後が文字列の終端またはスペース・改行・日本語文字の場合置換
+            const beforeValid = mentionIndex === 0 || /[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(charBeforeMention);
+            const afterValid = afterMentionIndex === result.length || /[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(charAfterMention);
+            
+            if (beforeValid && afterValid) {
+                result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
+            }
+        }
+    }
+
+    console.log('convertRawValue result', result)
+
+    return result;
+};
+
 export const generateRawValue = (rawValue: string, inputValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     const mentionMappings = extractMentionRawMappings(rawValue);
+    console.log('generateRawValue called with:', 'mentionMappings', mentionMappings, 'mapValue', rawValue);
 
     let result = inputValue
     const replacedPositions = new Set<number>();
@@ -167,8 +230,26 @@ export const generateRawValue = (rawValue: string, inputValue: string, usersByUs
         result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
     }
 
+    console.log('Final result after generateRawValue:', result);
+
     return result;
 };
+
+export const generateMapValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME ): string => {
+    // 1. rawValue = @user-123 Hi, How are you. @user-456
+    // 2. result = @user-123<x-name>@田中 太郎</x-name> Hi, How are you. @user-456<x-name>@田中 次郎</x-name>
+    const mentionMappings = extractMentionRawMappings(rawValue);
+
+    let result = rawValue
+    const replacedPositions = new Set<number>();
+    
+    for (const mapping of mentionMappings) {
+        const user = usersByUsername[mapping.username];
+        const displayName = displayUsername(user, teammateNameDisplay, false);
+        result = replaceFirstUnprocessed(result, mapping.fullMatch, `@${mapping.username}<x-name>@${displayName}</x-name>`, replacedPositions);
+    }
+    return result;
+}
 
 const extractMentionRawMappings = (rawValue: string): Array<{ fullMatch: string; username: string; }> => {
     const mappings: Array<{ fullMatch: string; username: string; }> = [];
