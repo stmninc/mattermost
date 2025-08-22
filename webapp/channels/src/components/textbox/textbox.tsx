@@ -74,6 +74,8 @@ export type Props = {
     hasLabels?: boolean;
     hasError?: boolean;
     isInEditMode?: boolean;
+    usersByUsername?: Record<string, UserProfile>;
+    teammateNameDisplay?: string;
 };
 
 const VISIBLE = {visibility: 'visible'};
