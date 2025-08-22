@@ -23,6 +23,7 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
+import {initializeMapValueFromInputValue, convertToDisplayValueFromMapValue} from 'components/textbox/util';
 
 import * as Utils from 'utils/utils';
 
@@ -147,9 +148,11 @@ export default class Textbox extends React.PureComponent<Props> {
         this.preview = React.createRef();
         this.textareaRef = React.createRef();
 
+        const mapValue = initializeMapValueFromInputValue(props.value, props.usersByUsername, props.teammateNameDisplay);
+
         this.state = {
-            mapValue: props.value,
-            displayValue: props.value,
+            mapValue: mapValue,
+            displayValue: convertToDisplayValueFromMapValue(mapValue),
             rawValue: props.value,
         };
     }
