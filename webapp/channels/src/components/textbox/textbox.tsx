@@ -23,7 +23,7 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
-import {initializeMapValueFromInputValue, convertToDisplayValueFromMapValue} from 'components/textbox/util';
+import {initializeMapValueFromInputValue, convertToDisplayValueFromMapValue, updateStateWhenSuggestionSelected} from 'components/textbox/util';
 
 import * as Utils from 'utils/utils';
 
@@ -267,10 +267,6 @@ export default class Textbox extends React.PureComponent<Props> {
         return this.message.current?.getTextbox();
     };
 
-    getRawValue = () => {
-        return this.state.displayValue;
-    }
-
     focus = () => {
         const textbox = this.getInputBox();
         if (textbox) {
@@ -292,6 +288,25 @@ export default class Textbox extends React.PureComponent<Props> {
     getStyle = () => {
         return this.props.preview ? HIDDEN : VISIBLE;
     };
+
+    getRawValue = () => {
+        return this.state.displayValue;
+    }
+
+    handleSuggestionSelected = (item: any) => {
+        const textBox = this.getInputBox();
+        const textBoxValue = textBox?.value || '';
+        updateStateWhenSuggestionSelected(
+            item, 
+            textBoxValue, 
+            this.getRawValue(), 
+            this.props.usersByUsername, 
+            this.props.teammateNameDisplay, 
+            this.setState.bind(this),
+            textBox,
+            1 // カーソル位置
+        );
+    }
 
     render() {
         let textboxClassName = 'form-control custom-textarea textbox-edit-area';
@@ -358,6 +373,7 @@ export default class Textbox extends React.PureComponent<Props> {
                     contextId={this.props.channelId}
                     openWhenEmpty={this.props.openWhenEmpty}
                     alignWithTextbox={this.props.alignWithTextbox}
+                    onItemSelected={this.handleSuggestionSelected}
                 />
             </div>
         );
