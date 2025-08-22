@@ -79,11 +79,24 @@ export type Props = {
 const VISIBLE = {visibility: 'visible'};
 const HIDDEN = {visibility: 'hidden'};
 
+interface TextboxState {
+    mapValue: string;
+    displayValue: string;
+    rawValue: string;
+}
+
 export default class Textbox extends React.PureComponent<Props> {
     private readonly suggestionProviders: Provider[];
     private readonly wrapper: React.RefObject<HTMLDivElement>;
     private readonly message: React.RefObject<SuggestionBoxComponent>;
     private readonly preview: React.RefObject<HTMLDivElement>;
+    private readonly textareaRef: React.RefObject<HTMLTextAreaElement>;
+
+    state: TextboxState = {
+        mapValue: '',
+        displayValue: '',
+        rawValue: '',
+    };
 
     static defaultProps = {
         supportsCommands: true,
@@ -130,6 +143,13 @@ export default class Textbox extends React.PureComponent<Props> {
         this.wrapper = React.createRef();
         this.message = React.createRef();
         this.preview = React.createRef();
+        this.textareaRef = React.createRef();
+
+        this.state = {
+            mapValue: props.value,
+            displayValue: props.value,
+            rawValue: props.value,
+        };
     }
 
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,6 +261,10 @@ export default class Textbox extends React.PureComponent<Props> {
     getInputBox = () => {
         return this.message.current?.getTextbox();
     };
+
+    getRawValue = () => {
+        return this.state.displayValue;
+    }
 
     focus = () => {
         const textbox = this.getInputBox();

@@ -363,6 +363,16 @@ const AdvancedTextEditor = ({
     );
 
     const handleSubmitWithErrorHandling = useCallback((submittingDraft?: PostDraft, schedulingInfo?: SchedulingInfo, options?: CreatePostOptions) => {
+        let finalDraft = submittingDraft || draft;
+
+        if (textboxRef.current && typeof textboxRef.current.getRawValue === 'function') {
+            const rawValue = textboxRef.current.getRawValue();
+            finalDraft = {
+                ...finalDraft,
+                message: rawValue,
+            };
+        }
+
         handleSubmit(submittingDraft, schedulingInfo, options);
         if (!errorClass) {
             const messageStatusElement = messageStatusRef.current;
@@ -373,7 +383,7 @@ const AdvancedTextEditor = ({
                 messageStatusElement!.textContent = 'Message Sent';
             }
         }
-    }, [errorClass, handleSubmit]);
+    }, [errorClass, handleSubmit, draft, textboxRef]);
 
     const handleCancel = useCallback(() => {
         handleDraftChange({
