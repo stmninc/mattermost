@@ -35,7 +35,6 @@ export const updateStateWhenSuggestionSelected = (
     teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME,
     setState: (state: any, callback?: () => void) => void,
     textBox?: HTMLInputElement | HTMLTextAreaElement | null,
-    caretPosition = 1,
 ) => {
     if (!usersByUsername) {
         return;
@@ -50,6 +49,12 @@ export const updateStateWhenSuggestionSelected = (
             textBox.value = newDisplayValue;
         }
 
+        const cursorPosition = calculateCursorPositionAfterMention(
+            inputValue,
+            item.username,
+            displayUsername(item, teammateNameDisplay, false)
+        );
+
         setState({
             rawValue: newRawValue,
             mapValue: newMapValue,
@@ -57,7 +62,7 @@ export const updateStateWhenSuggestionSelected = (
         }, () => {
             window.requestAnimationFrame(() => {
                 if (textBox) {
-                    Utils.setCaretPosition(textBox, caretPosition);
+                    Utils.setCaretPosition(textBox, cursorPosition);
                 }
             });
         });
@@ -142,4 +147,21 @@ const replaceFirstUnprocessed = (
     }
 
     return text;
+};
+
+const calculateCursorPositionAfterMention = (
+    textValue: string,
+    username: string,
+    displayName: string
+): number => {
+    const usernameIndex = textValue.indexOf(username);
+    if (usernameIndex === -1) {
+        return textValue.length;
+    }
+
+    const basePosition = usernameIndex + username.length + 1;
+
+    const lengthDifference = displayName.length - username.length;
+
+    return basePosition + lengthDifference;
 };

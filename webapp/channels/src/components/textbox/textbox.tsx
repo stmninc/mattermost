@@ -303,8 +303,7 @@ export default class Textbox extends React.PureComponent<Props> {
             this.props.usersByUsername, 
             this.props.teammateNameDisplay, 
             this.setState.bind(this),
-            textBox,
-            1 // カーソル位置
+            textBox
         );
     }
 
