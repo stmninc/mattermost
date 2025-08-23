@@ -1,3 +1,4 @@
+import React from 'react';
 import type {UserProfile} from '@mattermost/types/users';
 import {Preferences} from 'mattermost-redux/constants';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
@@ -104,13 +105,13 @@ export const updateStateWhenOnChanged = (mapValue: string, usersByUsername: Reco
     const newRawValue = convertRawValue(mapValue, inputValue, usersByUsername, teammateNameDisplay);
     const newMapValue = generateMapValue(newRawValue, usersByUsername, teammateNameDisplay);
     const newDisplayValue = convertToDisplayValueFromMapValue(newMapValue);
-
-    console.log('updateStateWhenOnChanged', 'mapValue', newMapValue, 'displayValue', newDisplayValue, 'rawValue', newRawValue);
+    const newMentionHighlights = calculateMentionPositions(newMapValue, newDisplayValue);
 
     setState({
         mapValue: newMapValue,
         rawValue: newRawValue,
         displayValue: newDisplayValue,
+        mentionHighlights: newMentionHighlights
     });
 
     const syntheticEvent = {
@@ -130,6 +131,7 @@ export const resetState = (prevProps: any, setState: (state: any) => void, curre
             mapValue: '',
             displayValue: '',
             rawValue: '',
+            mentionHighlights: [],
         });
     }
 
@@ -141,6 +143,7 @@ export const resetState = (prevProps: any, setState: (state: any) => void, curre
                 rawValue: value,
                 mapValue: mapValue,
                 displayValue: displayValue,
+                mentionHighlights: calculateMentionPositions(mapValue, displayValue)
             });
         }
 
@@ -149,8 +152,83 @@ export const resetState = (prevProps: any, setState: (state: any) => void, curre
             rawValue: "",
             mapValue: "",
             displayValue: "",
+            mentionHighlights: [],
         });
     }
+};
+
+export const calculateMentionPositions = (mapValue: string, displayValue: string): Array<{start: number; end: number; username: string}> => {
+    const positions: Array<{start: number; end: number; username: string}> = [];
+    const mapMentionRegex = /@([a-zA-Z0-9.\-_]+)<x-name>@([^<]+)<\/x-name>/g;
+    let mapMatch;
+
+    while ((mapMatch = mapMentionRegex.exec(mapValue)) !== null) {
+        const username = mapMatch[1];
+        const displayName = mapMatch[2];
+
+        // displayValue内でこのメンションの位置を探す
+        const displayMentionPattern = `@${displayName}`;
+        let searchStartIndex = 0;
+        let displayIndex = displayValue.indexOf(displayMentionPattern, searchStartIndex);
+
+        while (displayIndex !== -1) {
+            // 既に処理された位置でないかチェック
+            const isAlreadyProcessed = positions.some(pos => 
+                displayIndex >= pos.start && displayIndex < pos.end
+            );
+
+            if (!isAlreadyProcessed) {
+                positions.push({
+                    start: displayIndex,
+                    end: displayIndex + displayMentionPattern.length,
+                    username: username
+                });
+                break; // 最初の一致のみを処理
+            }
+
+            // 次の一致を探す
+            searchStartIndex = displayIndex + 1;
+            displayIndex = displayValue.indexOf(displayMentionPattern, searchStartIndex);
+        }
+    };
+    return positions;
+}
+
+export const renderMentionOverlay = (
+    textbox: HTMLTextAreaElement | null, 
+    mentionHighlights: Array<{start: number; end: number; username: string}>, 
+    displayValue: string
+): JSX.Element | null => {
+    if (!textbox || mentionHighlights.length === 0) {
+        return null;
+    }
+
+    const computedStyle = window.getComputedStyle(textbox);
+    const overlayStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        pointerEvents: 'none',
+        color: 'transparent',
+        backgroundColor: 'transparent',
+        border: 'transparent',
+        fontFamily: computedStyle.fontFamily,
+        fontSize: computedStyle.fontSize,
+        lineHeight: computedStyle.lineHeight,
+        padding: computedStyle.padding,
+        whiteSpace: 'pre-wrap',
+        wordWrap: 'break-word',
+        overflow: 'hidden',
+        zIndex: 1,
+    };
+
+    return (
+        <div style={overlayStyle} className="mention-overlay">
+            {renderHighlightedText(mentionHighlights, displayValue)}
+        </div>
+    );
 };
 
 const generateMapValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME ): string => {
@@ -263,7 +341,7 @@ const convertRawValue = (mapValue: string, inputValue: string, usersByUsername: 
     return result;
 };
 
-export const extractMentionMapMappings = (mapValue: string): Array<{ fullMatch: string; username: string; }> => {
+const extractMentionMapMappings = (mapValue: string): Array<{ fullMatch: string; username: string; }> => {
     const mappings: Array<{ fullMatch: string; username: string; }> = [];
     const regex = /@([a-zA-Z0-9.\-_]+)<x-name>.*?<\/x-name>/g;
     let match;
@@ -278,3 +356,45 @@ export const extractMentionMapMappings = (mapValue: string): Array<{ fullMatch: 
 
     return mappings;
 }
+
+const renderHighlightedText = (mentionHighlights: Array<{start: number; end: number; username: string}>, displayValue: string) => {
+    const parts: JSX.Element[] = [];
+    let lastIndex = 0;
+
+    mentionHighlights.forEach((highlight, index) => {
+        // 通常のテキスト部分
+        if (highlight.start > lastIndex) {
+            parts.push(
+                <span key={`text-${index}`} style={{ color: 'transparent' }}>
+                    {displayValue.substring(lastIndex, highlight.start)}
+                </span>
+            );
+        }
+
+        // メンション部分（青色でハイライト）
+        parts.push(
+            <span 
+                key={`mention-${index}`} 
+                className="mention-highlight"
+                style={{
+                    color: Preferences.THEMES.denim.linkColor, // メンションの色をテーマに合わせる
+                }}
+            >
+                {displayValue.substring(highlight.start, highlight.end)}
+            </span>
+        );
+
+        lastIndex = highlight.end;
+    });
+
+    // 最後の通常テキスト部分
+    if (lastIndex < displayValue.length) {
+        parts.push(
+            <span key="text-final" style={{ color: 'transparent' }}>
+                {displayValue.substring(lastIndex)}
+            </span>
+        );
+    }
+
+    return parts;
+};
