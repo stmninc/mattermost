@@ -94,6 +94,65 @@ export const generateRawValue = (rawValue: string, inputValue: string, usersByUs
     return result;
 };
 
+export const updateStateWhenOnChanged = (mapValue: string, usersByUsername: Record<string, UserProfile> | undefined, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME, setState: (state: any) => void, e: React.ChangeEvent<HTMLInputElement>, onChange: (event: React.ChangeEvent<HTMLInputElement>) => void) => {
+    const inputValue = e.target.value;
+
+    if (!usersByUsername) {
+        return;
+    }
+
+    const newRawValue = convertRawValue(mapValue, inputValue, usersByUsername, teammateNameDisplay);
+    const newMapValue = generateMapValue(newRawValue, usersByUsername, teammateNameDisplay);
+    const newDisplayValue = convertToDisplayValueFromMapValue(newMapValue);
+
+    console.log('updateStateWhenOnChanged', 'mapValue', newMapValue, 'displayValue', newDisplayValue, 'rawValue', newRawValue);
+
+    setState({
+        mapValue: newMapValue,
+        rawValue: newRawValue,
+        displayValue: newDisplayValue,
+    });
+
+    const syntheticEvent = {
+        ...e,
+        target: {
+            ...e.target,
+            value: newRawValue,
+        },
+    } as React.ChangeEvent<HTMLInputElement>;
+
+    onChange(syntheticEvent);
+};
+
+export const resetState = (prevProps: any, setState: (state: any) => void, currentChannelId: string, value: string, usersByUsername: Record<string, UserProfile> | undefined, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME) => {
+    if (prevProps.channelId !== currentChannelId) {
+        setState({
+            mapValue: '',
+            displayValue: '',
+            rawValue: '',
+        });
+    }
+
+    if (prevProps.value !== value && value.length > 0 && prevProps.value.length === 0 && usersByUsername) {
+            const mapValue = generateMapValue(value, usersByUsername, teammateNameDisplay);
+            const displayValue = initializeMapValueFromInputValue(value, usersByUsername, teammateNameDisplay);
+
+            setState({
+                rawValue: value,
+                mapValue: mapValue,
+                displayValue: displayValue,
+            });
+        }
+
+    if (prevProps.value !== value && value.length === 0 && prevProps.value.length > 0) {
+        setState({
+            rawValue: "",
+            mapValue: "",
+            displayValue: "",
+        });
+    }
+};
+
 const generateMapValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME ): string => {
     const mentionMappings = extractMentionRawMappings(rawValue);
 
@@ -165,3 +224,57 @@ const calculateCursorPositionAfterMention = (
 
     return basePosition + lengthDifference;
 };
+
+const convertRawValue = (mapValue: string, inputValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
+    const mentionMappings = extractMentionMapMappings(mapValue);
+
+    let result = inputValue
+    const replacedPositions = new Set<number>();
+
+    for (const mapping of mentionMappings) {
+        const user = usersByUsername[mapping.username];
+        const displayName = displayUsername(user, teammateNameDisplay, false);
+        const replacement = mapping.username
+
+        if (!user) {
+            continue;
+        }
+
+        const mentionPattern = `@${displayName}`;
+        const mentionIndex = result.indexOf(mentionPattern);
+
+        if (mentionIndex !== -1) {
+            const beforeMentionIndex = mentionIndex - 1;
+            const afterMentionIndex = mentionIndex + mentionPattern.length;
+            const charBeforeMention = result.charAt(beforeMentionIndex);
+            const charAfterMention = result.charAt(afterMentionIndex);
+
+            // メンションの前が文字列の開始またはスペース・改行・日本語文字で、
+            // かつメンションの後が文字列の終端またはスペース・改行・日本語文字の場合置換
+            const beforeValid = mentionIndex === 0 || /[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(charBeforeMention);
+            const afterValid = afterMentionIndex === result.length || /[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(charAfterMention);
+
+            if (beforeValid && afterValid) {
+                result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
+            }
+        }
+    }
+
+    return result;
+};
+
+export const extractMentionMapMappings = (mapValue: string): Array<{ fullMatch: string; username: string; }> => {
+    const mappings: Array<{ fullMatch: string; username: string; }> = [];
+    const regex = /@([a-zA-Z0-9.\-_]+)<x-name>.*?<\/x-name>/g;
+    let match;
+
+    while ((match = regex.exec(mapValue)) !== null) {
+        console.log('matchMapValue', match);
+        mappings.push({
+            fullMatch: match[0],
+            username: match[1]
+        });
+    }
+
+    return mappings;
+}

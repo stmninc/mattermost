@@ -23,7 +23,7 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
-import {initializeMapValueFromInputValue, convertToDisplayValueFromMapValue, updateStateWhenSuggestionSelected} from 'components/textbox/util';
+import {initializeMapValueFromInputValue, convertToDisplayValueFromMapValue, updateStateWhenSuggestionSelected, updateStateWhenOnChanged, resetState} from 'components/textbox/util';
 
 import * as Utils from 'utils/utils';
 
@@ -150,6 +150,10 @@ export default class Textbox extends React.PureComponent<Props> {
 
         const mapValue = initializeMapValueFromInputValue(props.value, props.usersByUsername, props.teammateNameDisplay);
 
+        console.log('mapValue', mapValue);
+        console.log('displayValue', convertToDisplayValueFromMapValue(mapValue));
+        console.log('rawValue', props.value);
+
         this.state = {
             mapValue: mapValue,
             displayValue: convertToDisplayValueFromMapValue(mapValue),
@@ -158,7 +162,17 @@ export default class Textbox extends React.PureComponent<Props> {
     }
 
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.onChange(e);
+        console.log('handleChange: before', 'mapValue', this.state.mapValue, 'displayValue', this.state.displayValue, 'rawValue', this.state.rawValue);
+        updateStateWhenOnChanged(
+            this.state.mapValue,
+            this.props.usersByUsername,
+            this.props.teammateNameDisplay,
+            this.setState.bind(this),
+            e,
+            this.props.onChange
+        );
+        console.log('handleChange: after', 'mapValue', this.state.mapValue, 'displayValue', this.state.displayValue, 'rawValue', this.state.rawValue);
+
     };
 
     updateSuggestions(prevProps: Props) {
@@ -226,6 +240,7 @@ export default class Textbox extends React.PureComponent<Props> {
             this.preview.current?.focus();
         }
         this.updateSuggestions(prevProps);
+        resetState(prevProps, this.setState.bind(this), this.props.channelId, this.props.value, this.props.usersByUsername, this.props.teammateNameDisplay);
     }
 
     checkMessageLength = (message: string) => {
@@ -305,6 +320,7 @@ export default class Textbox extends React.PureComponent<Props> {
             this.setState.bind(this),
             textBox
         );
+        console.log('handleSuggestionSelected: after', 'mapValue', this.state.mapValue, 'displayValue', this.state.displayValue, 'rawValue', this.state.rawValue);
     }
 
     render() {
@@ -366,7 +382,7 @@ export default class Textbox extends React.PureComponent<Props> {
                     listComponent={this.props.suggestionList}
                     listPosition={this.props.suggestionListPosition}
                     providers={this.suggestionProviders}
-                    value={this.props.value}
+                    value={this.state.displayValue}
                     renderDividers={ALL}
                     disabled={this.props.disabled}
                     contextId={this.props.channelId}
