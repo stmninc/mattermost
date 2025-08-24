@@ -265,7 +265,7 @@ export const resetState = (prevProps: any, setState: (state: any) => void, curre
 
     if (prevProps.value !== value && value.length > 0 && prevProps.value.length === 0 && usersByUsername) {
         const mapValue = generateMapValueFromRawValue(value, usersByUsername, teammateNameDisplay);
-        const displayValue = generateMapValueFromInputValue(value, usersByUsername, teammateNameDisplay);
+        const displayValue = generateDisplayValueFromMapValue(mapValue);
 
         setState({
             rawValue: value,
