@@ -376,7 +376,7 @@ const AdvancedTextEditor = ({
             };
         }
 
-        handleSubmit(submittingDraft, schedulingInfo, options);
+        handleSubmit(finalDraft, schedulingInfo, options);
         if (!errorClass) {
             const messageStatusElement = messageStatusRef.current;
             const messageStatusInnerText = messageStatusElement?.textContent;

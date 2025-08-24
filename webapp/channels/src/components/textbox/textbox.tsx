@@ -24,9 +24,10 @@ import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
 import {generateMapValueFromInputValue, generateDisplayValueFromMapValue, updateStateWhenSuggestionSelected, updateStateWhenOnChanged, resetState, calculateMentionPositions} from 'components/textbox/util';
-import {renderMentionOverlay} from './hilight';
 
 import * as Utils from 'utils/utils';
+
+import {renderMentionOverlay} from './hilight';
 
 import type {TextboxElement} from './index';
 
@@ -153,10 +154,10 @@ export default class Textbox extends React.PureComponent<Props> {
         const displayValue = generateDisplayValueFromMapValue(mapValue);
 
         this.state = {
-            mapValue: mapValue,
-            displayValue: displayValue,
+            mapValue,
+            displayValue,
             rawValue: props.value,
-            mentionHighlights: calculateMentionPositions(mapValue, displayValue)
+            mentionHighlights: calculateMentionPositions(mapValue, displayValue),
         };
     }
 
@@ -167,7 +168,7 @@ export default class Textbox extends React.PureComponent<Props> {
             this.props.teammateNameDisplay,
             this.setState.bind(this),
             e,
-            this.props.onChange
+            this.props.onChange,
         );
     };
 
@@ -302,21 +303,21 @@ export default class Textbox extends React.PureComponent<Props> {
 
     getRawValue = () => {
         return this.state.rawValue;
-    }
+    };
 
     handleSuggestionSelected = (item: any) => {
         const textBox = this.getInputBox();
         const textBoxValue = textBox?.value || '';
         updateStateWhenSuggestionSelected(
-            item, 
-            textBoxValue, 
-            this.getRawValue(), 
-            this.props.usersByUsername, 
-            this.props.teammateNameDisplay, 
+            item,
+            textBoxValue,
+            this.getRawValue(),
+            this.props.usersByUsername,
+            this.props.teammateNameDisplay,
             this.setState.bind(this),
-            textBox
+            textBox,
         );
-    }
+    };
 
     render() {
         let textboxClassName = 'form-control custom-textarea textbox-edit-area';

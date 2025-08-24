@@ -1,5 +1,8 @@
+// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
 
 import type {UserProfile} from '@mattermost/types/users';
+
 import {Preferences} from 'mattermost-redux/constants';
 import {displayUsername} from 'mattermost-redux/utils/user_utils';
 
@@ -28,9 +31,9 @@ export const generateMapValueFromInputValue = (inputValue: string, usersByUserna
             const displayUserName = displayUsername(user, teammateNameDisplay, false);
             return `@${username}<x-name>@${displayUserName}</x-name>`;
         }
-        return match
+        return match;
     });
-}
+};
 
 /**
  * Generates a display value from the map value by replacing mention tags with their display names.
@@ -44,7 +47,7 @@ export const generateDisplayValueFromMapValue = (mapValue: string): string => {
     return mapValue.replace(new RegExp(MENTION_REGEX.source, 'g'), (_, username, displayName) => {
         return `@${displayName}`;
     });
-}
+};
 
 /**
  * Generates a raw value from the input value by replacing usernames with their raw values.
@@ -61,13 +64,13 @@ export const generateDisplayValueFromMapValue = (mapValue: string): string => {
 export const generateRawValueFromInputValue = (rawValue: string, inputValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     const mentionMappings = extractMentionRawMappings(rawValue);
 
-    let result = inputValue
+    let result = inputValue;
     const replacedPositions = new Set<number>();
 
     for (const mapping of mentionMappings) {
         const user = usersByUsername[mapping.username];
         const displayName = displayUsername(user, teammateNameDisplay, false);
-        const replacement = mapping.username
+        const replacement = mapping.username;
 
         if (!user) {
             continue;
@@ -89,10 +92,10 @@ export const generateRawValueFromInputValue = (rawValue: string, inputValue: str
  * // rawValue: "Hello @john_doe"
  * // return: "Hello @john_doe<x-name>@John Doe</x-name>"
  */
-export const generateMapValueFromRawValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME ): string => {
+export const generateMapValueFromRawValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     const mentionMappings = extractMentionRawMappings(rawValue);
 
-    let result = rawValue
+    let result = rawValue;
     const replacedPositions = new Set<number>();
 
     for (const mapping of mentionMappings) {
@@ -101,7 +104,7 @@ export const generateMapValueFromRawValue = (rawValue: string, usersByUsername: 
         result = replaceFirstUnprocessed(result, mapping.fullMatch, `@${mapping.username}<x-name>@${displayName}</x-name>`, replacedPositions);
     }
     return result;
-}
+};
 
 /**
  * Generates a raw value from the map value by replacing mention tags with their raw usernames.
@@ -118,13 +121,13 @@ export const generateMapValueFromRawValue = (rawValue: string, usersByUsername: 
 export const generateRawValueFromMapValue = (mapValue: string, inputValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     const mentionMappings = extractMentionMapMappings(mapValue);
 
-    let result = inputValue
+    let result = inputValue;
     const replacedPositions = new Set<number>();
 
     for (const mapping of mentionMappings) {
         const user = usersByUsername[mapping.username];
         const displayName = displayUsername(user, teammateNameDisplay, false);
-        const replacement = mapping.username
+        const replacement = mapping.username;
 
         if (!user) {
             continue;
@@ -138,8 +141,8 @@ export const generateRawValueFromMapValue = (mapValue: string, inputValue: strin
             const afterMentionIndex = mentionIndex + mentionPattern.length;
             const charBeforeMention = result.charAt(beforeMentionIndex);
             const charAfterMention = result.charAt(afterMentionIndex);
-            const beforeValid = mentionIndex === 0 || /[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(charBeforeMention);
-            const afterValid = afterMentionIndex === result.length || /[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(charAfterMention);
+            const beforeValid = mentionIndex === 0 || (/[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(charBeforeMention);
+            const afterValid = afterMentionIndex === result.length || (/[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(charAfterMention);
 
             if (beforeValid && afterValid) {
                 result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
@@ -161,10 +164,10 @@ export const generateRawValueFromMapValue = (mapValue: string, inputValue: strin
  * @param textBox - The text box element.
  */
 export const updateStateWhenSuggestionSelected = (
-    item: any, 
-    inputValue: string, 
-    rawValue: string, 
-    usersByUsername: Record<string, UserProfile> | undefined, 
+    item: any,
+    inputValue: string,
+    rawValue: string,
+    usersByUsername: Record<string, UserProfile> | undefined,
     teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME,
     setState: (state: any, callback?: () => void) => void,
     textBox?: HTMLInputElement | HTMLTextAreaElement | null,
@@ -177,7 +180,6 @@ export const updateStateWhenSuggestionSelected = (
         const newMapValue = generateMapValueFromRawValue(newRawValue, usersByUsername, teammateNameDisplay);
         const newDisplayValue = generateDisplayValueFromMapValue(newMapValue);
 
-
         if (textBox && textBox.value !== newDisplayValue) {
             textBox.value = newDisplayValue;
         }
@@ -185,7 +187,7 @@ export const updateStateWhenSuggestionSelected = (
         const cursorPosition = calculateCursorPositionAfterMention(
             inputValue,
             item.username,
-            displayUsername(item, teammateNameDisplay, false)
+            displayUsername(item, teammateNameDisplay, false),
         );
 
         setState({
@@ -200,7 +202,7 @@ export const updateStateWhenSuggestionSelected = (
             });
         });
     }
-}
+};
 
 /**
  * Updates the component state when the input value changes.
@@ -228,7 +230,7 @@ export const updateStateWhenOnChanged = (mapValue: string, usersByUsername: Reco
         mapValue: newMapValue,
         rawValue: newRawValue,
         displayValue: newDisplayValue,
-        mentionHighlights: newMentionHighlights
+        mentionHighlights: newMentionHighlights,
     });
 
     const syntheticEvent = {
@@ -262,22 +264,22 @@ export const resetState = (prevProps: any, setState: (state: any) => void, curre
     }
 
     if (prevProps.value !== value && value.length > 0 && prevProps.value.length === 0 && usersByUsername) {
-            const mapValue = generateMapValueFromRawValue(value, usersByUsername, teammateNameDisplay);
-            const displayValue = generateMapValueFromInputValue(value, usersByUsername, teammateNameDisplay);
+        const mapValue = generateMapValueFromRawValue(value, usersByUsername, teammateNameDisplay);
+        const displayValue = generateMapValueFromInputValue(value, usersByUsername, teammateNameDisplay);
 
-            setState({
-                rawValue: value,
-                mapValue: mapValue,
-                displayValue: displayValue,
-                mentionHighlights: calculateMentionPositions(mapValue, displayValue)
-            });
-        }
+        setState({
+            rawValue: value,
+            mapValue,
+            displayValue,
+            mentionHighlights: calculateMentionPositions(mapValue, displayValue),
+        });
+    }
 
     if (prevProps.value !== value && value.length === 0 && prevProps.value.length > 0) {
         setState({
-            rawValue: "",
-            mapValue: "",
-            displayValue: "",
+            rawValue: '',
+            mapValue: '',
+            displayValue: '',
             mentionHighlights: [],
         });
     }
@@ -303,15 +305,16 @@ export const calculateMentionPositions = (mapValue: string, displayValue: string
         let displayIndex = displayValue.indexOf(displayMentionPattern, searchStartIndex);
 
         while (displayIndex !== -1) {
-            const isAlreadyProcessed = positions.some(pos => 
-                displayIndex >= pos.start && displayIndex < pos.end
+            const currentDisplayIndex = displayIndex;
+            const isAlreadyProcessed = positions.some((pos) =>
+                currentDisplayIndex >= pos.start && currentDisplayIndex < pos.end,
             );
 
             if (!isAlreadyProcessed) {
                 positions.push({
                     start: displayIndex,
                     end: displayIndex + displayMentionPattern.length,
-                    username: username
+                    username,
                 });
                 break;
             }
@@ -319,24 +322,24 @@ export const calculateMentionPositions = (mapValue: string, displayValue: string
             searchStartIndex = displayIndex + 1;
             displayIndex = displayValue.indexOf(displayMentionPattern, searchStartIndex);
         }
-    };
+    }
     return positions;
-}
+};
 
 /**
  * Extracts raw mention mappings from the input value.
  * @param rawValue - The current raw value.
  * @returns An array of objects representing the full match and username for each mention.
  */
-const extractMentionRawMappings = (rawValue: string): Array<{ fullMatch: string; username: string; }> => {
-    const mappings: Array<{ fullMatch: string; username: string; }> = [];
+const extractMentionRawMappings = (rawValue: string): Array<{ fullMatch: string; username: string }> => {
+    const mappings: Array<{ fullMatch: string; username: string }> = [];
     const regex = new RegExp(USERNAME_REGEX.source, 'g');
     let match;
 
     while ((match = regex.exec(rawValue)) !== null) {
         mappings.push({
             fullMatch: match[0],
-            username: match[1]
+            username: match[1],
         });
     }
 
@@ -348,20 +351,20 @@ const extractMentionRawMappings = (rawValue: string): Array<{ fullMatch: string;
  * @param mapValue - The current map value.
  * @returns An array of objects representing the full match and username for each mention.
  */
-const extractMentionMapMappings = (mapValue: string): Array<{ fullMatch: string; username: string; }> => {
-    const mappings: Array<{ fullMatch: string; username: string; }> = [];
+const extractMentionMapMappings = (mapValue: string): Array<{ fullMatch: string; username: string }> => {
+    const mappings: Array<{ fullMatch: string; username: string }> = [];
     const regex = /@([a-zA-Z0-9.\-_]+)<x-name>.*?<\/x-name>/g;
     let match;
 
     while ((match = regex.exec(mapValue)) !== null) {
         mappings.push({
             fullMatch: match[0],
-            username: match[1]
+            username: match[1],
         });
     }
 
     return mappings;
-}
+};
 
 /**
  * Replaces the first unprocessed occurrence of a pattern in the text with a replacement string.
@@ -406,7 +409,7 @@ const replaceFirstUnprocessed = (
 const calculateCursorPositionAfterMention = (
     textValue: string,
     username: string,
-    displayName: string
+    displayName: string,
 ): number => {
     const usernameIndex = textValue.indexOf(username);
     if (usernameIndex === -1) {

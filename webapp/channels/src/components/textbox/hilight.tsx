@@ -1,4 +1,8 @@
+// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 import React from 'react';
+
 import {Preferences} from 'mattermost-redux/constants';
 
 /**
@@ -9,9 +13,9 @@ import {Preferences} from 'mattermost-redux/constants';
  * @returns The JSX element for the mention overlay.
  */
 export const renderMentionOverlay = (
-    textbox: HTMLTextAreaElement | null, 
-    mentionHighlights: Array<{start: number; end: number; username: string}>, 
-    displayValue: string
+    textbox: HTMLTextAreaElement | null,
+    mentionHighlights: Array<{start: number; end: number; username: string}>,
+    displayValue: string,
 ): JSX.Element | null => {
     if (!textbox || mentionHighlights.length === 0) {
         return null;
@@ -39,7 +43,10 @@ export const renderMentionOverlay = (
     };
 
     return (
-        <div style={overlayStyle} className="mention-overlay">
+        <div
+            style={overlayStyle}
+            className='mention-overlay'
+        >
             {renderHighlightedText(mentionHighlights, displayValue)}
         </div>
     );
@@ -58,22 +65,25 @@ const renderHighlightedText = (mentionHighlights: Array<{start: number; end: num
     mentionHighlights.forEach((highlight, index) => {
         if (highlight.start > lastIndex) {
             parts.push(
-                <span key={`text-${index}`} style={{ color: 'transparent' }}>
+                <span
+                    key={`text-${index}`}
+                    style={{color: 'transparent'}}
+                >
                     {displayValue.substring(lastIndex, highlight.start)}
-                </span>
+                </span>,
             );
         }
 
         parts.push(
-            <span 
-                key={`mention-${index}`} 
-                className="mention-highlight"
+            <span
+                key={`mention-${index}`}
+                className='mention-highlight'
                 style={{
                     color: Preferences.THEMES.denim.linkColor,
                 }}
             >
                 {displayValue.substring(highlight.start, highlight.end)}
-            </span>
+            </span>,
         );
 
         lastIndex = highlight.end;
@@ -81,9 +91,12 @@ const renderHighlightedText = (mentionHighlights: Array<{start: number; end: num
 
     if (lastIndex < displayValue.length) {
         parts.push(
-            <span key="text-final" style={{ color: 'transparent' }}>
+            <span
+                key='text-final'
+                style={{color: 'transparent'}}
+            >
                 {displayValue.substring(lastIndex)}
-            </span>
+            </span>,
         );
     }
 
