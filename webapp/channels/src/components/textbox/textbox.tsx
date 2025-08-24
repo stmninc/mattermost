@@ -23,7 +23,8 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
-import {initializeMapValueFromInputValue, convertToDisplayValueFromMapValue, updateStateWhenSuggestionSelected, updateStateWhenOnChanged, resetState, calculateMentionPositions, renderMentionOverlay} from 'components/textbox/util';
+import {generateMapValueFromInputValue, generateDisplayValueFromMapValue, updateStateWhenSuggestionSelected, updateStateWhenOnChanged, resetState, calculateMentionPositions} from 'components/textbox/util';
+import {renderMentionOverlay} from './hilight';
 
 import * as Utils from 'utils/utils';
 
@@ -148,8 +149,8 @@ export default class Textbox extends React.PureComponent<Props> {
         this.message = React.createRef();
         this.preview = React.createRef();
 
-        const mapValue = initializeMapValueFromInputValue(props.value, props.usersByUsername, props.teammateNameDisplay);
-        const displayValue = convertToDisplayValueFromMapValue(mapValue);
+        const mapValue = generateMapValueFromInputValue(props.value, props.usersByUsername, props.teammateNameDisplay);
+        const displayValue = generateDisplayValueFromMapValue(mapValue);
 
         this.state = {
             mapValue: mapValue,
@@ -300,7 +301,7 @@ export default class Textbox extends React.PureComponent<Props> {
     };
 
     getRawValue = () => {
-        return this.state.displayValue;
+        return this.state.rawValue;
     }
 
     handleSuggestionSelected = (item: any) => {
@@ -315,7 +316,6 @@ export default class Textbox extends React.PureComponent<Props> {
             this.setState.bind(this),
             textBox
         );
-        console.log('handleSuggestionSelected: after', 'mapValue', this.state.mapValue, 'displayValue', this.state.displayValue, 'rawValue', this.state.rawValue);
     }
 
     render() {
