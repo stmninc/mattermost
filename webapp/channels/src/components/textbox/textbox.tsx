@@ -30,8 +30,6 @@ import * as Utils from 'utils/utils';
 import {renderMentionOverlay} from './hilight';
 
 import type {TextboxElement} from './index';
-import { is } from 'i18n/langmap';
-import { isA11yFocusEventDetail } from 'utils/constants';
 
 const ALL = ['all'];
 
@@ -167,7 +165,7 @@ export default class Textbox extends React.PureComponent<Props> {
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!this.props.isAdvanced) {
             this.props.onChange(e);
-            return
+            return;
         }
         updateStateWhenOnChanged(
             this.state.mapValue,
