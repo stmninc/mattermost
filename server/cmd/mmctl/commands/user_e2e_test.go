@@ -191,6 +191,11 @@ func (s *MmctlE2ETestSuite) TestUserDeactivationAutocompleteExclusion() {
 		}
 		s.Require().False(found, "deactivated user should not appear in autocomplete results")
 
+		// Also check OutOfChannel users are properly filtered
+		for _, u := range rusers.OutOfChannel {
+			s.Require().NotEqual(user.Id, u.Id, "deactivated user should not appear in out-of-channel autocomplete results")
+		}
+
 		// Reactivate user via mmctl
 		err = userActivateCmdF(c, &cobra.Command{}, []string{user.Email})
 		s.Require().Nil(err)
@@ -343,6 +348,11 @@ func (s *MmctlE2ETestSuite) TestUserDeactivationAutocompleteExclusionMultipleCon
 			}
 		}
 		s.Require().False(found, "deactivated user should not appear in channel autocomplete results")
+
+		// Also check that deactivated user is not in OutOfChannel list
+		for _, u := range channelUsers.OutOfChannel {
+			s.Require().NotEqual(user.Id, u.Id, "deactivated user should not appear in out-of-channel autocomplete results")
+		}
 
 		// Reactivate user via mmctl
 		err = userActivateCmdF(c, &cobra.Command{}, []string{user.Email})
