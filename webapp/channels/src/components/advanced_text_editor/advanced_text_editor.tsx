@@ -818,6 +818,7 @@ const AdvancedTextEditor = ({
                             isInEditMode={isInEditMode}
                             usersByUsername={usersByUsername}
                             teammateNameDisplay={teammateNameDisplay}
+                            isAdvanced={true}
                         />
                         {attachmentPreview}
                         {!isDisabled && (showFormattingBar || showPreview) && (

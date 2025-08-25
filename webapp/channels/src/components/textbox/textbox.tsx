@@ -30,6 +30,8 @@ import * as Utils from 'utils/utils';
 import {renderMentionOverlay} from './hilight';
 
 import type {TextboxElement} from './index';
+import { is } from 'i18n/langmap';
+import { isA11yFocusEventDetail } from 'utils/constants';
 
 const ALL = ['all'];
 
@@ -79,6 +81,7 @@ export type Props = {
     isInEditMode?: boolean;
     usersByUsername?: Record<string, UserProfile>;
     teammateNameDisplay?: string;
+    isAdvanced?: boolean;
 };
 
 const VISIBLE = {visibility: 'visible'};
@@ -162,6 +165,10 @@ export default class Textbox extends React.PureComponent<Props> {
     }
 
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!this.props.isAdvanced) {
+            this.props.onChange(e);
+            return
+        }
         updateStateWhenOnChanged(
             this.state.mapValue,
             this.props.usersByUsername,
@@ -237,7 +244,9 @@ export default class Textbox extends React.PureComponent<Props> {
             this.preview.current?.focus();
         }
         this.updateSuggestions(prevProps);
-        resetState(prevProps, this.setState.bind(this), this.props.value, this.state.rawValue, this.props.usersByUsername, this.props.teammateNameDisplay);
+        if (this.props.isAdvanced) {
+            resetState(prevProps, this.setState.bind(this), this.props.value, this.state.rawValue, this.props.usersByUsername, this.props.teammateNameDisplay);
+        }
     }
 
     checkMessageLength = (message: string) => {
@@ -306,17 +315,19 @@ export default class Textbox extends React.PureComponent<Props> {
     };
 
     handleSuggestionSelected = (item: any) => {
-        const textBox = this.getInputBox();
-        const textBoxValue = textBox?.value || '';
-        updateStateWhenSuggestionSelected(
-            item,
-            textBoxValue,
-            this.getRawValue(),
-            this.props.usersByUsername,
-            this.props.teammateNameDisplay,
-            this.setState.bind(this),
-            textBox,
-        );
+        if (this.props.isAdvanced) {
+            const textBox = this.getInputBox();
+            const textBoxValue = textBox?.value || '';
+            updateStateWhenSuggestionSelected(
+                item,
+                textBoxValue,
+                this.getRawValue(),
+                this.props.usersByUsername,
+                this.props.teammateNameDisplay,
+                this.setState.bind(this),
+                textBox,
+            );
+        }
     };
 
     render() {
@@ -378,7 +389,7 @@ export default class Textbox extends React.PureComponent<Props> {
                     listComponent={this.props.suggestionList}
                     listPosition={this.props.suggestionListPosition}
                     providers={this.suggestionProviders}
-                    value={this.state.displayValue}
+                    value={this.props.isAdvanced ? this.state.displayValue : this.props.value}
                     renderDividers={ALL}
                     disabled={this.props.disabled}
                     contextId={this.props.channelId}
