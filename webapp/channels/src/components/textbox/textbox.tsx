@@ -23,8 +23,11 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
+import {generateMapValueFromInputValue, generateDisplayValueFromMapValue, updateStateWhenSuggestionSelected, updateStateWhenOnChanged, resetState, calculateMentionPositions} from 'components/textbox/util';
 
 import * as Utils from 'utils/utils';
+
+import {renderMentionOverlay} from './hilight';
 
 import type {TextboxElement} from './index';
 
@@ -74,16 +77,32 @@ export type Props = {
     hasLabels?: boolean;
     hasError?: boolean;
     isInEditMode?: boolean;
+    usersByUsername?: Record<string, UserProfile>;
+    teammateNameDisplay?: string;
 };
 
 const VISIBLE = {visibility: 'visible'};
 const HIDDEN = {visibility: 'hidden'};
+
+interface TextboxState {
+    mapValue: string;
+    displayValue: string;
+    rawValue: string;
+    mentionHighlights: Array<{start: number; end: number; username: string}>;
+}
 
 export default class Textbox extends React.PureComponent<Props> {
     private readonly suggestionProviders: Provider[];
     private readonly wrapper: React.RefObject<HTMLDivElement>;
     private readonly message: React.RefObject<SuggestionBoxComponent>;
     private readonly preview: React.RefObject<HTMLDivElement>;
+
+    state: TextboxState = {
+        mapValue: '',
+        displayValue: '',
+        rawValue: '',
+        mentionHighlights: [],
+    };
 
     static defaultProps = {
         supportsCommands: true,
@@ -131,10 +150,27 @@ export default class Textbox extends React.PureComponent<Props> {
         this.wrapper = React.createRef();
         this.message = React.createRef();
         this.preview = React.createRef();
+
+        const mapValue = generateMapValueFromInputValue(props.value, props.usersByUsername, props.teammateNameDisplay);
+        const displayValue = generateDisplayValueFromMapValue(mapValue);
+
+        this.state = {
+            mapValue,
+            displayValue,
+            rawValue: props.value,
+            mentionHighlights: calculateMentionPositions(mapValue, displayValue),
+        };
     }
 
     handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.onChange(e);
+        updateStateWhenOnChanged(
+            this.state.mapValue,
+            this.props.usersByUsername,
+            this.props.teammateNameDisplay,
+            this.setState.bind(this),
+            e,
+            this.props.onChange,
+        );
     };
 
     updateSuggestions(prevProps: Props) {
@@ -203,6 +239,7 @@ export default class Textbox extends React.PureComponent<Props> {
             this.preview.current?.focus();
         }
         this.updateSuggestions(prevProps);
+        resetState(prevProps, this.setState.bind(this), this.props.value, this.state.rawValue, this.props.usersByUsername, this.props.teammateNameDisplay);
     }
 
     checkMessageLength = (message: string) => {
@@ -266,6 +303,24 @@ export default class Textbox extends React.PureComponent<Props> {
         return this.props.preview ? HIDDEN : VISIBLE;
     };
 
+    getRawValue = () => {
+        return this.state.rawValue;
+    };
+
+    handleSuggestionSelected = (item: any) => {
+        const textBox = this.getInputBox();
+        const textBoxValue = textBox?.value || '';
+        updateStateWhenSuggestionSelected(
+            item,
+            textBoxValue,
+            this.getRawValue(),
+            this.props.usersByUsername,
+            this.props.teammateNameDisplay,
+            this.setState.bind(this),
+            textBox,
+        );
+    };
+
     render() {
         let textboxClassName = 'form-control custom-textarea textbox-edit-area';
         if (this.props.emojiEnabled) {
@@ -325,13 +380,15 @@ export default class Textbox extends React.PureComponent<Props> {
                     listComponent={this.props.suggestionList}
                     listPosition={this.props.suggestionListPosition}
                     providers={this.suggestionProviders}
-                    value={this.props.value}
+                    value={this.state.displayValue}
                     renderDividers={ALL}
                     disabled={this.props.disabled}
                     contextId={this.props.channelId}
                     openWhenEmpty={this.props.openWhenEmpty}
                     alignWithTextbox={this.props.alignWithTextbox}
+                    onItemSelected={this.handleSuggestionSelected}
                 />
+                {!this.props.preview && renderMentionOverlay(this.getInputBox(), this.state.mentionHighlights, this.state.displayValue)}
             </div>
         );
     }
