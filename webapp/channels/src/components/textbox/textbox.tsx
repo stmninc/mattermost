@@ -237,7 +237,7 @@ export default class Textbox extends React.PureComponent<Props> {
             this.preview.current?.focus();
         }
         this.updateSuggestions(prevProps);
-        resetState(prevProps, this.setState.bind(this), this.props.channelId, this.props.value, this.props.usersByUsername, this.props.teammateNameDisplay);
+        resetState(prevProps, this.setState.bind(this), this.props.value, this.state.rawValue, this.props.usersByUsername, this.props.teammateNameDisplay);
     }
 
     checkMessageLength = (message: string) => {

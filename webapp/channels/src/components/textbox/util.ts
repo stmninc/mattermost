@@ -253,34 +253,20 @@ export const updateStateWhenOnChanged = (mapValue: string, usersByUsername: Reco
  * @param usersByUsername - A mapping of usernames to user profiles.
  * @param teammateNameDisplay - The display setting for teammate names.
  */
-export const resetState = (prevProps: any, setState: (state: any) => void, currentChannelId: string, value: string, usersByUsername: Record<string, UserProfile> | undefined, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME) => {
-    if (prevProps.channelId !== currentChannelId) {
-        setState({
-            mapValue: '',
-            displayValue: '',
-            rawValue: '',
-            mentionHighlights: [],
-        });
+export const resetState = (prevProps: any, setState: (state: any) => void, value: string, rawValue: string, usersByUsername: Record<string, UserProfile> | undefined, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME) => {
+    if (!usersByUsername) {
+        return;
     }
 
-    if (prevProps.value !== value && value.length > 0 && prevProps.value.length === 0 && usersByUsername) {
-        const mapValue = generateMapValueFromRawValue(value, usersByUsername, teammateNameDisplay);
+    if (prevProps.value !== value && rawValue !== value) {
+        const mapValue = generateMapValueFromInputValue(value, usersByUsername, teammateNameDisplay);
         const displayValue = generateDisplayValueFromMapValue(mapValue);
 
         setState({
-            rawValue: value,
             mapValue,
             displayValue,
+            rawValue: value,
             mentionHighlights: calculateMentionPositions(mapValue, displayValue),
-        });
-    }
-
-    if (prevProps.value !== value && value.length === 0 && prevProps.value.length > 0) {
-        setState({
-            rawValue: '',
-            mapValue: '',
-            displayValue: '',
-            mentionHighlights: [],
         });
     }
 };
