@@ -1,27 +1,130 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 
 import {Preferences} from 'mattermost-redux/constants';
 
 /**
+ * Mention overlay component that follows textarea scroll
+ */
+const MentionOverlay: React.FC<{
+    textarea: HTMLTextAreaElement;
+    mentionHighlights: Array<{start: number; end: number; username: string}>;
+    displayValue: string;
+}> = ({textarea, mentionHighlights, displayValue}) => {
+    const overlayRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const overlay = overlayRef.current;
+        if (!overlay || !textarea) return;
+
+        const computedStyle = window.getComputedStyle(textarea);
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.right = '0';
+        overlay.style.bottom = '0';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.color = 'transparent';
+        overlay.style.backgroundColor = 'transparent';
+        overlay.style.border = 'transparent';
+        overlay.style.fontFamily = computedStyle.fontFamily;
+        overlay.style.fontSize = computedStyle.fontSize;
+        overlay.style.lineHeight = computedStyle.lineHeight;
+        overlay.style.padding = computedStyle.padding;
+        overlay.style.whiteSpace = 'pre-wrap';
+        overlay.style.wordWrap = 'break-word';
+        overlay.style.overflow = 'hidden';
+        overlay.style.overflowX = 'hidden';
+        overlay.style.overflowY = 'hidden';
+        overlay.style.zIndex = '1';
+        
+        overlay.style.width = `${textarea.clientWidth}px`;
+        overlay.style.height = `${textarea.clientHeight}px`;
+        overlay.style.borderRadius = computedStyle.borderRadius;
+        overlay.style.boxSizing = computedStyle.boxSizing;
+
+        const updatePosition = () => {
+            if (!textarea || !overlay) return;
+            
+            overlay.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
+            
+            const newWidth = textarea.clientWidth;
+            const newHeight = textarea.clientHeight;
+            if (overlay.style.width !== `${newWidth}px` || overlay.style.height !== `${newHeight}px`) {
+                overlay.style.width = `${newWidth}px`;
+                overlay.style.height = `${newHeight}px`;
+            }
+        };
+
+        updatePosition();
+
+        textarea.addEventListener('scroll', updatePosition, {passive: true});
+
+        const handleResize = () => {
+            const computedStyle = window.getComputedStyle(textarea);
+            overlay.style.fontFamily = computedStyle.fontFamily;
+            overlay.style.fontSize = computedStyle.fontSize;
+            overlay.style.lineHeight = computedStyle.lineHeight;
+            overlay.style.padding = computedStyle.padding;
+            updatePosition();
+        };
+
+        window.addEventListener('resize', handleResize, {passive: true});
+
+        let resizeObserver: ResizeObserver | null = null;
+        if (window.ResizeObserver) {
+            resizeObserver = new ResizeObserver(handleResize);
+            resizeObserver.observe(textarea);
+        }
+
+        return () => {
+            textarea.removeEventListener('scroll', updatePosition);
+            window.removeEventListener('resize', handleResize);
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+        };
+    }, [textarea]);
+
+    return (
+        <div
+            ref={overlayRef}
+            className='mention-overlay'
+        >
+            {renderHighlightedText(mentionHighlights, displayValue)}
+        </div>
+    );
+};
+
+/**
  * Renders the mention overlay for the text box.
- * @param textbox - The text box element.
+ * @param element - The text box element or preview div element.
  * @param mentionHighlights - The array of mention highlights.
  * @param displayValue - The current display value.
  * @returns The JSX element for the mention overlay.
  */
 export const renderMentionOverlay = (
-    textbox: HTMLTextAreaElement | null,
+    element: HTMLTextAreaElement | HTMLDivElement | null,
     mentionHighlights: Array<{start: number; end: number; username: string}>,
     displayValue: string,
 ): JSX.Element | null => {
-    if (!textbox || mentionHighlights.length === 0) {
+    if (!element || mentionHighlights.length === 0) {
         return null;
     }
 
-    const computedStyle = window.getComputedStyle(textbox);
+    if (element instanceof HTMLTextAreaElement) {
+        return (
+            <MentionOverlay
+                textarea={element}
+                mentionHighlights={mentionHighlights}
+                displayValue={displayValue}
+            />
+        );
+    }
+
+    const computedStyle = window.getComputedStyle(element);
     const overlayStyle: React.CSSProperties = {
         position: 'absolute',
         top: 0,
