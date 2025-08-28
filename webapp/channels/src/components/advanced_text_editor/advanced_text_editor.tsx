@@ -43,7 +43,7 @@ import SuggestionList from 'components/suggestion/suggestion_list';
 import Textbox from 'components/textbox';
 import type {TextboxElement} from 'components/textbox';
 import type TextboxClass from 'components/textbox/textbox';
-import {convertDisplayPositionToRawPosition} from 'components/textbox/util';
+import {convertDisplayPositionToRawPosition, convertRawPositionToDisplayPosition} from 'components/textbox/util';
 import {OnboardingTourSteps, OnboardingTourStepsForGuestUsers, TutorialTourName} from 'components/tours/constant';
 import {SendMessageTour} from 'components/tours/onboarding_tour';
 
@@ -295,7 +295,9 @@ const AdvancedTextEditor = ({
 
         setTimeout(() => {
             const textbox = textboxRef.current?.getInputBox();
-            Utils.setSelectionRange(textbox, res.selectionStart, res.selectionEnd);
+            const displaySelectionStart = convertRawPositionToDisplayPosition(res.selectionStart, res.message, usersByUsername, teammateNameDisplay);
+            const displaySelectionEnd = convertRawPositionToDisplayPosition(res.selectionEnd, res.message, usersByUsername, teammateNameDisplay);
+            Utils.setSelectionRange(textbox, displaySelectionStart, displaySelectionEnd);
         });
     }, [showPreview, handleDraftChange, draft]);
 
