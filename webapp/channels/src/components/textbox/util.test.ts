@@ -5,7 +5,7 @@ import type {UserProfile} from '@mattermost/types/users';
 
 import {Preferences} from 'mattermost-redux/constants';
 
-import {generateMapValueFromInputValue, generateDisplayValueFromMapValue, generateRawValueFromInputValue, generateMapValueFromRawValue, generateRawValueFromMapValue, calculateMentionPositions} from './util';
+import {generateMapValueFromInputValue, generateDisplayValueFromMapValue, generateRawValueFromInputValue, generateMapValueFromRawValue, generateRawValueFromMapValue, calculateMentionPositions, generateDisplayValueFromRawValue, convertDisplayPositionToRawPosition} from './util';
 
 const mockDisplayUsername = require('mattermost-redux/utils/user_utils').displayUsername;
 
@@ -926,5 +926,437 @@ describe('calculateMentionPositions', () => {
                 username: 'user2',
             },
         ]);
+    });
+});
+describe('generateDisplayValueFromRawValue', () => {
+    beforeEach(() => {
+        mockDisplayUsername.mockClear();
+    });
+
+    it('should convert raw username to display format', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello @John Doe');
+        expect(mockDisplayUsername).toHaveBeenCalledWith(users.john_doe, Preferences.DISPLAY_PREFER_USERNAME, false);
+    });
+
+    it('should convert multiple mentions from raw to display format', () => {
+        mockDisplayUsername.
+            mockReturnValueOnce('John Doe').
+            mockReturnValueOnce('Jane Smith');
+
+        const rawValue = 'Hello @john_doe and @jane_smith';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+            jane_smith: {id: '2', username: 'jane_smith'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello @John Doe and @Jane Smith');
+    });
+
+    it('should handle usernames with special characters', () => {
+        mockDisplayUsername.mockReturnValue('Test User');
+
+        const rawValue = 'Hello @test.user-name_123';
+        const users = {
+            'test.user-name_123': {id: '1', username: 'test.user-name_123'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello @Test User');
+    });
+
+    it('should handle same username mentioned multiple times', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const rawValue = 'Hi @john_doe, @john_doe are you there?';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hi @John Doe, @John Doe are you there?');
+    });
+
+    it('should handle display names with special characters', () => {
+        mockDisplayUsername.mockReturnValue('John O\'Connor-Smith');
+
+        const rawValue = 'Hello @john.oconnor';
+        const users = {
+            'john.oconnor': {id: '1', username: 'john.oconnor'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello @John O\'Connor-Smith');
+    });
+
+    it('should handle Japanese display names', () => {
+        mockDisplayUsername.mockReturnValue('田中 太郎');
+
+        const rawValue = 'こんにちは @tanaka.taro';
+        const users = {
+            'tanaka.taro': {id: '1', username: 'tanaka.taro'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('こんにちは @田中 太郎');
+    });
+
+    it('should respect custom teammateNameDisplay preference', () => {
+        mockDisplayUsername.mockReturnValue('John (john_doe)');
+
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users, Preferences.DISPLAY_PREFER_FULL_NAME);
+        expect(result).toBe('Hello @John (john_doe)');
+        expect(mockDisplayUsername).toHaveBeenCalledWith(users.john_doe, Preferences.DISPLAY_PREFER_FULL_NAME, false);
+    });
+
+    it('should handle mentions at beginning and end of text', () => {
+        mockDisplayUsername.
+            mockReturnValueOnce('John Doe').
+            mockReturnValueOnce('Jane Smith');
+
+        const rawValue = '@john_doe hello @jane_smith';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+            jane_smith: {id: '2', username: 'jane_smith'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('@John Doe hello @Jane Smith');
+    });
+
+    it('should handle consecutive mentions without spaces', () => {
+        mockDisplayUsername.
+            mockReturnValueOnce('John Doe').
+            mockReturnValueOnce('Jane Smith');
+
+        const rawValue = '@john_doe@jane_smith';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+            jane_smith: {id: '2', username: 'jane_smith'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('@John Doe@Jane Smith');
+    });
+
+    it('should handle empty string input', () => {
+        const rawValue = '';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('');
+    });
+
+    it('should handle text without mentions', () => {
+        const rawValue = 'Hello world, no mentions here';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello world, no mentions here');
+    });
+
+    it('should leave unknown users unchanged', () => {
+        const rawValue = 'Hello @unknown_user';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello @unknown_user');
+    });
+
+    it('should handle mixed existing and non-existing users', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const rawValue = 'Hello @john_doe and @unknown_user';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello @John Doe and @unknown_user');
+    });
+
+    it('should handle empty usersByUsername object', () => {
+        const rawValue = 'Hello @john_doe';
+        const users = {};
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Hello @john_doe');
+    });
+
+    it('should handle display names with spaces and punctuation', () => {
+        mockDisplayUsername.mockReturnValue('Dr. John Smith Jr.');
+
+        const rawValue = 'Meeting with @john.smith tomorrow';
+        const users = {
+            'john.smith': {id: '1', username: 'john.smith'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Meeting with @Dr. John Smith Jr. tomorrow');
+    });
+
+    it('should handle @ symbol without valid username', () => {
+        const rawValue = 'Email: test@example.com and @';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Email: test@example.com and @');
+    });
+
+    it('should handle mentions with identical display names correctly', () => {
+        mockDisplayUsername.
+            mockReturnValueOnce('John Smith').
+            mockReturnValueOnce('John Smith');
+
+        const rawValue = 'Both @john.smith1 and @john.smith2 are here';
+        const users = {
+            'john.smith1': {id: '1', username: 'john.smith1'} as UserProfile,
+            'john.smith2': {id: '2', username: 'john.smith2'} as UserProfile,
+        };
+
+        const result = generateDisplayValueFromRawValue(rawValue, users);
+        expect(result).toBe('Both @John Smith and @John Smith are here');
+    });
+});
+
+describe('convertDisplayPositionToRawPosition', () => {
+    beforeEach(() => {
+        mockDisplayUsername.mockClear();
+    });
+
+    it('should return displayPosition when usersByUsername is undefined', () => {
+        const displayPosition = 10;
+        const rawValue = 'Hello @john_doe';
+        
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, undefined);
+        expect(result).toBe(displayPosition);
+    });
+
+    it('should return displayPosition when displayPosition is 0 or negative', () => {
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        expect(convertDisplayPositionToRawPosition(0, rawValue, users)).toBe(0);
+        expect(convertDisplayPositionToRawPosition(-5, rawValue, users)).toBe(-5);
+    });
+
+    it('should convert position correctly when no mentions exist', () => {
+        const displayPosition = 10;
+        const rawValue = 'Hello world!';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(displayPosition);
+    });
+
+    it('should convert position before a mention correctly', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const displayPosition = 6; // Position before '@' in "Hello @John Doe"
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(6); // Same position in raw value
+    });
+
+    it('should convert position within a mention to end of username', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const displayPosition = 10; // Position within "@John Doe" in "Hello @John Doe"
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(15); // End of "@john_doe"
+    });
+
+    it('should convert position after a mention correctly', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const displayPosition = 17; // Position after "Hello @John Doe "
+        const rawValue = 'Hello @john_doe how are you?';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(17); // Position after "Hello @john_doe "
+    });
+
+    it('should handle multiple mentions correctly', () => {
+        mockDisplayUsername.
+            mockReturnValueOnce('John Doe').
+            mockReturnValueOnce('Jane Smith');
+
+        const displayPosition = 25; // Position after "Hello @John Doe and @Jane Smith"
+        const rawValue = 'Hello @john_doe and @jane_smith';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+            jane_smith: {id: '2', username: 'jane_smith'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(31); // End of raw value
+    });
+
+    it('should handle position between multiple mentions', () => {
+        mockDisplayUsername.
+            mockReturnValueOnce('John Doe').
+            mockReturnValueOnce('Jane Smith');
+
+        const displayPosition = 15; // Position in " and " between mentions
+        const rawValue = 'Hello @john_doe and @jane_smith';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+            jane_smith: {id: '2', username: 'jane_smith'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(15); // Position in " and " in raw value
+    });
+
+    it('should handle display names longer than usernames', () => {
+        mockDisplayUsername.mockReturnValue('Dr. John Smith Jr.');
+
+        const displayPosition = 25; // Position after "Hello @Dr. John Smith Jr."
+        const rawValue = 'Hello @john_smith';
+        const users = {
+            john_smith: {id: '1', username: 'john_smith'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(17); // End of raw value
+    });
+
+    it('should handle display names shorter than usernames', () => {
+        mockDisplayUsername.mockReturnValue('John');
+
+        const displayPosition = 12; // Position after "Hello @John "
+        const rawValue = 'Hello @john_doe_long how are you?';
+        const users = {
+            john_doe_long: {id: '1', username: 'john_doe_long'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(21); // Position after "Hello @john_doe_long "
+    });
+
+    it('should handle mentions with special characters', () => {
+        mockDisplayUsername.mockReturnValue('John-Doe');
+
+        const displayPosition = 13; // Position after "Hello @John-Doe"
+        const rawValue = 'Hello @john.doe';
+        const users = {
+            'john.doe': {id: '1', username: 'john.doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(15); // End of "@john.doe"
+    });
+
+    it('should respect custom teammateNameDisplay preference', () => {
+        mockDisplayUsername.mockReturnValue('j.doe');
+
+        const displayPosition = 12; // Position after "Hello @j.doe"
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users, Preferences.DISPLAY_PREFER_NICKNAME);
+        expect(result).toBe(15); // End of "@john_doe"
+    });
+
+    it('should handle position at the exact start of a mention', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const displayPosition = 6; // Position at '@' in "Hello @John Doe"
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(6); // Same position at '@' in raw value
+    });
+
+    it('should handle position at the exact end of a mention', () => {
+        mockDisplayUsername.mockReturnValue('John Doe');
+
+        const displayPosition = 15; // Position right after "Hello @John Doe"
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(15); // End of raw value
+    });
+
+    it('should handle empty rawValue', () => {
+        const displayPosition = 0;
+        const rawValue = '';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(0);
+    });
+
+    it('should clamp position to rawValue length when displayPosition exceeds boundaries', () => {
+        mockDisplayUsername.mockReturnValue('John');
+
+        const displayPosition = 100; // Position way beyond the text
+        const rawValue = 'Hello @john_doe';
+        const users = {
+            john_doe: {id: '1', username: 'john_doe'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(15); // Clamped to rawValue length
+    });
+
+    it('should handle Japanese text with mentions', () => {
+        mockDisplayUsername.mockReturnValue('田中太郎');
+
+        const displayPosition = 8; // Position after "こんにちは @田中太郎"
+        const rawValue = 'こんにちは @tanaka';
+        const users = {
+            tanaka: {id: '1', username: 'tanaka'} as UserProfile,
+        };
+
+        const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, users);
+        expect(result).toBe(13); // End of raw value
     });
 });
