@@ -191,14 +191,14 @@ export const convertDisplayPositionToRawPosition = (
     displayPosition: number,
     rawValue: string,
     usersByUsername?: Record<string, UserProfile>,
-    teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME
+    teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME,
 ): number => {
     if (!usersByUsername || displayPosition <= 0) {
         return displayPosition;
     }
 
     const mapValue = generateMapValueFromRawValue(rawValue, usersByUsername, teammateNameDisplay);
-    
+
     const mentions: Array<{
         username: string;
         displayName: string;
