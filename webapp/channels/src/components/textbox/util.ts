@@ -156,6 +156,21 @@ export const generateRawValueFromMapValue = (mapValue: string, inputValue: strin
     return result;
 };
 
+export const generateDisplayValueFromRawValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
+    const mentionMappings = extractMentionRawMappings(rawValue);
+
+    let result = rawValue;
+    for (const mapping of mentionMappings) {
+        const user = usersByUsername[mapping.username];
+        if (!user) {
+            continue;
+        }
+        const displayName = displayUsername(user, teammateNameDisplay, false);
+        result = replaceFirstUnprocessed(result, mapping.fullMatch, `@${displayName}`, new Set());
+    }
+    return result;
+};
+
 /**
  * Updates the component state when a mention suggestion is selected.
  * @param item - The selected suggestion item.
