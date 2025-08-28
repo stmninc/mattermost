@@ -6,10 +6,10 @@ import classNames from 'classnames';
 import React, {useCallback, useState} from 'react';
 import {useIntl} from 'react-intl';
 import {useSelector} from 'react-redux';
-import type {UserProfile} from '@mattermost/types/users';
 
 import {EmoticonHappyOutlineIcon} from '@mattermost/compass-icons/components';
 import type {Emoji} from '@mattermost/types/emojis';
+import type {UserProfile} from '@mattermost/types/users';
 
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getEmojiName} from 'mattermost-redux/utils/emoji_utils';
@@ -17,6 +17,7 @@ import {getEmojiName} from 'mattermost-redux/utils/emoji_utils';
 import useDidUpdate from 'components/common/hooks/useDidUpdate';
 import useEmojiPicker, {useEmojiPickerOffset} from 'components/emoji_picker/use_emoji_picker';
 import KeyboardShortcutSequence, {KEYBOARD_SHORTCUTS} from 'components/keyboard_shortcuts/keyboard_shortcuts_sequence';
+import {generateDisplayValueFromRawValue, convertDisplayPositionToRawPosition} from 'components/textbox/util';
 import WithTooltip from 'components/with_tooltip';
 
 import {horizontallyWithin} from 'utils/floating';
@@ -26,8 +27,6 @@ import type {GlobalState} from 'types/store';
 import type {PostDraft} from 'types/store/draft';
 
 import {IconContainer} from './formatting_bar/formatting_icon';
-
-import {generateDisplayValueFromRawValue, convertDisplayPositionToRawPosition} from 'components/textbox/util';
 
 const useEditorEmojiPicker = (
     textboxId: string,
@@ -39,7 +38,7 @@ const useEditorEmojiPicker = (
     shouldShowPreview: boolean,
     focusTextbox: () => void,
     usersByUsername?: Record<string, UserProfile>,
-    teammateNameDisplay?: string
+    teammateNameDisplay?: string,
 ) => {
     const intl = useIntl();
 
@@ -71,7 +70,7 @@ const useEditorEmojiPicker = (
             const rawCaretPosition = convertDisplayPositionToRawPosition(caretPosition, message, usersByUsername, teammateNameDisplay);
 
             const {firstPiece, lastPiece} = splitMessageBasedOnCaretPosition(rawCaretPosition, message);
-            const {firstPiece: displayFirstPiece, lastPiece: _} = splitMessageBasedOnCaretPosition(caretPosition, displayValue);
+            const {firstPiece: displayFirstPiece} = splitMessageBasedOnCaretPosition(caretPosition, displayValue);
 
             // check whether the first piece of the message is empty when cursor is placed at beginning of message and avoid adding an empty string at the beginning of the message
             newMessage =

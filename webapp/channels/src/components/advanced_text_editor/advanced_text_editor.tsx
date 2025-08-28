@@ -43,6 +43,7 @@ import SuggestionList from 'components/suggestion/suggestion_list';
 import Textbox from 'components/textbox';
 import type {TextboxElement} from 'components/textbox';
 import type TextboxClass from 'components/textbox/textbox';
+import {convertDisplayPositionToRawPosition} from 'components/textbox/util';
 import {OnboardingTourSteps, OnboardingTourStepsForGuestUsers, TutorialTourName} from 'components/tours/constant';
 import {SendMessageTour} from 'components/tours/onboarding_tour';
 
@@ -58,7 +59,6 @@ import Constants, {
 import {canUploadFiles as canUploadFilesAccordingToConfig} from 'utils/file_utils';
 import type {ApplyMarkdownOptions} from 'utils/markdown/apply_markdown';
 import {applyMarkdown as applyMarkdownUtil} from 'utils/markdown/apply_markdown';
-import {convertDisplayPositionToRawPosition, generateDisplayValueFromRawValue} from 'components/textbox/util';
 import {isErrorInvalidSlashCommand} from 'utils/post_utils';
 import {allAtMentions} from 'utils/text_formatting';
 import * as Utils from 'utils/utils';
@@ -341,7 +341,7 @@ const AdvancedTextEditor = ({
         showPreview,
         focusTextbox,
         usersByUsername,
-        teammateNameDisplay
+        teammateNameDisplay,
     );
     const {
         labels: priorityLabels,
@@ -488,17 +488,17 @@ const AdvancedTextEditor = ({
      */
     const getCurrentValue = useCallback(() => textboxRef.current?.getInputBox().value, [textboxRef]);
     const getCurrentRawValue = useCallback(() => {
-        let rawValue = ''
+        let rawValue = '';
         if (textboxRef.current && typeof textboxRef.current.getRawValue === 'function') {
             rawValue = textboxRef.current.getRawValue();
         }
-        return rawValue.length !== 0 ? rawValue : getCurrentValue();
+        return rawValue.length === 0 ? getCurrentValue() : rawValue;
     }, [textboxRef]);
 
     const getCurrentSelection = useCallback(() => {
         const input = textboxRef.current?.getInputBox();
         if (!input) {
-            return { start: 0, end: 0 };
+            return {start: 0, end: 0};
         }
 
         const displayStart = input.selectionStart || 0;
@@ -537,7 +537,6 @@ const AdvancedTextEditor = ({
     }, [hasDraftMessage]);
 
     const handleMouseUpKeyUp = useCallback((e: React.MouseEvent | React.KeyboardEvent) => {
-
         setCaretPosition((e.target as TextboxElement).selectionStart || 0);
     }, []);
 
