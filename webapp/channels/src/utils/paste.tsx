@@ -178,11 +178,11 @@ export function isKnownTargetForPaste(event: ClipboardEvent, location: string, i
 }
 
 export function pasteHandler(
-    event: ClipboardEvent, 
-    location: string, 
-    message: string, 
-    isNonFormattedPaste: boolean, 
-    caretPosition?: number, 
+    event: ClipboardEvent,
+    location: string,
+    message: string,
+    isNonFormattedPaste: boolean,
+    caretPosition?: number,
     isInEditMode?: boolean,
     usersByUsername?: Record<string, any>,
     teammateNameDisplay?: string,
@@ -215,14 +215,14 @@ export function pasteHandler(
     );
 
     // Convert caretPosition from display to raw position if needed
-    const rawCaretPosition = caretPosition !== undefined 
-        ? convertDisplayPositionToRawPosition(
+    const rawCaretPosition = caretPosition === undefined ?
+        undefined :
+        convertDisplayPositionToRawPosition(
             caretPosition,
             message,
             usersByUsername,
             teammateNameDisplay,
-        )
-        : undefined;
+        );
 
     const hasSelection = !isNil(selectionStart) && !isNil(selectionEnd) && selectionStart < selectionEnd;
     const hasTextUrl = isTextUrl(clipboardData);

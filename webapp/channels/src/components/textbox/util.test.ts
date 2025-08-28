@@ -1148,7 +1148,7 @@ describe('convertDisplayPositionToRawPosition', () => {
     it('should return displayPosition when usersByUsername is undefined', () => {
         const displayPosition = 10;
         const rawValue = 'Hello @john_doe';
-        
+
         const result = convertDisplayPositionToRawPosition(displayPosition, rawValue, undefined);
         expect(result).toBe(displayPosition);
     });
@@ -1431,6 +1431,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "Hello @john_doe, how are you?" (position 20 = "are y")
         // Display: "Hello @John Doe, how are you?" (position 20 = "are y")
         // The difference is "John Doe" (8 chars) vs "john_doe" (8 chars) = no difference
@@ -1450,6 +1451,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "Hello @john_doe and @jane_smith" (31 chars)
         // Display: "Hello @John Doe and @Jane Smith" (31 chars)
         // Both have same length, so position should be same
@@ -1469,6 +1471,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "Hello @john_doe and" (position 18 = "d")
         // Display: "Hello @John Doe and" (position 18 = "d")
         // Both mentions have same length, so position should be same
@@ -1485,6 +1488,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "Hello @john_doe" (15 chars)
         // Display: "Hello @John Michael Doe" (23 chars)
         expect(result).toBe(23);
@@ -1500,6 +1504,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "Hello @john_doe" (15 chars)
         // Display: "Hello @John" (11 chars)
         expect(result).toBe(11);
@@ -1515,6 +1520,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "Hello @test.user-name_123" (22 chars)
         // Display: "Hello @Test User" (16 chars)
         expect(result).toBe(16);
@@ -1530,6 +1536,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users, Preferences.DISPLAY_PREFER_FULL_NAME);
+
         // Raw: "Hello @john_doe" (15 chars)
         // Display: "Hello @John (john_doe)" (22 chars)
         expect(result).toBe(22);
@@ -1596,6 +1603,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "こんにちは @tanaka" (13 chars)
         // Display: "こんにちは @田中太郎" (11 chars)
         expect(result).toBe(11);
@@ -1611,6 +1619,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "Hi @john_doe, @john_doe there" (29 chars)
         // Display: "Hi @John Doe, @John Doe there" (29 chars)
         expect(result).toBe(29); // End of display value
@@ -1629,6 +1638,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         };
 
         const result = convertRawPositionToDisplayPosition(rawPosition, rawValue, users);
+
         // Raw: "@john_doe@jane_smith" (20 chars)
         // Display: "@John Doe@Jane Smith" (20 chars)
         expect(result).toBe(20); // End of display value
