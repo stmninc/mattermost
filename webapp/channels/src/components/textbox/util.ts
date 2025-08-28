@@ -156,6 +156,13 @@ export const generateRawValueFromMapValue = (mapValue: string, inputValue: strin
     return result;
 };
 
+/**
+ * Generates a display value from the raw value by replacing usernames with their display names.
+ * @param rawValue - The raw value to process.
+ * @param usersByUsername - A mapping of usernames to user profiles.
+ * @param teammateNameDisplay - The display setting for teammate names.
+ * @returns The generated display value
+ */
 export const generateDisplayValueFromRawValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     const mentionMappings = extractMentionRawMappings(rawValue);
 
@@ -169,6 +176,82 @@ export const generateDisplayValueFromRawValue = (rawValue: string, usersByUserna
         result = replaceFirstUnprocessed(result, mapping.fullMatch, `@${displayName}`, new Set());
     }
     return result;
+};
+
+/**
+ * Converts a display position to a raw position.
+ * @param displayPosition - The position in the display value.
+ * @param rawValue - The raw value.
+ * @param usersByUsername - A mapping of usernames to user profiles.
+ * @param teammateNameDisplay - The display setting for teammate names.
+ * @returns The corresponding position in the raw value.
+ */
+export const convertDisplayPositionToRawPosition = (
+    displayPosition: number,
+    rawValue: string,
+    usersByUsername?: Record<string, UserProfile>,
+    teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME
+): number => {
+    if (!usersByUsername || displayPosition <= 0) {
+        return displayPosition;
+    }
+
+    const mapValue = generateMapValueFromRawValue(rawValue, usersByUsername, teammateNameDisplay);
+    
+    const mentions: Array<{
+        username: string;
+        displayName: string;
+        rawStart: number;
+        rawEnd: number;
+        displayStart: number;
+        displayEnd: number;
+    }> = [];
+
+    let match;
+    let rawOffset = 0;
+    let displayOffset = 0;
+
+    while ((match = MENTION_REGEX.exec(mapValue)) !== null) {
+        const [fullMatch, username, displayName] = match;
+        const rawMentionLength = `@${username}`.length;
+        const displayMentionLength = `@${displayName}`.length;
+        const mapMentionStart = match.index;
+
+        const rawStart = mapMentionStart - rawOffset;
+        const rawEnd = rawStart + rawMentionLength;
+
+        const displayStart = mapMentionStart - displayOffset;
+        const displayEnd = displayStart + displayMentionLength;
+
+        mentions.push({
+            username,
+            displayName,
+            rawStart,
+            rawEnd,
+            displayStart,
+            displayEnd,
+        });
+
+        const tagLength = fullMatch.length - displayMentionLength;
+        rawOffset += tagLength;
+        displayOffset += tagLength;
+    }
+
+    let rawPosition = displayPosition;
+
+    for (const mention of mentions) {
+        if (displayPosition <= mention.displayStart) {
+            break;
+        } else if (displayPosition <= mention.displayEnd) {
+            rawPosition = mention.rawEnd;
+            break;
+        } else {
+            const lengthDiff = mention.rawEnd - mention.rawStart - (mention.displayEnd - mention.displayStart);
+            rawPosition += lengthDiff;
+        }
+    }
+
+    return Math.max(0, Math.min(rawPosition, rawValue.length));
 };
 
 /**
