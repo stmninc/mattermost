@@ -6,6 +6,7 @@ import {useCallback, useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 
 import type {SchedulingInfo} from '@mattermost/types/schedule_post';
+import type {UserProfile} from '@mattermost/types/users';
 
 import {getBool} from 'mattermost-redux/selectors/entities/preferences';
 
@@ -51,7 +52,7 @@ const useKeyHandler = (
     isInEditMode?: boolean,
     onCancel?: () => void,
     getCurrentRawValue?: () => string,
-    usersByUsername?: Record<string, any>,
+    usersByUsername?: Record<string, UserProfile>,
     teammateNameDisplay?: string,
 ): [
         (e: React.KeyboardEvent<TextboxElement>) => void,
@@ -392,11 +393,11 @@ const useKeyHandler = (
     useEffect(() => {
         function onPaste(event: ClipboardEvent) {
             pasteHandler(
-                event, 
-                location, 
-                draft.message, 
-                isNonFormattedPaste.current, 
-                caretPosition, 
+                event,
+                location,
+                draft.message,
+                isNonFormattedPaste.current,
+                caretPosition,
                 isInEditMode,
                 usersByUsername,
                 teammateNameDisplay,
