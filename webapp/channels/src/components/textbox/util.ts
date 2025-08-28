@@ -233,9 +233,10 @@ export const convertDisplayPositionToRawPosition = (
             displayEnd,
         });
 
-        const tagLength = fullMatch.length - displayMentionLength;
-        rawOffset += tagLength;
-        displayOffset += tagLength;
+        const rawOffsetIncrement = fullMatch.length - rawMentionLength;
+        const displayOffsetIncrement = fullMatch.length - displayMentionLength;
+        rawOffset += rawOffsetIncrement;
+        displayOffset += displayOffsetIncrement;
     }
 
     let rawPosition = displayPosition;
