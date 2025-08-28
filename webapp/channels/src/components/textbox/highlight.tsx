@@ -17,7 +17,9 @@ const MentionOverlay: React.FC<{
 
     useEffect(() => {
         const overlay = overlayRef.current;
-        if (!overlay || !textarea) return;
+        if (!overlay || !textarea) {
+            return () => {};
+        }
 
         const computedStyle = window.getComputedStyle(textarea);
         overlay.style.position = 'absolute';
@@ -39,17 +41,19 @@ const MentionOverlay: React.FC<{
         overlay.style.overflowX = 'hidden';
         overlay.style.overflowY = 'hidden';
         overlay.style.zIndex = '1';
-        
+
         overlay.style.width = `${textarea.clientWidth}px`;
         overlay.style.height = `${textarea.clientHeight}px`;
         overlay.style.borderRadius = computedStyle.borderRadius;
         overlay.style.boxSizing = computedStyle.boxSizing;
 
         const updatePosition = () => {
-            if (!textarea || !overlay) return;
-            
+            if (!textarea || !overlay) {
+                return;
+            }
+
             overlay.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
-            
+
             const newWidth = textarea.clientWidth;
             const newHeight = textarea.clientHeight;
             if (overlay.style.width !== `${newWidth}px` || overlay.style.height !== `${newHeight}px`) {

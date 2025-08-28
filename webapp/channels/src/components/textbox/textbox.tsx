@@ -27,7 +27,7 @@ import {generateMapValueFromInputValue, generateDisplayValueFromMapValue, update
 
 import * as Utils from 'utils/utils';
 
-import {renderMentionOverlay} from './hilight';
+import {renderMentionOverlay} from './highlight';
 
 import type {TextboxElement} from './index';
 
