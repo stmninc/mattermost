@@ -426,6 +426,14 @@ const AdvancedTextEditor = ({
         handleSubmitWithErrorHandling();
     }, [dispatch, draft, handleSubmitWithErrorHandling, isInEditMode, isRHS]);
 
+    const getCurrentRawValue = useCallback(() => {
+        let rawValue = '';
+        if (textboxRef.current && typeof textboxRef.current.getRawValue === 'function') {
+            rawValue = textboxRef.current.getRawValue();
+        }
+        return rawValue.length === 0 ? getCurrentValue() : rawValue;
+    }, [textboxRef]);
+
     const [handleKeyDown, postMsgKeyPress] = useKeyHandler(
         draft,
         channelId,
@@ -445,6 +453,9 @@ const AdvancedTextEditor = ({
         toggleEmojiPicker,
         isInEditMode,
         handleCancel,
+        getCurrentRawValue,
+        usersByUsername,
+        teammateNameDisplay,
     );
 
     const handleSubmitWithEvent = useCallback((e: React.FormEvent) => {
@@ -489,13 +500,6 @@ const AdvancedTextEditor = ({
      * although still working as expected
      */
     const getCurrentValue = useCallback(() => textboxRef.current?.getInputBox().value, [textboxRef]);
-    const getCurrentRawValue = useCallback(() => {
-        let rawValue = '';
-        if (textboxRef.current && typeof textboxRef.current.getRawValue === 'function') {
-            rawValue = textboxRef.current.getRawValue();
-        }
-        return rawValue.length === 0 ? getCurrentValue() : rawValue;
-    }, [textboxRef]);
 
     const getCurrentSelection = useCallback(() => {
         const input = textboxRef.current?.getInputBox();
