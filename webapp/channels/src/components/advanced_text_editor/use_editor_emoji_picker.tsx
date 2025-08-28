@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import React, {useCallback, useState} from 'react';
 import {useIntl} from 'react-intl';
 import {useSelector} from 'react-redux';
+import type {UserProfile} from '@mattermost/types/users';
 
 import {EmoticonHappyOutlineIcon} from '@mattermost/compass-icons/components';
 import type {Emoji} from '@mattermost/types/emojis';
@@ -26,7 +27,7 @@ import type {PostDraft} from 'types/store/draft';
 
 import {IconContainer} from './formatting_bar/formatting_icon';
 
-import {generateDisplayValueFromRawValue, generateMapValueFromRawValue, convertDisplayPositionToRawPosition} from 'components/textbox/util';
+import {generateDisplayValueFromRawValue, convertDisplayPositionToRawPosition} from 'components/textbox/util';
 
 const useEditorEmojiPicker = (
     textboxId: string,
@@ -37,7 +38,7 @@ const useEditorEmojiPicker = (
     handleDraftChange: (draft: PostDraft) => void,
     shouldShowPreview: boolean,
     focusTextbox: () => void,
-    usersByUsername?: Record<string, any>,
+    usersByUsername?: Record<string, UserProfile>,
     teammateNameDisplay?: string
 ) => {
     const intl = useIntl();
