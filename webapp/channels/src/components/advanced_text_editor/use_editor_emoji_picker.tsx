@@ -26,6 +26,8 @@ import type {PostDraft} from 'types/store/draft';
 
 import {IconContainer} from './formatting_bar/formatting_icon';
 
+import {generateDisplayValueFromRawValue, generateMapValueFromRawValue, convertDisplayPositionToRawPosition} from 'components/textbox/util';
+
 const useEditorEmojiPicker = (
     textboxId: string,
     isDisabled: boolean,
@@ -35,6 +37,8 @@ const useEditorEmojiPicker = (
     handleDraftChange: (draft: PostDraft) => void,
     shouldShowPreview: boolean,
     focusTextbox: () => void,
+    usersByUsername?: Record<string, any>,
+    teammateNameDisplay?: string
 ) => {
     const intl = useIntl();
 
@@ -62,14 +66,18 @@ const useEditorEmojiPicker = (
             setCaretPosition(newMessage.length);
         } else {
             const {message} = draft;
-            const {firstPiece, lastPiece} = splitMessageBasedOnCaretPosition(caretPosition, message);
+            const displayValue = generateDisplayValueFromRawValue(draft.message, usersByUsername, teammateNameDisplay);
+            const rawCaretPosition = convertDisplayPositionToRawPosition(caretPosition, message, usersByUsername, teammateNameDisplay);
+
+            const {firstPiece, lastPiece} = splitMessageBasedOnCaretPosition(rawCaretPosition, message);
+            const {firstPiece: displayFirstPiece, lastPiece: _} = splitMessageBasedOnCaretPosition(caretPosition, displayValue);
 
             // check whether the first piece of the message is empty when cursor is placed at beginning of message and avoid adding an empty string at the beginning of the message
             newMessage =
                 firstPiece === '' ? `:${emojiAlias}: ${lastPiece}` : `${firstPiece} :${emojiAlias}: ${lastPiece}`;
 
             const newCaretPosition =
-                firstPiece === '' ? `:${emojiAlias}: `.length : `${firstPiece} :${emojiAlias}: `.length;
+                displayFirstPiece === '' ? `:${emojiAlias}: `.length : `${displayFirstPiece} :${emojiAlias}: `.length;
             setCaretPosition(newCaretPosition);
         }
 
