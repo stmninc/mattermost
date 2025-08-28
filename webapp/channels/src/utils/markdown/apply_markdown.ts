@@ -53,7 +53,6 @@ export function applyMarkdown(options: ApplyMarkdownOptions): ApplyMarkdownRetur
      *
      * In a strange case where nothing works we throw an error.
      */
-    console.log('markdownModel', 'selectionEnd', selectionEnd, 'selectionStart', selectionStart, 'message', message)
     switch (markdownMode) {
     case 'bold':
         return applyBoldMarkdown({selectionEnd, selectionStart, message});
