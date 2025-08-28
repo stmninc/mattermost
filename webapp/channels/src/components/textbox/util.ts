@@ -165,6 +165,7 @@ export const generateRawValueFromMapValue = (mapValue: string, inputValue: strin
  */
 export const generateDisplayValueFromRawValue = (rawValue: string, usersByUsername: Record<string, UserProfile> = {}, teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME): string => {
     const mentionMappings = extractMentionRawMappings(rawValue);
+    const processedPositions = new Set<number>();
 
     let result = rawValue;
     for (const mapping of mentionMappings) {
@@ -173,7 +174,7 @@ export const generateDisplayValueFromRawValue = (rawValue: string, usersByUserna
             continue;
         }
         const displayName = displayUsername(user, teammateNameDisplay, false);
-        result = replaceFirstUnprocessed(result, mapping.fullMatch, `@${displayName}`, new Set());
+        result = replaceFirstUnprocessed(result, mapping.fullMatch, `@${displayName}`, processedPositions);
     }
     return result;
 };
