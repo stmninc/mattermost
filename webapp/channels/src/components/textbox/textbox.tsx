@@ -398,7 +398,11 @@ export default class Textbox extends React.PureComponent<Props> {
                         alignWithTextbox={this.props.alignWithTextbox}
                         onItemSelected={this.handleSuggestionSelected}
                     />
-                    {!this.props.preview && this.props.isAdvanced && renderMentionOverlay(this.getInputBox(), this.state.mentionHighlights, this.state.displayValue)}
+                    {!this.props.preview && this.props.isAdvanced && (
+                        <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none'}}>
+                            {renderMentionOverlay(this.getInputBox(), this.state.mentionHighlights, this.state.displayValue)}
+                        </div>
+                    )}
                 </div>
             </div>
         );
