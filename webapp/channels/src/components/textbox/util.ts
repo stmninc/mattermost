@@ -144,8 +144,8 @@ export const generateRawValueFromMapValue = (mapValue: string, inputValue: strin
             const afterMentionIndex = mentionIndex + mentionPattern.length;
             const charBeforeMention = result.charAt(beforeMentionIndex);
             const charAfterMention = result.charAt(afterMentionIndex);
-            const beforeValid = mentionIndex === 0 || (/[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(charBeforeMention);
-            const afterValid = afterMentionIndex === result.length || (/[\s\n\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/).test(charAfterMention);
+            const beforeValid = mentionIndex === 0 || !(/[a-zA-Z0-9]/).test(charBeforeMention);
+            const afterValid = afterMentionIndex === result.length || !(/[a-zA-Z0-9]/).test(charAfterMention);
 
             if (beforeValid && afterValid) {
                 result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
