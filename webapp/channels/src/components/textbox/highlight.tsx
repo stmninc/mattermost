@@ -1,7 +1,7 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 import {Preferences} from 'mattermost-redux/constants';
 
@@ -14,6 +14,7 @@ const MentionOverlay: React.FC<{
     displayValue: string;
 }> = ({textarea, mentionHighlights, displayValue}) => {
     const overlayRef = useRef<HTMLDivElement>(null);
+    const [scrollPosition, setScrollPosition] = useState({left: 0, top: 0});
 
     useEffect(() => {
         const overlay = overlayRef.current;
@@ -25,8 +26,8 @@ const MentionOverlay: React.FC<{
         overlay.style.position = 'absolute';
         overlay.style.top = '0';
         overlay.style.left = '0';
-        overlay.style.right = '0';
-        overlay.style.bottom = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
         overlay.style.pointerEvents = 'none';
         overlay.style.color = 'transparent';
         overlay.style.backgroundColor = 'transparent';
@@ -41,25 +42,19 @@ const MentionOverlay: React.FC<{
         overlay.style.overflowX = 'hidden';
         overlay.style.overflowY = 'hidden';
         overlay.style.zIndex = '1';
-
-        overlay.style.width = `${textarea.clientWidth}px`;
-        overlay.style.height = `${textarea.clientHeight}px`;
+        
         overlay.style.borderRadius = computedStyle.borderRadius;
         overlay.style.boxSizing = computedStyle.boxSizing;
 
         const updatePosition = () => {
-            if (!textarea || !overlay) {
+            if (!textarea) {
                 return;
             }
 
-            overlay.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
-
-            const newWidth = textarea.clientWidth;
-            const newHeight = textarea.clientHeight;
-            if (overlay.style.width !== `${newWidth}px` || overlay.style.height !== `${newHeight}px`) {
-                overlay.style.width = `${newWidth}px`;
-                overlay.style.height = `${newHeight}px`;
-            }
+            setScrollPosition({
+                left: textarea.scrollLeft,
+                top: textarea.scrollTop,
+            });
         };
 
         updatePosition();
@@ -96,8 +91,21 @@ const MentionOverlay: React.FC<{
         <div
             ref={overlayRef}
             className='mention-overlay'
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                overflow: 'hidden',
+                pointerEvents: 'none',
+            }}
         >
-            {renderHighlightedText(mentionHighlights, displayValue)}
+            <div style={{
+                transform: `translate(${-scrollPosition.left}px, ${-scrollPosition.top}px)`,
+            }}>
+                {renderHighlightedText(mentionHighlights, displayValue)}
+            </div>
         </div>
     );
 };
