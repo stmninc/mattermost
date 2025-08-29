@@ -42,7 +42,7 @@ const MentionOverlay: React.FC<{
         overlay.style.overflowX = 'hidden';
         overlay.style.overflowY = 'hidden';
         overlay.style.zIndex = '1';
-        
+
         overlay.style.borderRadius = computedStyle.borderRadius;
         overlay.style.boxSizing = computedStyle.boxSizing;
 
@@ -101,9 +101,11 @@ const MentionOverlay: React.FC<{
                 pointerEvents: 'none',
             }}
         >
-            <div style={{
-                transform: `translate(${-scrollPosition.left}px, ${-scrollPosition.top}px)`,
-            }}>
+            <div
+                style={{
+                    transform: `translate(${-scrollPosition.left}px, ${-scrollPosition.top}px)`,
+                }}
+            >
                 {renderHighlightedText(mentionHighlights, displayValue)}
             </div>
         </div>
