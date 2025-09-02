@@ -9,7 +9,7 @@ import {displayUsername} from 'mattermost-redux/utils/user_utils';
 import * as Utils from 'utils/utils';
 
 const MENTION_REGEX = /@([a-zA-Z0-9.\-_]+)<x-name>@([^<]+)<\/x-name>/g;
-const USERNAME_REGEX = /@([a-zA-Z0-9.\-_]+)/g;
+const USERNAME_REGEX = /@([a-z0-9._-]*[a-z0-9])(?=[^a-z0-9]|$)/g;
 
 /**
  * Generates a map value from the input value by replacing usernames with their map values.
