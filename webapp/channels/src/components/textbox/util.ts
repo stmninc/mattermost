@@ -60,8 +60,6 @@ export const generateRawValueFromInputValue = (rawValue: string, inputValue: str
                 afterValid = mentionStartPattern.test(textAfterMention);
             }
 
-            console.log('mapping', mapping, 'beforeValid', beforeValid, 'afterValid', afterValid, 'charBeforeMention', charBeforeMention, 'charAfterMention', charAfterMention);
-
             if (beforeValid && afterValid) {
                 result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
             }
@@ -295,10 +293,10 @@ export const resetState = (prevProps: any, setState: (state: any) => void, value
  * @returns An array of objects representing the start and end positions of each mention.
  */
 export const calculateMentionPositions = (
-    rawValue: string, 
-    displayValue: string, 
-    usersByUsername: Record<string, UserProfile> = {}, 
-    teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME
+    rawValue: string,
+    displayValue: string,
+    usersByUsername: Record<string, UserProfile> = {},
+    teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME,
 ): Array<{start: number; end: number; username: string}> => {
     const positions: Array<{start: number; end: number; username: string}> = [];
     const mentionMappings = extractMentionRawMappings(rawValue);
@@ -328,24 +326,24 @@ export const calculateMentionPositions = (
 
         const displayName = displayUsername(user, teammateNameDisplay, false);
         const displayMentionPattern = `@${displayName}`;
-        
+
         const displayMentionStart = displayValue.indexOf(displayMentionPattern, displayCursor);
-        
-        if (displayMentionStart !== -1) {
+
+        if (displayMentionStart === -1) {
+            displayCursor += mapping.fullMatch.length;
+        } else {
             positions.push({
                 start: displayMentionStart,
                 end: displayMentionStart + displayMentionPattern.length,
                 username: mapping.username,
             });
-            
+
             displayCursor = displayMentionStart + displayMentionPattern.length;
-        } else {
-            displayCursor += mapping.fullMatch.length;
         }
-        
+
         rawCursor = rawMentionStart + mapping.fullMatch.length;
     }
-    
+
     return positions;
 };
 
@@ -424,7 +422,7 @@ const buildMentionMappings = (
         const rawStart = rawMentionStart;
         const rawEnd = rawStart + mapping.fullMatch.length;
         const displayStart = displayCursor;
-        
+
         const displayName = displayUsername(user, teammateNameDisplay, false);
         const displayMentionLength = `@${displayName}`.length;
         const displayEnd = displayStart + displayMentionLength;
