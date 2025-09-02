@@ -45,8 +45,22 @@ export const generateRawValueFromInputValue = (rawValue: string, inputValue: str
             const afterMentionIndex = mentionIndex + mentionPattern.length;
             const charBeforeMention = result.charAt(beforeMentionIndex);
             const charAfterMention = result.charAt(afterMentionIndex);
-            const beforeValid = mentionIndex === 0 || !(/[a-zA-Z0-9]/).test(charBeforeMention);
-            const afterValid = afterMentionIndex === result.length || !(/[a-zA-Z0-9]/).test(charAfterMention);
+
+            let beforeValid = mentionIndex === 0 || !(/[a-zA-Z0-9]/).test(charBeforeMention);
+            if (!beforeValid) {
+                const textBeforeMention = result.substring(0, mentionIndex);
+                const mentionEndPattern = /@[a-zA-Z0-9._-]+$/;
+                beforeValid = mentionEndPattern.test(textBeforeMention);
+            }
+
+            let afterValid = afterMentionIndex === result.length || !(/[a-zA-Z0-9]/).test(charAfterMention);
+            if (!afterValid) {
+                const textAfterMention = result.substring(afterMentionIndex);
+                const mentionStartPattern = /^@[a-zA-Z0-9._-]+/;
+                afterValid = mentionStartPattern.test(textAfterMention);
+            }
+
+            console.log('mapping', mapping, 'beforeValid', beforeValid, 'afterValid', afterValid, 'charBeforeMention', charBeforeMention, 'charAfterMention', charAfterMention);
 
             if (beforeValid && afterValid) {
                 result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
