@@ -40,7 +40,6 @@ export const generateRawValueFromInputValue = (rawValue: string, inputValue: str
         const mentionPattern = `@${displayName}`;
         const mentionIndex = result.indexOf(mentionPattern);
 
-        // result = replaceFirstUnprocessed(result, displayName, replacement, replacedPositions);
         if (mentionIndex !== -1) {
             const beforeMentionIndex = mentionIndex - 1;
             const afterMentionIndex = mentionIndex + mentionPattern.length;
