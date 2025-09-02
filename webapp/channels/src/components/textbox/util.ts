@@ -99,60 +99,7 @@ export const convertDisplayPositionToRawPosition = (
         return displayPosition;
     }
 
-    const mentionMappings = extractMentionRawMappings(rawValue);
-
-    const mentions: Array<{
-        username: string;
-        displayName: string;
-        rawStart: number;
-        rawEnd: number;
-        displayStart: number;
-        displayEnd: number;
-    }> = [];
-
-    let rawCursor = 0;
-    let displayCursor = 0;
-
-    for (const mapping of mentionMappings) {
-        const user = usersByUsername[mapping.username];
-        if (!user) {
-            const rawMentionStart = rawValue.indexOf(mapping.fullMatch, rawCursor);
-            if (rawMentionStart !== -1) {
-                const beforeMentionRaw = rawValue.slice(rawCursor, rawMentionStart);
-                displayCursor += beforeMentionRaw.length + mapping.fullMatch.length;
-                rawCursor = rawMentionStart + mapping.fullMatch.length;
-            }
-            continue;
-        }
-
-        const rawMentionStart = rawValue.indexOf(mapping.fullMatch, rawCursor);
-        if (rawMentionStart === -1) {
-            continue;
-        }
-
-        const beforeMentionRaw = rawValue.slice(rawCursor, rawMentionStart);
-        displayCursor += beforeMentionRaw.length;
-
-        const rawStart = rawMentionStart;
-        const rawEnd = rawStart + mapping.fullMatch.length;
-        const displayStart = displayCursor;
-        
-        const displayName = displayUsername(user, teammateNameDisplay, false);
-        const displayMentionLength = `@${displayName}`.length;
-        const displayEnd = displayStart + displayMentionLength;
-
-        mentions.push({
-            username: mapping.username,
-            displayName,
-            rawStart,
-            rawEnd,
-            displayStart,
-            displayEnd,
-        });
-
-        rawCursor = rawEnd;
-        displayCursor = displayEnd;
-    }
+    const mentions = buildMentionMappings(rawValue, usersByUsername, teammateNameDisplay);
 
     let rawPosition = displayPosition;
 
@@ -190,60 +137,7 @@ export const convertRawPositionToDisplayPosition = (
     }
 
     const displayValue = generateDisplayValueFromRawValue(rawValue, usersByUsername, teammateNameDisplay);
-    const mentionMappings = extractMentionRawMappings(rawValue);
-
-    const mentions: Array<{
-        username: string;
-        displayName: string;
-        rawStart: number;
-        rawEnd: number;
-        displayStart: number;
-        displayEnd: number;
-    }> = [];
-
-    let rawCursor = 0;
-    let displayCursor = 0;
-
-    for (const mapping of mentionMappings) {
-        const user = usersByUsername[mapping.username];
-        if (!user) {
-            const rawMentionStart = rawValue.indexOf(mapping.fullMatch, rawCursor);
-            if (rawMentionStart !== -1) {
-                const beforeMentionRaw = rawValue.slice(rawCursor, rawMentionStart);
-                displayCursor += beforeMentionRaw.length + mapping.fullMatch.length;
-                rawCursor = rawMentionStart + mapping.fullMatch.length;
-            }
-            continue;
-        }
-
-        const rawMentionStart = rawValue.indexOf(mapping.fullMatch, rawCursor);
-        if (rawMentionStart === -1) {
-            continue;
-        }
-
-        const beforeMentionRaw = rawValue.slice(rawCursor, rawMentionStart);
-        displayCursor += beforeMentionRaw.length;
-
-        const rawStart = rawMentionStart;
-        const rawEnd = rawStart + mapping.fullMatch.length;
-        const displayStart = displayCursor;
-        
-        const displayName = displayUsername(user, teammateNameDisplay, false);
-        const displayMentionLength = `@${displayName}`.length;
-        const displayEnd = displayStart + displayMentionLength;
-
-        mentions.push({
-            username: mapping.username,
-            displayName,
-            rawStart,
-            rawEnd,
-            displayStart,
-            displayEnd,
-        });
-
-        rawCursor = rawEnd;
-        displayCursor = displayEnd;
-    }
+    const mentions = buildMentionMappings(rawValue, usersByUsername, teammateNameDisplay);
 
     let displayPosition = rawPosition;
     let accumulatedLengthDiff = 0;
@@ -460,6 +354,82 @@ const extractMentionRawMappings = (rawValue: string): Array<{ fullMatch: string;
     }
 
     return mappings;
+};
+
+/**
+ * Builds mention position mappings between raw and display values.
+ * @param rawValue - The raw value.
+ * @param usersByUsername - A mapping of usernames to user profiles.
+ * @param teammateNameDisplay - The display setting for teammate names.
+ * @returns An array of mention mappings with raw and display positions.
+ */
+const buildMentionMappings = (
+    rawValue: string,
+    usersByUsername: Record<string, UserProfile>,
+    teammateNameDisplay = Preferences.DISPLAY_PREFER_USERNAME,
+): Array<{
+    username: string;
+    displayName: string;
+    rawStart: number;
+    rawEnd: number;
+    displayStart: number;
+    displayEnd: number;
+}> => {
+    const mentionMappings = extractMentionRawMappings(rawValue);
+    const mentions: Array<{
+        username: string;
+        displayName: string;
+        rawStart: number;
+        rawEnd: number;
+        displayStart: number;
+        displayEnd: number;
+    }> = [];
+
+    let rawCursor = 0;
+    let displayCursor = 0;
+
+    for (const mapping of mentionMappings) {
+        const user = usersByUsername[mapping.username];
+        if (!user) {
+            const rawMentionStart = rawValue.indexOf(mapping.fullMatch, rawCursor);
+            if (rawMentionStart !== -1) {
+                const beforeMentionRaw = rawValue.slice(rawCursor, rawMentionStart);
+                displayCursor += beforeMentionRaw.length + mapping.fullMatch.length;
+                rawCursor = rawMentionStart + mapping.fullMatch.length;
+            }
+            continue;
+        }
+
+        const rawMentionStart = rawValue.indexOf(mapping.fullMatch, rawCursor);
+        if (rawMentionStart === -1) {
+            continue;
+        }
+
+        const beforeMentionRaw = rawValue.slice(rawCursor, rawMentionStart);
+        displayCursor += beforeMentionRaw.length;
+
+        const rawStart = rawMentionStart;
+        const rawEnd = rawStart + mapping.fullMatch.length;
+        const displayStart = displayCursor;
+        
+        const displayName = displayUsername(user, teammateNameDisplay, false);
+        const displayMentionLength = `@${displayName}`.length;
+        const displayEnd = displayStart + displayMentionLength;
+
+        mentions.push({
+            username: mapping.username,
+            displayName,
+            rawStart,
+            rawEnd,
+            displayStart,
+            displayEnd,
+        });
+
+        rawCursor = rawEnd;
+        displayCursor = displayEnd;
+    }
+
+    return mentions;
 };
 
 /**
