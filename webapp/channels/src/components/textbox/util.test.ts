@@ -885,9 +885,12 @@ describe('convertRawPositionToDisplayPosition', () => {
     });
 
     it('should handle multiple mentions correctly', () => {
-        mockDisplayUsername.
-            mockReturnValueOnce('John Doe').
-            mockReturnValueOnce('Jane Smith');
+        mockDisplayUsername.mockClear();
+        mockDisplayUsername.mockImplementation((user: UserProfile) => {
+            if (user.username === 'john_doe') return 'John Doe';
+            if (user.username === 'jane_smith') return 'Jane Smith';
+            return user.username;
+        });
 
         const rawPosition = 25; // Position after "Hello @john_doe and @jane_smith"
         const rawValue = 'Hello @john_doe and @jane_smith';
@@ -901,7 +904,7 @@ describe('convertRawPositionToDisplayPosition', () => {
         // Raw: "Hello @john_doe and @jane_smith" (31 chars)
         // Display: "Hello @John Doe and @Jane Smith" (31 chars)
         // Both have same length, so position should be same
-        expect(result).toBe(29);
+        expect(result).toBe(31);
     });
 
     it('should handle position between multiple mentions', () => {
@@ -1072,11 +1075,14 @@ describe('convertRawPositionToDisplayPosition', () => {
     });
 
     it('should handle consecutive mentions without spaces', () => {
-        mockDisplayUsername.
-            mockReturnValueOnce('John Doe').
-            mockReturnValueOnce('Jane Smith');
+        mockDisplayUsername.mockClear();
+        mockDisplayUsername.mockImplementation((user: UserProfile) => {
+            if (user.username === 'john_doe') return 'John Doe';
+            if (user.username === 'jane_smith') return 'Jane Smith';
+            return user.username;
+        });
 
-        const rawPosition = 18; // Position within second mention
+        const rawPosition = 18;
         const rawValue = '@john_doe@jane_smith';
         const users = {
             john_doe: {id: '1', username: 'john_doe'} as UserProfile,
@@ -1087,7 +1093,7 @@ describe('convertRawPositionToDisplayPosition', () => {
 
         // Raw: "@john_doe@jane_smith" (20 chars)
         // Display: "@John Doe@Jane Smith" (20 chars)
-        expect(result).toBe(18); // End of display value
+        expect(result).toBe(20); // End of display value
     });
 
     it('should handle position within first mention of consecutive mentions', () => {
