@@ -887,8 +887,12 @@ describe('convertRawPositionToDisplayPosition', () => {
     it('should handle multiple mentions correctly', () => {
         mockDisplayUsername.mockClear();
         mockDisplayUsername.mockImplementation((user: UserProfile) => {
-            if (user.username === 'john_doe') return 'John Doe';
-            if (user.username === 'jane_smith') return 'Jane Smith';
+            if (user.username === 'john_doe') {
+                return 'John Doe';
+            }
+            if (user.username === 'jane_smith') {
+                return 'Jane Smith';
+            }
             return user.username;
         });
 
@@ -1077,8 +1081,12 @@ describe('convertRawPositionToDisplayPosition', () => {
     it('should handle consecutive mentions without spaces', () => {
         mockDisplayUsername.mockClear();
         mockDisplayUsername.mockImplementation((user: UserProfile) => {
-            if (user.username === 'john_doe') return 'John Doe';
-            if (user.username === 'jane_smith') return 'Jane Smith';
+            if (user.username === 'john_doe') {
+                return 'John Doe';
+            }
+            if (user.username === 'jane_smith') {
+                return 'Jane Smith';
+            }
             return user.username;
         });
 
