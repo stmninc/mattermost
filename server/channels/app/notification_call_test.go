@@ -149,7 +149,7 @@ func TestSendNotificationCallEnd(t *testing.T) {
 			ChannelId: directChannel.Id,
 			Type:      "custom_calls",
 			Props: model.StringInterface{
-				"end_at":      1234567890,
+				"end_at":       1234567890,
 				"participants": []interface{}{senderId, member1Id, member2Id},
 			},
 		}
