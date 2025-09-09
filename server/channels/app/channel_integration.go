@@ -4,6 +4,7 @@
 package app
 
 import (
+	"net/http"
 	"os"
 	"sync"
 
@@ -28,13 +29,17 @@ func getIntegrationAdminUsername() string {
 // IsOfficialChannel checks if a channel is official by comparing creator with integration admin user.
 func (a *App) IsOfficialChannel(c request.CTX, channel *model.Channel) (bool, *model.AppError) {
 	if channel == nil {
-		return false, nil
+		return false, model.NewAppError("IsOfficialChannel", "app.channel.invalid", nil, "channel is nil", http.StatusBadRequest)
+	}
+
+	if channel.CreatorId == "" {
+		return false, model.NewAppError("IsOfficialChannel", "app.channel.invalid_creator", nil, "channel creator ID is empty", http.StatusBadRequest)
 	}
 
 	// Get cached integration admin username
 	adminUsername := getIntegrationAdminUsername()
 	if adminUsername == "" {
-		return false, nil
+		return false, model.NewAppError("IsOfficialChannel", "app.channel.config_missing", nil, "INTEGRATION_ADMIN_USERNAME not configured", http.StatusInternalServerError)
 	}
 
 	creatorUser, err := a.GetUser(channel.CreatorId)
