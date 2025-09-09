@@ -33,7 +33,7 @@ func (a *App) IsOfficialChannel(c request.CTX, channel *model.Channel) (bool, *m
 	}
 
 	if channel.CreatorId == "" {
-		return false, model.NewAppError("IsOfficialChannel", "app.channel.invalid_creator", nil, "channel creator ID is empty", http.StatusBadRequest)
+		return false, nil
 	}
 
 	// Get cached integration admin username
@@ -44,7 +44,8 @@ func (a *App) IsOfficialChannel(c request.CTX, channel *model.Channel) (bool, *m
 
 	creatorUser, err := a.GetUser(channel.CreatorId)
 	if err != nil {
-		return false, err
+		// If creator user doesn't exist, channel is not official
+		return false, nil
 	}
 
 	return creatorUser.Username == adminUsername, nil

@@ -121,26 +121,6 @@ func TestIsOfficialChannel(t *testing.T) {
 		assert.Equal(t, "app.channel.invalid", appErr.Id)
 	})
 
-	t.Run("returns error when user does not exist", func(t *testing.T) {
-		// Reset cache for this test
-		resetIntegrationAdminUsernameForTesting()
-
-		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
-		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
-
-		channel := &model.Channel{
-			TeamId:      th.BasicTeam.Id,
-			DisplayName: "Test Channel",
-			Name:        "test-channel",
-			Type:        model.ChannelTypePrivate,
-			CreatorId:   "non-existent-user-id",
-		}
-
-		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
-		require.NotNil(t, appErr)
-		assert.False(t, isOfficial)
-	})
-
 	t.Run("returns error when environment variable is empty string", func(t *testing.T) {
 		// Reset cache for this test
 		resetIntegrationAdminUsernameForTesting()
@@ -162,7 +142,7 @@ func TestIsOfficialChannel(t *testing.T) {
 		assert.Equal(t, "app.channel.config_missing", appErr.Id)
 	})
 
-	t.Run("returns error when channel creator ID is empty", func(t *testing.T) {
+	t.Run("returns false when channel creator ID is empty", func(t *testing.T) {
 		// Reset cache for this test
 		resetIntegrationAdminUsernameForTesting()
 
@@ -178,9 +158,8 @@ func TestIsOfficialChannel(t *testing.T) {
 		}
 
 		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
-		require.NotNil(t, appErr)
+		require.Nil(t, appErr)
 		assert.False(t, isOfficial)
-		assert.Equal(t, "app.channel.invalid_creator", appErr.Id)
 	})
 
 	t.Run("returns true for public channel created by integration admin (edge case)", func(t *testing.T) {
@@ -211,5 +190,85 @@ func TestIsOfficialChannel(t *testing.T) {
 		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, publicChannel)
 		require.Nil(t, appErr)
 		assert.True(t, isOfficial)
+	})
+
+	t.Run("returns false for DM channel", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
+		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
+		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
+
+		// Create admin user (even though it won't be used for DM)
+		_, err := th.App.CreateUser(th.Context, &model.User{
+			Email:    fmt.Sprintf("admin-%d@example.com", time.Now().UnixNano()),
+			Username: adminUsername,
+			Password: "password123",
+		})
+		require.Nil(t, err)
+
+		channel := &model.Channel{
+			Type:      model.ChannelTypeDirect,
+			CreatorId: "", // DM channels typically have empty CreatorId
+		}
+
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
+		require.Nil(t, appErr)
+		assert.False(t, isOfficial)
+	})
+
+	t.Run("returns false for GM channel", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
+		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
+		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
+
+		// Create admin user (even though it won't be used for GM)
+		_, err := th.App.CreateUser(th.Context, &model.User{
+			Email:    fmt.Sprintf("admin-%d@example.com", time.Now().UnixNano()),
+			Username: adminUsername,
+			Password: "password123",
+		})
+		require.Nil(t, err)
+
+		channel := &model.Channel{
+			Type:      model.ChannelTypeGroup,
+			CreatorId: "", // GM channels typically have empty CreatorId
+		}
+
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
+		require.Nil(t, appErr)
+		assert.False(t, isOfficial)
+	})
+
+	t.Run("returns false when creator does not exist", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
+		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
+		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
+
+		// Create admin user
+		_, err := th.App.CreateUser(th.Context, &model.User{
+			Email:    fmt.Sprintf("admin-%d@example.com", time.Now().UnixNano()),
+			Username: adminUsername,
+			Password: "password123",
+		})
+		require.Nil(t, err)
+
+		channel := &model.Channel{
+			TeamId:      th.BasicTeam.Id,
+			DisplayName: "Test Channel",
+			Name:        "test-channel",
+			Type:        model.ChannelTypePrivate,
+			CreatorId:   "non-existent-user-id",
+		}
+
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
+		// Should return false when creator doesn't exist (not an error in our logic,
+		// just means the channel is not official)
+		require.Nil(t, appErr)
+		assert.False(t, isOfficial)
 	})
 }
