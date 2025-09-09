@@ -112,8 +112,8 @@ func TestIsOfficialChannel(t *testing.T) {
 	})
 
 	t.Run("returns error when channel is nil", func(t *testing.T) {
-		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
-		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
 
 		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, nil)
 		require.NotNil(t, appErr)
@@ -196,17 +196,6 @@ func TestIsOfficialChannel(t *testing.T) {
 		// Reset cache for this test
 		resetIntegrationAdminUsernameForTesting()
 
-		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
-		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
-
-		// Create admin user (even though it won't be used for DM)
-		_, err := th.App.CreateUser(th.Context, &model.User{
-			Email:    fmt.Sprintf("admin-%d@example.com", time.Now().UnixNano()),
-			Username: adminUsername,
-			Password: "password123",
-		})
-		require.Nil(t, err)
-
 		channel := &model.Channel{
 			Type:      model.ChannelTypeDirect,
 			CreatorId: "", // DM channels typically have empty CreatorId
@@ -220,17 +209,6 @@ func TestIsOfficialChannel(t *testing.T) {
 	t.Run("returns false for GM channel", func(t *testing.T) {
 		// Reset cache for this test
 		resetIntegrationAdminUsernameForTesting()
-
-		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
-		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
-
-		// Create admin user (even though it won't be used for GM)
-		_, err := th.App.CreateUser(th.Context, &model.User{
-			Email:    fmt.Sprintf("admin-%d@example.com", time.Now().UnixNano()),
-			Username: adminUsername,
-			Password: "password123",
-		})
-		require.Nil(t, err)
 
 		channel := &model.Channel{
 			Type:      model.ChannelTypeGroup,
