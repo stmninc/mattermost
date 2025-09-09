@@ -6,6 +6,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,6 +15,12 @@ import (
 
 	"github.com/mattermost/mattermost/server/public/model"
 )
+
+// Resets the cached integration admin username from environment variable for tests.
+func resetIntegrationAdminUsernameForTesting() {
+	integrationAdminUsername = ""
+	integrationAdminOnce = sync.Once{}
+}
 
 func TestIsOfficialChannel(t *testing.T) {
 	th := Setup(t).InitBasic()
@@ -30,6 +37,9 @@ func TestIsOfficialChannel(t *testing.T) {
 	}()
 
 	t.Run("returns true when channel creator is integration admin", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
 		// Set up environment variable with unique username
 		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
 		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
@@ -43,39 +53,47 @@ func TestIsOfficialChannel(t *testing.T) {
 		require.Nil(t, err)
 
 		// Create channel with admin user as creator
+		// Official channels are created as private channels
 		channel := &model.Channel{
 			TeamId:      th.BasicTeam.Id,
 			DisplayName: "Official Channel",
 			Name:        "official-channel",
-			Type:        model.ChannelTypeOpen,
+			Type:        model.ChannelTypePrivate,
 			CreatorId:   adminUser.Id,
 		}
 
-		isOfficial, appErr := th.App.IsOfficialTunagChannel(th.Context, channel)
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
 		require.Nil(t, appErr)
 		assert.True(t, isOfficial)
 	})
 
 	t.Run("returns false when channel creator is not integration admin", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
 		// Set up environment variable with unique username
 		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
 		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
 
 		// Use basic user (not admin) as creator
+		// Non-official channels can be either public or private, using private here
 		channel := &model.Channel{
 			TeamId:      th.BasicTeam.Id,
 			DisplayName: "Non-Official Channel",
 			Name:        "non-official-channel",
-			Type:        model.ChannelTypeOpen,
+			Type:        model.ChannelTypePrivate,
 			CreatorId:   th.BasicUser.Id,
 		}
 
-		isOfficial, appErr := th.App.IsOfficialTunagChannel(th.Context, channel)
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
 		require.Nil(t, appErr)
 		assert.False(t, isOfficial)
 	})
 
 	t.Run("returns false when environment variable is not set", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
 		// Clear environment variable
 		os.Unsetenv("INTEGRATION_ADMIN_USERNAME")
 
@@ -83,11 +101,11 @@ func TestIsOfficialChannel(t *testing.T) {
 			TeamId:      th.BasicTeam.Id,
 			DisplayName: "Test Channel",
 			Name:        "test-channel",
-			Type:        model.ChannelTypeOpen,
+			Type:        model.ChannelTypePrivate,
 			CreatorId:   th.BasicUser.Id,
 		}
 
-		isOfficial, appErr := th.App.IsOfficialTunagChannel(th.Context, channel)
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
 		require.Nil(t, appErr)
 		assert.False(t, isOfficial)
 	})
@@ -96,12 +114,15 @@ func TestIsOfficialChannel(t *testing.T) {
 		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
 		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
 
-		isOfficial, appErr := th.App.IsOfficialTunagChannel(th.Context, nil)
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, nil)
 		require.Nil(t, appErr)
 		assert.False(t, isOfficial)
 	})
 
 	t.Run("returns error when user does not exist", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
 		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
 		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
 
@@ -109,16 +130,19 @@ func TestIsOfficialChannel(t *testing.T) {
 			TeamId:      th.BasicTeam.Id,
 			DisplayName: "Test Channel",
 			Name:        "test-channel",
-			Type:        model.ChannelTypeOpen,
+			Type:        model.ChannelTypePrivate,
 			CreatorId:   "non-existent-user-id",
 		}
 
-		isOfficial, appErr := th.App.IsOfficialTunagChannel(th.Context, channel)
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
 		require.NotNil(t, appErr)
 		assert.False(t, isOfficial)
 	})
 
 	t.Run("returns false when environment variable is empty string", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
 		// Set environment variable to empty string
 		os.Setenv("INTEGRATION_ADMIN_USERNAME", "")
 
@@ -126,16 +150,19 @@ func TestIsOfficialChannel(t *testing.T) {
 			TeamId:      th.BasicTeam.Id,
 			DisplayName: "Test Channel",
 			Name:        "test-channel",
-			Type:        model.ChannelTypeOpen,
+			Type:        model.ChannelTypePrivate,
 			CreatorId:   th.BasicUser.Id,
 		}
 
-		isOfficial, appErr := th.App.IsOfficialTunagChannel(th.Context, channel)
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
 		require.Nil(t, appErr)
 		assert.False(t, isOfficial)
 	})
 
-	t.Run("works with different channel types", func(t *testing.T) {
+	t.Run("returns true for public channel created by integration admin (edge case)", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
 		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
 		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
 
@@ -147,16 +174,17 @@ func TestIsOfficialChannel(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		// Test with private channel
-		privateChannel := &model.Channel{
+		// Edge case: Test that the function works for public channels created by integration admin
+		// (though official channels should normally be private)
+		publicChannel := &model.Channel{
 			TeamId:      th.BasicTeam.Id,
-			DisplayName: "Private Official Channel",
-			Name:        "private-official-channel",
-			Type:        model.ChannelTypePrivate,
+			DisplayName: "Public Channel by Admin",
+			Name:        "public-channel-by-admin",
+			Type:        model.ChannelTypeOpen,
 			CreatorId:   adminUser.Id,
 		}
 
-		isOfficial, appErr := th.App.IsOfficialTunagChannel(th.Context, privateChannel)
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, publicChannel)
 		require.Nil(t, appErr)
 		assert.True(t, isOfficial)
 	})

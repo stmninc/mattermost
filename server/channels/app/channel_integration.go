@@ -5,19 +5,35 @@ package app
 
 import (
 	"os"
+	"sync"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/request"
 )
 
-// IsOfficialTunagChannel checks if a channel is official by comparing creator with integration admin user.
-func (a *App) IsOfficialTunagChannel(c request.CTX, channel *model.Channel) (bool, *model.AppError) {
+var (
+	integrationAdminUsername string
+	integrationAdminOnce     sync.Once
+)
+
+// getIntegrationAdminUsername returns the integration admin username from environment variable
+// using sync.Once to ensure it's only read once for performance.
+func getIntegrationAdminUsername() string {
+	integrationAdminOnce.Do(func() {
+		integrationAdminUsername = os.Getenv("INTEGRATION_ADMIN_USERNAME")
+	})
+	return integrationAdminUsername
+}
+
+// IsOfficialChannel checks if a channel is official by comparing creator with integration admin user.
+func (a *App) IsOfficialChannel(c request.CTX, channel *model.Channel) (bool, *model.AppError) {
 	if channel == nil {
 		return false, nil
 	}
 
-	integrationAdminUsername := os.Getenv("INTEGRATION_ADMIN_USERNAME")
-	if integrationAdminUsername == "" {
+	// Get cached integration admin username
+	adminUsername := getIntegrationAdminUsername()
+	if adminUsername == "" {
 		return false, nil
 	}
 
@@ -26,9 +42,5 @@ func (a *App) IsOfficialTunagChannel(c request.CTX, channel *model.Channel) (boo
 		return false, err
 	}
 
-	if creatorUser == nil {
-		return false, nil
-	}
-
-	return creatorUser.Username == integrationAdminUsername, nil
+	return creatorUser.Username == adminUsername, nil
 }
