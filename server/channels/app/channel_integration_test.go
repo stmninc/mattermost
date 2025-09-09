@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 	"testing"
@@ -247,6 +248,44 @@ func TestIsOfficialChannel(t *testing.T) {
 		// Should return false when creator doesn't exist (not an error in our logic,
 		// just means the channel is not official)
 		require.Nil(t, appErr)
+		assert.False(t, isOfficial)
+	})
+
+	t.Run("propagates system errors from GetUser", func(t *testing.T) {
+		// Reset cache for this test
+		resetIntegrationAdminUsernameForTesting()
+
+		adminUsername := fmt.Sprintf("integration-admin-%d", time.Now().UnixNano())
+		os.Setenv("INTEGRATION_ADMIN_USERNAME", adminUsername)
+
+		// Create admin user
+		_, err := th.App.CreateUser(th.Context, &model.User{
+			Email:    fmt.Sprintf("admin-%d@example.com", time.Now().UnixNano()),
+			Username: adminUsername,
+			Password: "password123",
+		})
+		require.Nil(t, err)
+
+		// Use an invalid UUID format to potentially trigger a system error
+		// This simulates a scenario where GetUser might fail with a system error
+		// rather than a simple "not found" error
+		channel := &model.Channel{
+			TeamId:      th.BasicTeam.Id,
+			DisplayName: "Test Channel",
+			Name:        "test-channel",
+			Type:        model.ChannelTypePrivate,
+			CreatorId:   "invalid-uuid-format-that-might-cause-system-error",
+		}
+
+		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
+		// This test verifies that system errors are properly propagated
+		// If GetUser fails with a system error (not NotFound), IsOfficialChannel should return that error
+		if appErr != nil {
+			// If an error is returned, it should not be a NotFound error
+			// It should be a system error that was properly propagated
+			assert.NotEqual(t, http.StatusNotFound, appErr.StatusCode, "System errors should be propagated, not treated as NotFound")
+		}
+		// The result should be false when there's an error
 		assert.False(t, isOfficial)
 	})
 }

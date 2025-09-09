@@ -44,8 +44,11 @@ func (a *App) IsOfficialChannel(c request.CTX, channel *model.Channel) (bool, *m
 
 	creatorUser, err := a.GetUser(channel.CreatorId)
 	if err != nil {
-		// If creator user doesn't exist, channel is not official
-		return false, nil
+		if err.StatusCode == http.StatusNotFound {
+			// If creator user doesn't exist, channel is not official
+			return false, nil
+		}
+		return false, err
 	}
 
 	return creatorUser.Username == adminUsername, nil
