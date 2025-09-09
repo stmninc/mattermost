@@ -58,17 +58,14 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 	}
 
 	notification := &model.PushNotification{
-		Category:    model.CategoryCanReply,
-		Sound:       model.PushSoundNone,
-		Message:     "Call ended",
-		Badge:       0,
-		ContentAvailable: 1,
+		Version:     model.PushMessageV2,
 		Type:        model.PushTypeMessage,
-		SubType: 	   model.PushSubTypeCalls,
+		SubType:     model.PushSubTypeCalls,
+		TeamId:      channel.TeamId,
 		ChannelId:   post.ChannelId,
 		PostId:      post.Id,
+		Message:     "Call ended",
 		ChannelName: channel.DisplayName,
-		TeamId:      channel.TeamId,
 	}
 
 	for _, member := range channelMembers {
