@@ -44,7 +44,7 @@ func (a *App) IsOfficialChannel(c request.CTX, channel *model.Channel) (bool, *m
 
 	creatorUser, err := a.GetUser(channel.CreatorId)
 	if err != nil {
-		if err.StatusCode == http.StatusNotFound {
+		if err.Id == MissingAccountError {
 			// If creator user doesn't exist, channel is not official
 			return false, nil
 		}
