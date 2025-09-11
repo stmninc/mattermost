@@ -43,10 +43,10 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 		return err
 	}
 
-	currentUserId := c.Session().UserId
-	if currentUserId == "" {
-		c.Logger().Error("No current user for call notification",
-			mlog.String("channel_id", post.ChannelId))
+	postUserId := post.UserId
+	if postUserId == "" {
+		c.Logger().Error("Post user ID is empty for call notification",
+			mlog.String("post_id", post.Id))
 		return nil
 	}
 
@@ -59,12 +59,11 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 		PostId:      post.Id,
 		Message:     "Call ended",
 		ChannelName: channel.DisplayName,
-		SenderId:   currentUserId,
 	}
 
 	for _, member := range channelMembers {
-		// Don't send notification to the user who ended the call
-		if member.UserId == currentUserId {
+		// Don't send notification to the user who created the post because they started the call
+		if member.UserId == postUserId {
 			continue
 		}
 
