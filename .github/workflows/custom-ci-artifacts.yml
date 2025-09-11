@@ -15,6 +15,14 @@ on:
         description: 'Tag to build'
         required: false
         default: ''
+      environment:
+        description: 'Environment to build (production or staging)'
+        required: false
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
 
 jobs:
   build-artifacts:
@@ -95,7 +103,12 @@ jobs:
       - name: Set Docker tags
         id: docker_meta
         run: |
-          IMAGE_NAME="${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GAR_REPOSITORY_NAME }}/${{ secrets.GAR_IMAGE_NAME }}"
+          if [[ "${{ inputs.environment }}" == "staging" ]]; then
+            GAR_REPOSITORY_NAME="${{ secrets.STG_GAR_REPOSITORY_NAME }}"
+          else
+            GAR_REPOSITORY_NAME="${{ secrets.GAR_REPOSITORY_NAME }}"
+          fi
+          IMAGE_NAME="${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${GAR_REPOSITORY_NAME}/${{ secrets.GAR_IMAGE_NAME }}"
           DOCKER_TAG_NAME=""
 
           # Priority order for determining the Docker tag name:
