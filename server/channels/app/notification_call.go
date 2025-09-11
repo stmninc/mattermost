@@ -91,8 +91,14 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 			}
 			tmpMessage.SetDeviceIdAndPlatform(deviceID)
 
+			c.Logger().Info("Preparing to send call end notification",
+				mlog.String("user_id", member.UserId),
+				mlog.String("session_id", session.Id),
+				mlog.String("device_id", deviceID),
+				mlog.String("platform", tmpMessage.Platform))
+
       // Don't send notification if platform is iOS React Native because call notifications are not supported
-			if tmpMessage.Platform == model.PushNotifyAppleReactNative {
+			if session.VoipDeviceId == "" && tmpMessage.Platform == model.PushNotifyAppleReactNative {
 				continue
 			}
 
