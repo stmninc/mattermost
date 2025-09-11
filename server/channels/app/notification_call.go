@@ -46,17 +46,6 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 		return err
 	}
 
-	participants := make(map[string]bool)
-	if participantsData, exists := post.Props["participants"]; exists {
-		if participantsList, ok := participantsData.([]interface{}); ok {
-			for _, participant := range participantsList {
-				if participantStr, ok := participant.(string); ok {
-					participants[participantStr] = true
-				}
-			}
-		}
-	}
-
 	notification := &model.PushNotification{
 		Version:     model.PushMessageV2,
 		Type:        model.PushTypeMessage,
@@ -69,9 +58,8 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 	}
 
 	for _, member := range channelMembers {
-		// participants is a list of users who have participated in the call.
-		// Do not send notifications to users who have already participated in the call.
-		if participants[member.UserId] {
+		// Don't send notification to the user who ended the call
+		if member.UserId == c.Session().UserId {
 			continue
 		}
 
@@ -97,6 +85,12 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 				deviceID = session.VoipDeviceId
 			}
 			tmpMessage.SetDeviceIdAndPlatform(deviceID)
+
+      // Don't send notification if platform is iOS React Native because call notifications are not supported
+			if tmpMessage.Platform == model.PushNotifyAppleReactNative {
+				continue
+			}
+
 			tmpMessage.AckId = model.NewId()
 
 			notificationJSON, _ := json.Marshal(tmpMessage)

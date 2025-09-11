@@ -125,7 +125,7 @@ func TestSendNotificationCallEnd(t *testing.T) {
 		require.NotNil(t, err)
 	})
 
-	t.Run("should send notification to channel members excluding participants", func(t *testing.T) {
+	t.Run("should send notification to all channel members except current session user", func(t *testing.T) {
 		th := SetupWithStoreMock(t)
 		defer th.TearDown()
 
@@ -139,9 +139,11 @@ func TestSendNotificationCallEnd(t *testing.T) {
 		}
 
 		senderId := model.NewId()
+		sessionUserId := model.NewId()
 		member1Id := model.NewId()
 		member2Id := model.NewId()
-		member3Id := model.NewId()
+
+		th.Context.Session().UserId = sessionUserId
 
 		post := &model.Post{
 			Id:        model.NewId(),
@@ -149,16 +151,15 @@ func TestSendNotificationCallEnd(t *testing.T) {
 			ChannelId: directChannel.Id,
 			Type:      "custom_calls",
 			Props: model.StringInterface{
-				"end_at":       1234567890,
-				"participants": []interface{}{senderId, member1Id, member2Id},
+				"end_at": 1234567890,
 			},
 		}
 
 		channelMembers := model.ChannelMembers{
 			{ChannelId: directChannel.Id, UserId: senderId},
+			{ChannelId: directChannel.Id, UserId: sessionUserId},
 			{ChannelId: directChannel.Id, UserId: member1Id},
 			{ChannelId: directChannel.Id, UserId: member2Id},
-			{ChannelId: directChannel.Id, UserId: member3Id},
 		}
 
 		mockStore := th.App.Srv().Store().(*mocks.Store)
@@ -173,7 +174,9 @@ func TestSendNotificationCallEnd(t *testing.T) {
 		mockStore.On("Channel").Return(&mockChannelStore)
 
 		mockSessionStore := mocks.SessionStore{}
-		mockSessionStore.On("GetSessionsWithActiveDeviceIds", member3Id).Return([]*model.Session{}, nil)
+		mockSessionStore.On("GetSessionsWithActiveDeviceIds", senderId).Return([]*model.Session{}, nil)
+		mockSessionStore.On("GetSessionsWithActiveDeviceIds", member1Id).Return([]*model.Session{}, nil)
+		mockSessionStore.On("GetSessionsWithActiveDeviceIds", member2Id).Return([]*model.Session{}, nil)
 		mockStore.On("Session").Return(&mockSessionStore)
 
 		err := th.App.SendNotificationCallEnd(th.Context, post)
