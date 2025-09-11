@@ -84,6 +84,17 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 				continue
 			}
 
+			c.Logger().Info("Found mobile session for user",
+				mlog.String("user_id", member.UserId),
+				mlog.String("session_id", session.Id),
+				mlog.String("device_id", session.DeviceId),
+				mlog.String("platform", session.Props["os"]))
+
+			// Do not send notifications to devices that do not ring
+			if session.Props["os"] == "iOS" && session.VoipDeviceId == "" {
+				continue
+			}
+
 			tmpMessage := notification.DeepCopy()
 			deviceID := session.DeviceId
 			if notification.SubType == model.PushSubTypeCalls && session.VoipDeviceId != "" {
@@ -98,9 +109,6 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 				mlog.String("platform", tmpMessage.Platform))
 
       // Don't send notification if platform is iOS React Native because call notifications are not supported
-			if session.VoipDeviceId == "" && tmpMessage.Platform == model.PushNotifyAppleReactNative {
-				continue
-			}
 
 			tmpMessage.AckId = model.NewId()
 
