@@ -96,9 +96,6 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 
 			tmpMessage := notification.DeepCopy()
 			deviceID := session.DeviceId
-			if notification.SubType == model.PushSubTypeCalls && session.VoipDeviceId != "" {
-				deviceID = session.VoipDeviceId
-			}
 			tmpMessage.SetDeviceIdAndPlatform(deviceID)
 
 			c.Logger().Info("Preparing to send call end notification",
