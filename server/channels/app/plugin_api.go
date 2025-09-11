@@ -843,6 +843,12 @@ func (api *PluginAPI) GetPostsForChannel(channelID string, page, perPage int) (*
 }
 
 func (api *PluginAPI) UpdatePost(post *model.Post) (*model.Post, *model.AppError) {
+  // postの内容をログに出力する
+	api.logger.Info("UpdatePost called",
+		mlog.String("post_id", post.Id),
+		mlog.String("post_type", post.Type),
+		mlog.String("post_props", model.StringInterfaceToJSON(post.Props)))
+
 	err := api.app.SendNotificationCallEnd(api.ctx, post)
 	if err != nil {
 		return nil, err

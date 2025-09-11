@@ -11,7 +11,7 @@ import (
 // SendNotificationCallEnd sends a notification to mobile app users when a call ends
 // This function is intended to be called from UpdatePost
 func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.AppError {
-	c.Logger().Debug("SendNotificationCallEnd called",
+	c.Logger().Info("SendNotificationCallEnd called",
 		mlog.String("post_id", post.Id),
 		mlog.String("post_type", post.Type),
 		mlog.String("post_props", model.StringInterfaceToJSON(post.Props)))
