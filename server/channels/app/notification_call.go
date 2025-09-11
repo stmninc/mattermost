@@ -43,6 +43,13 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 		return err
 	}
 
+	currentUserId := c.Session().UserId
+	if currentUserId == "" {
+		c.Logger().Error("No current user for call notification",
+			mlog.String("channel_id", post.ChannelId))
+		return nil
+	}
+
 	notification := &model.PushNotification{
 		Version:     model.PushMessageV2,
 		Type:        model.PushTypeMessage,
@@ -52,11 +59,12 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 		PostId:      post.Id,
 		Message:     "Call ended",
 		ChannelName: channel.DisplayName,
+		SenderId:   currentUserId,
 	}
 
 	for _, member := range channelMembers {
 		// Don't send notification to the user who ended the call
-		if member.UserId == c.Session().UserId {
+		if member.UserId == currentUserId {
 			continue
 		}
 
