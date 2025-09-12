@@ -9,6 +9,10 @@ import (
 	"github.com/mattermost/mattermost/server/public/shared/request"
 )
 
+const (
+	NotificationCallEndMessage = "Call ended"
+)
+
 // SendNotificationCallEnd sends a notification to mobile app users when a call ends
 // This function is intended to be called from UpdatePost
 func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.AppError {
@@ -53,7 +57,7 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 		TeamId:      channel.TeamId,
 		ChannelId:   post.ChannelId,
 		PostId:      post.Id,
-		Message:     "Call ended",
+		Message:     NotificationCallEndMessage,
 		ChannelName: channel.DisplayName,
 	}
 
