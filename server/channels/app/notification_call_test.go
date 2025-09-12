@@ -58,7 +58,7 @@ func TestSendNotificationCallEnd(t *testing.T) {
 		require.Nil(t, err)
 	})
 
-	t.Run("should  early if channel is not direct or group", func(t *testing.T) {
+	t.Run("should return early if channel is not direct or group", func(t *testing.T) {
 		th := Setup(t).InitBasic()
 		defer th.TearDown()
 
