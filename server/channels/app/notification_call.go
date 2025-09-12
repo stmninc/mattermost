@@ -4,8 +4,6 @@
 package app
 
 import (
-	"encoding/json"
-
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 	"github.com/mattermost/mattermost/server/public/shared/request"
@@ -14,11 +12,6 @@ import (
 // SendNotificationCallEnd sends a notification to mobile app users when a call ends
 // This function is intended to be called from UpdatePost
 func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.AppError {
-	c.Logger().Debug("SendNotificationCallEnd called",
-		mlog.String("post_id", post.Id),
-		mlog.String("post_type", post.Type),
-		mlog.String("post_props", model.StringInterfaceToJSON(post.Props)))
-
 	if post.Type != "custom_calls" {
 		return nil
 	}
@@ -46,6 +39,13 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 		return err
 	}
 
+	postUserId := post.UserId
+	if postUserId == "" {
+		c.Logger().Error("Post user ID is empty for call notification",
+			mlog.String("post_id", post.Id))
+		return nil
+	}
+
 	notification := &model.PushNotification{
 		Version:     model.PushMessageV2,
 		Type:        model.PushTypeMessage,
@@ -58,8 +58,8 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 	}
 
 	for _, member := range channelMembers {
-		// Don't send notification to the user who ended the call
-		if member.UserId == c.Session().UserId {
+		// Don't send notification to the user who created the post because they started the call
+		if member.UserId == postUserId {
 			continue
 		}
 
@@ -79,26 +79,15 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 				continue
 			}
 
-			tmpMessage := notification.DeepCopy()
-			deviceID := session.DeviceId
-			if notification.SubType == model.PushSubTypeCalls && session.VoipDeviceId != "" {
-				deviceID = session.VoipDeviceId
-			}
-			tmpMessage.SetDeviceIdAndPlatform(deviceID)
-
-      // Don't send notification if platform is iOS React Native because call notifications are not supported
-			if tmpMessage.Platform == model.PushNotifyAppleReactNative {
+			// Do not send notifications to devices that do not ring
+			if session.Props["os"] == "iOS" && session.VoipDeviceId == "" {
 				continue
 			}
 
+			tmpMessage := notification.DeepCopy()
+			deviceID := session.DeviceId
+			tmpMessage.SetDeviceIdAndPlatform(deviceID)
 			tmpMessage.AckId = model.NewId()
-
-			notificationJSON, _ := json.Marshal(tmpMessage)
-			c.Logger().Debug("Sending call end notification to session",
-				mlog.String("user_id", member.UserId),
-				mlog.String("session_id", session.Id),
-				mlog.String("device_id", deviceID),
-				mlog.String("notification", string(notificationJSON)))
 
 			if err := a.sendToPushProxy(tmpMessage, session); err != nil {
 				c.Logger().Error("Failed to send call end notification to session",
