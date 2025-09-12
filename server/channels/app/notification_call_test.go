@@ -125,7 +125,7 @@ func TestSendNotificationCallEnd(t *testing.T) {
 		require.NotNil(t, err)
 	})
 
-	t.Run("should send notification to all channel members except current session user", func(t *testing.T) {
+	t.Run("should send notification to all channel members except post user", func(t *testing.T) {
 		th := SetupWithStoreMock(t)
 		defer th.TearDown()
 
@@ -174,7 +174,8 @@ func TestSendNotificationCallEnd(t *testing.T) {
 		mockStore.On("Channel").Return(&mockChannelStore)
 
 		mockSessionStore := mocks.SessionStore{}
-		mockSessionStore.On("GetSessionsWithActiveDeviceIds", senderId).Return([]*model.Session{}, nil)
+		// getMobileAppSessions should be called for every channel member except the post author (senderId)
+		mockSessionStore.On("GetSessionsWithActiveDeviceIds", sessionUserId).Return([]*model.Session{}, nil)
 		mockSessionStore.On("GetSessionsWithActiveDeviceIds", member1Id).Return([]*model.Session{}, nil)
 		mockSessionStore.On("GetSessionsWithActiveDeviceIds", member2Id).Return([]*model.Session{}, nil)
 		mockStore.On("Session").Return(&mockSessionStore)
