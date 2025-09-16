@@ -1764,6 +1764,23 @@ func updateChannelMemberRoles(c *Context, w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	channel, err := c.App.GetChannel(c.AppContext, c.Params.ChannelId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	isOfficial, appErr := c.App.IsOfficialChannel(c.AppContext, channel)
+	if appErr != nil {
+		c.Err = appErr
+		return
+	}
+
+	if isOfficial && channel.CreatorId != c.AppContext.Session().UserId {
+		c.Err = model.NewAppError("updateChannelMemberRoles", "api.channel.update_member_roles.official_channel.forbidden", nil, "", http.StatusForbidden)
+		return
+	}
+
 	if _, err := c.App.UpdateChannelMemberRoles(c.AppContext, c.Params.ChannelId, c.Params.UserId, newRoles); err != nil {
 		c.Err = err
 		return
@@ -1793,6 +1810,23 @@ func updateChannelMemberSchemeRoles(c *Context, w http.ResponseWriter, r *http.R
 
 	if !c.App.SessionHasPermissionToChannel(c.AppContext, *c.AppContext.Session(), c.Params.ChannelId, model.PermissionManageChannelRoles) {
 		c.SetPermissionError(model.PermissionManageChannelRoles)
+		return
+	}
+
+	channel, err := c.App.GetChannel(c.AppContext, c.Params.ChannelId)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	isOfficial, appErr := c.App.IsOfficialChannel(c.AppContext, channel)
+	if appErr != nil {
+		c.Err = appErr
+		return
+	}
+
+	if isOfficial && channel.CreatorId != c.AppContext.Session().UserId {
+		c.Err = model.NewAppError("updateChannelMemberSchemeRoles", "api.channel.update_member_scheme_roles.official_channel.forbidden", nil, "", http.StatusForbidden)
 		return
 	}
 
