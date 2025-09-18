@@ -4,6 +4,13 @@
 import type {Channel} from '@mattermost/types/channels';
 
 /**
+ * Regex pattern for official tunag channels.
+ * Pattern: tunag-{digits}-{alphanumeric}-admin
+ * Example: tunag-00002-stmn-admin
+ */
+const OFFICIAL_CHANNEL_PATTERN = /^tunag-\d+-[a-zA-Z0-9]+-admin$/;
+
+/**
  * Check if a channel is an official tunag channel based on its name pattern.
  * Official channels follow the pattern: tunag-{company_id}-{subdomain}-admin
  * Example: tunag-00002-stmn-admin
@@ -15,13 +22,5 @@ import type {Channel} from '@mattermost/types/channels';
 export function isOfficialTunagChannel(channel: Channel | string): boolean {
     const channelName = typeof channel === 'string' ? channel : channel.name;
 
-    if (!channelName) {
-        return false;
-    }
-
-    // Pattern: tunag-{digits}-{alphanumeric}-admin
-    // Example: tunag-00002-stmn-admin
-    const officialChannelPattern = /^tunag-\d+-[a-zA-Z0-9]+-admin$/;
-
-    return officialChannelPattern.test(channelName);
+    return Boolean(channelName) && OFFICIAL_CHANNEL_PATTERN.test(channelName);
 }
