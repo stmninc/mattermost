@@ -372,7 +372,6 @@ func TestOfficialChannelValidation(t *testing.T) {
 }
 
 func TestIntegrationAdminConfiguration(t *testing.T) {
-
 	t.Run("IsOfficialChannel function behavior without environment variable", func(t *testing.T) {
 		// Reset the integration admin properly to ensure clean state
 		cleanup := testutils.ResetIntegrationAdmin("")
