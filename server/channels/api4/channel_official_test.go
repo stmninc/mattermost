@@ -278,7 +278,11 @@ func TestOfficialChannelValidation(t *testing.T) {
 		newRoles := "channel_user channel_admin"
 		_, err = th.SystemAdminClient.UpdateChannelRoles(context.Background(), officialChannel.Id, testUser.Id, newRoles)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "Only the channel creator can modify member roles in an official channel")
+		if appErr, ok := err.(*model.AppError); ok {
+			require.Equal(t, "api.channel.update_member_roles.official_channel.forbidden", appErr.Id)
+		} else {
+			t.Fatalf("Expected AppError, got %T", err)
+		}
 
 		// Test: Creator user changes member roles in official channel (should succeed)
 		_, _, err3 := th.Client.Login(context.Background(), officialAdmin.Email, "Pa$$word11")
@@ -373,7 +377,7 @@ func TestOfficialChannelValidation(t *testing.T) {
 
 func TestIntegrationAdminConfiguration(t *testing.T) {
 	t.Run("IsOfficialChannel function behavior without environment variable", func(t *testing.T) {
-		// Reset the integration admin properly to ensure clean state
+		// Reset the integration admin cache and clear environment variable
 		cleanup := testutils.ResetIntegrationAdmin("")
 		defer cleanup()
 
