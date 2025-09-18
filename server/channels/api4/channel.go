@@ -133,6 +133,28 @@ func createChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// checkOfficialChannelPermission checks if the current user has permission to perform actions on an official channel
+// Returns true if the action is permitted, false otherwise. Sets c.Err if there's an error.
+func checkOfficialChannelPermission(c *Context, channelId string) bool {
+	channel, appErr := c.App.GetChannel(c.AppContext, channelId)
+	if appErr != nil {
+		c.Err = appErr
+		return false
+	}
+
+	isOfficial, appErr := c.App.IsOfficialChannel(c.AppContext, channel)
+	if appErr != nil {
+		c.Err = appErr
+		return false
+	}
+
+	if isOfficial && channel.CreatorId != c.AppContext.Session().UserId {
+		return false
+	}
+
+	return true
+}
+
 func updateChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.RequireChannelId()
 	if c.Err != nil {
@@ -197,6 +219,13 @@ func updateChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	if oldChannel.DeleteAt > 0 {
 		c.Err = model.NewAppError("updateChannel", "api.channel.update_channel.deleted.app_error", nil, "", http.StatusBadRequest)
 		return
+	}
+
+	if channel.DisplayName != "" && channel.DisplayName != oldChannel.DisplayName {
+		if !checkOfficialChannelPermission(c, oldChannel.Id) {
+			c.Err = model.NewAppError("updateChannel", "api.channel.update_channel.official_channel_title.forbidden", nil, "", http.StatusForbidden)
+			return
+		}
 	}
 
 	if channel.Type != "" && channel.Type != oldChannel.Type {
@@ -377,6 +406,13 @@ func patchChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if patch.DisplayName != nil && *patch.DisplayName != oldChannel.DisplayName {
+		if !checkOfficialChannelPermission(c, oldChannel.Id) {
+			c.Err = model.NewAppError("patchChannel", "api.channel.patch_channel.official_channel_title.forbidden", nil, "", http.StatusForbidden)
+			return
+		}
+	}
+
 	if patch.BannerInfo != nil {
 		canEditChannelBanner(c, originalOldChannel)
 		if c.Err != nil {
@@ -432,10 +468,23 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	defer c.LogAuditRec(auditRec)
 	auditRec.AddEventPriorState(channel)
 
-	if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), teamId, model.PermissionManageTeam) &&
-		!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
-		c.SetPermissionError(model.PermissionManageTeam)
+	isOfficial, appErr := c.App.IsOfficialChannel(c.AppContext, channel)
+	if appErr != nil {
+		c.Err = appErr
 		return
+	}
+
+	if isOfficial {
+		if channel.CreatorId != c.AppContext.Session().UserId {
+			c.Err = model.NewAppError("restoreChannel", "api.channel.restore_channel.official_channel.forbidden", nil, "", http.StatusForbidden)
+			return
+		}
+	} else {
+		if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), teamId, model.PermissionManageTeam) &&
+			!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
+			c.SetPermissionError(model.PermissionManageTeam)
+			return
+		}
 	}
 
 	channel, err = c.App.RestoreChannel(c.AppContext, channel, c.AppContext.Session().UserId)
@@ -1393,6 +1442,11 @@ func deleteChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !checkOfficialChannelPermission(c, channel.Id) {
+		c.Err = model.NewAppError("deleteChannel", "api.channel.delete_channel.official_channel.forbidden", nil, "", http.StatusForbidden)
+		return
+	}
+
 	if c.Params.Permanent {
 		if *c.App.Config().ServiceSettings.EnableAPIChannelDeletion {
 			err = c.App.PermanentDeleteChannel(c.AppContext, channel)
@@ -1720,6 +1774,14 @@ func updateChannelMemberRoles(c *Context, w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Check official channel permission
+	if !checkOfficialChannelPermission(c, c.Params.ChannelId) {
+		if c.Err == nil {
+			c.Err = model.NewAppError("updateChannelMemberRoles", "api.channel.update_member_roles.official_channel.forbidden", nil, "", http.StatusForbidden)
+		}
+		return
+	}
+
 	if _, err := c.App.UpdateChannelMemberRoles(c.AppContext, c.Params.ChannelId, c.Params.UserId, newRoles); err != nil {
 		c.Err = err
 		return
@@ -1749,6 +1811,14 @@ func updateChannelMemberSchemeRoles(c *Context, w http.ResponseWriter, r *http.R
 
 	if !c.App.SessionHasPermissionToChannel(c.AppContext, *c.AppContext.Session(), c.Params.ChannelId, model.PermissionManageChannelRoles) {
 		c.SetPermissionError(model.PermissionManageChannelRoles)
+		return
+	}
+
+	// Check official channel permission
+	if !checkOfficialChannelPermission(c, c.Params.ChannelId) {
+		if c.Err == nil {
+			c.Err = model.NewAppError("updateChannelMemberSchemeRoles", "api.channel.update_member_scheme_roles.official_channel.forbidden", nil, "", http.StatusForbidden)
+		}
 		return
 	}
 
@@ -1883,6 +1953,14 @@ func addChannelMember(c *Context, w http.ResponseWriter, r *http.Request) {
 			c.SetPermissionError(model.PermissionManagePrivateChannelMembers)
 			return
 		}
+	}
+
+	// Check official channel permission
+	if !checkOfficialChannelPermission(c, c.Params.ChannelId) {
+		if c.Err == nil {
+			c.Err = model.NewAppError("addChannelMember", "api.channel.add_member.official_channel.forbidden", nil, "", http.StatusForbidden)
+		}
+		return
 	}
 
 	if channel.IsGroupConstrained() {
@@ -2039,6 +2117,20 @@ func removeChannelMember(c *Context, w http.ResponseWriter, r *http.Request) {
 			c.SetPermissionError(model.PermissionManagePrivateChannelMembers)
 			return
 		}
+	}
+
+	// Check if this is an official channel and if the user has permission
+	if !checkOfficialChannelPermission(c, channel.Id) {
+		var errID string
+		if c.Params.UserId != c.AppContext.Session().UserId {
+			// Removing other members
+			errID = "api.channel.remove_member.official_channel.forbidden"
+		} else {
+			// Self-removal from official channel (leaving)
+			errID = "api.channel.leave.official_channel.forbidden"
+		}
+		c.Err = model.NewAppError("removeChannelMember", errID, nil, "", http.StatusForbidden)
+		return
 	}
 
 	if err = c.App.RemoveUserFromChannel(c.AppContext, c.Params.UserId, c.AppContext.Session().UserId, channel); err != nil {
