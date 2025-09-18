@@ -345,8 +345,7 @@ func TestOfficialChannelValidation(t *testing.T) {
 
 		// Test with non-existent user ID in channel creation
 		nonExistentUser := &model.User{
-			Id:       model.NewId(),
-			Username: "non-existent-user",
+			Id: model.NewId(),
 		}
 		tempChannel := &model.Channel{
 			DisplayName: "Test Channel",
@@ -372,63 +371,45 @@ func TestOfficialChannelValidation(t *testing.T) {
 	})
 }
 
-func TestOfficialChannelValidationWithoutAdmin(t *testing.T) {
-	// Test without INTEGRATION_ADMIN_USERNAME set - clear it BEFORE Setup()
-	originalEnv := os.Getenv("INTEGRATION_ADMIN_USERNAME")
-	defer func() {
-		if originalEnv != "" {
-			os.Setenv("INTEGRATION_ADMIN_USERNAME", originalEnv)
-		} else {
-			os.Unsetenv("INTEGRATION_ADMIN_USERNAME")
+func TestIntegrationAdminConfiguration(t *testing.T) {
+
+	t.Run("IsOfficialChannel function behavior without environment variable", func(t *testing.T) {
+		// Reset the integration admin properly to ensure clean state
+		cleanup := testutils.ResetIntegrationAdmin("")
+		defer cleanup()
+
+		th := Setup(t).InitBasic()
+		defer th.TearDown()
+
+		// Create a test channel
+		th.LoginBasic()
+		channel := &model.Channel{
+			DisplayName: "Test Channel",
+			Name:        "test-channel",
+			Type:        model.ChannelTypeOpen,
+			TeamId:      th.BasicTeam.Id,
 		}
-	}()
-	os.Unsetenv("INTEGRATION_ADMIN_USERNAME")
+		channel, _, err := th.Client.CreateChannel(context.Background(), channel)
+		require.NoError(t, err)
 
-	th := Setup(t).InitBasic()
-	defer th.TearDown()
-
-	// Create a channel
-	th.LoginBasic()
-	channel := &model.Channel{
-		DisplayName: "Test Channel",
-		Name:        "test-channel",
-		Type:        model.ChannelTypeOpen,
-		TeamId:      th.BasicTeam.Id,
-	}
-	channel, _, err := th.Client.CreateChannel(context.Background(), channel)
-	require.NoError(t, err)
-
-	t.Run("All operations should work normally without official admin", func(t *testing.T) {
-		// Update channel title
-		updated := *channel
-		updated.DisplayName = "Updated Title"
-		_, _, err := th.Client.UpdateChannel(context.Background(), &updated)
-		assert.NoError(t, err)
-
-		// Patch channel
-		newTitle := "Patched Title"
-		patch := &model.ChannelPatch{DisplayName: &newTitle}
-		_, _, err = th.Client.PatchChannel(context.Background(), channel.Id, patch)
-		assert.NoError(t, err)
-
-		// Add member
-		newUser := th.CreateUser()
-		_, _, appErr3 := th.App.AddUserToTeam(th.Context, th.BasicTeam.Id, newUser.Id, "")
-		if appErr3 != nil {
-			t.Fatal(appErr3)
+		// Test that IsOfficialChannel returns error when no admin is configured
+		isOfficial, officialErr := th.App.IsOfficialChannel(th.Context, channel)
+		t.Logf("IsOfficialChannel result: isOfficial=%v, err=%v", isOfficial, officialErr)
+		if officialErr == nil {
+			t.Fatalf("IsOfficialChannel should return error when admin not configured, got: %v", officialErr)
 		}
-		_, _, err = th.Client.AddChannelMember(context.Background(), channel.Id, newUser.Id)
-		if err != nil {
-			t.Fatal(err)
+		if isOfficial {
+			t.Fatalf("Channel should not be official when no admin is configured, got: %v", isOfficial)
 		}
 
-		// Update roles
-		_, err = th.Client.UpdateChannelRoles(context.Background(), channel.Id, newUser.Id, "channel_user channel_admin")
-		if err != nil {
-			t.Fatal(err)
+		// Test that the error contains the expected message
+		expectedErrorID := "app.channel.config_missing"
+		if officialErr.Id != expectedErrorID {
+			t.Fatalf("Expected error ID %s, got: %s", expectedErrorID, officialErr.Id)
 		}
 
-		// All operations should work normally without official channel restrictions
+		// Note: Normal API operations will receive 500 errors when INTEGRATION_ADMIN_USERNAME
+		// is not configured, which is the expected behavior to ensure proper configuration
 	})
 }
 
@@ -472,7 +453,7 @@ func BenchmarkOfficialChannelValidation(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			updated := *officialChannel
 			updated.DisplayName = fmt.Sprintf("Updated Title %d", i)
-			th.Client.UpdateChannel(context.Background(), &updated)
+			_, _, _ = th.Client.UpdateChannel(context.Background(), &updated)
 		}
 	})
 }
