@@ -20,7 +20,7 @@ const OFFICIAL_CHANNEL_PATTERN = /^tunag-\d+-[a-zA-Z0-9]+-admin$/;
  * @returns {boolean} - true if channel is an official tunag channel, false otherwise
  */
 export function isOfficialTunagChannel(channel: Channel | string): boolean {
-    const channelName = typeof channel === 'string' ? channel : channel.name;
+    const channelName = typeof channel === 'string' ? channel : channel?.name;
 
-    return Boolean(channelName) && OFFICIAL_CHANNEL_PATTERN.test(channelName);
+    return Boolean(channelName && OFFICIAL_CHANNEL_PATTERN.test(channelName));
 }

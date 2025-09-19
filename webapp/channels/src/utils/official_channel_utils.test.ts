@@ -70,6 +70,14 @@ describe('Official Channel Utils', () => {
             expect(OfficialChannelUtils.isOfficialTunagChannel(channelWithEmptyName as Channel)).toBe(false);
         });
 
+        test('handles null and undefined inputs', () => {
+            // @ts-expect-error Testing untyped, raw JS usage
+            expect(OfficialChannelUtils.isOfficialTunagChannel(null)).toBe(false);
+
+            // @ts-expect-error Testing untyped, raw JS usage
+            expect(OfficialChannelUtils.isOfficialTunagChannel(undefined)).toBe(false);
+        });
+
         test('handles edge cases correctly', () => {
             // Test various valid patterns
             expect(OfficialChannelUtils.isOfficialTunagChannel('tunag-1-a-admin')).toBe(true);
