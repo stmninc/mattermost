@@ -16,10 +16,10 @@ const OFFICIAL_CHANNEL_PATTERN = /^tunag-\d+-[a-zA-Z0-9]+-admin$/;
  * Example: tunag-00002-stmn-admin
  * Pattern: tunag-digits-alphanumeric-admin
  *
- * @param {Channel | string} channel - Channel object or channel name string
+ * @param {Channel | string | null | undefined} channel - Channel object or channel name string
  * @returns {boolean} - true if channel is an official tunag channel, false otherwise
  */
-export function isOfficialTunagChannel(channel: Channel | string): boolean {
+export function isOfficialTunagChannel(channel: Channel | string | null | undefined): boolean {
     const channelName = typeof channel === 'string' ? channel : channel?.name;
 
     return Boolean(channelName && OFFICIAL_CHANNEL_PATTERN.test(channelName));

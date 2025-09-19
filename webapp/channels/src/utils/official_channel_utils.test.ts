@@ -71,10 +71,8 @@ describe('Official Channel Utils', () => {
         });
 
         test('handles null and undefined inputs', () => {
-            // @ts-expect-error Testing untyped, raw JS usage
             expect(OfficialChannelUtils.isOfficialTunagChannel(null)).toBe(false);
 
-            // @ts-expect-error Testing untyped, raw JS usage
             expect(OfficialChannelUtils.isOfficialTunagChannel(undefined)).toBe(false);
         });
 
