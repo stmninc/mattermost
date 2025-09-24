@@ -3,24 +3,44 @@
 
 import type {Channel} from '@mattermost/types/channels';
 
+import {getUser} from 'mattermost-redux/selectors/entities/users';
+
+import store from 'stores/redux_store';
+
 /**
- * Regex pattern for official tunag channels.
+ * Regex pattern for official tunag integration admin usernames.
  * Pattern: tunag-{digits}-{alphanumeric}-admin
  * Example: tunag-00002-stmn-admin
  */
-const OFFICIAL_CHANNEL_PATTERN = /^tunag-\d+-[a-zA-Z0-9]+-admin$/;
+const OFFICIAL_INTEGRATION_ADMIN_PATTERN = /^tunag-\d+-[a-zA-Z0-9]+-admin$/;
 
 /**
- * Check if a channel is an official tunag channel based on its name pattern.
- * Official channels follow the pattern: tunag-{company_id}-{subdomain}-admin
- * Example: tunag-00002-stmn-admin
- * Pattern: tunag-digits-alphanumeric-admin
+ * Check if a channel is an official tunag channel based on its creator's username.
+ * Official channels are created by integration admin users with usernames matching the pattern:
+ * tunag-{company_id}-{subdomain}-admin
  *
- * @param {Channel | string | null | undefined} channel - Channel object or channel name string
+ * @param {Channel | string | null | undefined} channel - Channel object (string input not supported for creator validation)
  * @returns {boolean} - true if channel is an official tunag channel, false otherwise
  */
 export function isOfficialTunagChannel(channel: Channel | string | null | undefined): boolean {
-    const channelName = typeof channel === 'string' ? channel : channel?.name;
+    // If it's a string, we cannot validate creator, so return false
+    if (typeof channel === 'string' || !channel) {
+        return false;
+    }
 
-    return Boolean(channelName && OFFICIAL_CHANNEL_PATTERN.test(channelName));
+    // Check if channel has creator_id
+    if (!channel.creator_id) {
+        return false;
+    }
+
+    // Get the creator user from Redux store
+    const state = store.getState();
+    const creator = getUser(state, channel.creator_id);
+
+    if (!creator || !creator.username) {
+        return false;
+    }
+
+    // Check if creator's username matches the integration admin pattern
+    return OFFICIAL_INTEGRATION_ADMIN_PATTERN.test(creator.username);
 }
