@@ -4,8 +4,6 @@
 import type {Channel} from '@mattermost/types/channels';
 import type {UserProfile} from '@mattermost/types/users';
 
-import * as OfficialChannelUtils from 'utils/official_channel_utils';
-
 // Mock Redux store
 jest.mock('stores/redux_store', () => ({
     getState: jest.fn(),
@@ -16,8 +14,11 @@ jest.mock('mattermost-redux/selectors/entities/users', () => ({
     getUser: jest.fn(),
 }));
 
-import store from 'stores/redux_store';
 import {getUser} from 'mattermost-redux/selectors/entities/users';
+
+import store from 'stores/redux_store';
+
+import * as OfficialChannelUtils from 'utils/official_channel_utils';
 
 const mockStore = store as jest.Mocked<typeof store>;
 const mockGetUser = getUser as jest.MockedFunction<typeof getUser>;
@@ -79,13 +80,13 @@ describe('Official Channel Utils', () => {
                 'tunag-0-z-admin',
                 'tunag-999-company123-admin',
                 'tunag-1-a-admin',
-                'tunag-123456789-subdomain123-admin'
+                'tunag-123456789-subdomain123-admin',
             ];
 
             validUsernames.forEach((username) => {
                 const integrationAdminUser: Partial<UserProfile> = {
                     id: 'user_id_1',
-                    username: username,
+                    username,
                 };
 
                 mockGetUser.mockReturnValue(integrationAdminUser as UserProfile);
@@ -119,13 +120,13 @@ describe('Official Channel Utils', () => {
                 'tunag-00002-stmn-ADMIN',
                 'tunag-00002-stm-n-admin',
                 'tunag-00002-stm_n-admin',
-                'tunag-00002-stm.n-admin'
+                'tunag-00002-stm.n-admin',
             ];
 
             invalidUsernames.forEach((username) => {
                 const regularUser: Partial<UserProfile> = {
                     id: 'user_id_1',
-                    username: username,
+                    username,
                 };
 
                 mockGetUser.mockReturnValue(regularUser as UserProfile);
