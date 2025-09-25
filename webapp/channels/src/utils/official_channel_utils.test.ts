@@ -73,14 +73,14 @@ describe('Official Channel Utils', () => {
                 creator_id: 'user_id_1',
             };
 
-            // Test various valid integration admin usernames
+            // Test various valid integration admin usernames (5 digits + lowercase/numbers/hyphens)
             const validUsernames = [
                 'tunag-00002-stmn-admin',
                 'tunag-12345-abc-admin',
-                'tunag-0-z-admin',
-                'tunag-999-company123-admin',
-                'tunag-1-a-admin',
-                'tunag-123456789-subdomain123-admin',
+                'tunag-00000-z-admin',
+                'tunag-99999-company123-admin',
+                'tunag-00001-a-admin',
+                'tunag-12345-subdomain-123-admin',
             ];
 
             validUsernames.forEach((username) => {
@@ -102,7 +102,7 @@ describe('Official Channel Utils', () => {
                 creator_id: 'user_id_1',
             };
 
-            // Test invalid usernames
+            // Test invalid usernames (violating new pattern requirements)
             const invalidUsernames = [
                 'regular_user',
                 'tunag-admin',
@@ -112,15 +112,19 @@ describe('Official Channel Utils', () => {
                 'tuna-00002-stmn-admin',
                 'tunag-00002-stmn-admins',
                 'tunag-00002-stmn-user',
-                'tunag-abc-stmn-admin',
+                'tunag-abc-stmn-admin', // non-digits in company_id
                 ' tunag-00002-stmn-admin',
                 'tunag-00002-stmn-admin ',
                 'tunag-00002-stmn-admin-extra',
-                'TUNAG-00002-stmn-admin',
-                'tunag-00002-stmn-ADMIN',
-                'tunag-00002-stm-n-admin',
-                'tunag-00002-stm_n-admin',
-                'tunag-00002-stm.n-admin',
+                'TUNAG-00002-stmn-admin', // uppercase prefix
+                'tunag-00002-stmn-ADMIN', // uppercase suffix
+                'tunag-00002-stm_n-admin', // underscore not allowed
+                'tunag-00002-stm.n-admin', // dot not allowed
+                'tunag-0-stmn-admin', // too few digits (1 instead of 5)
+                'tunag-999-stmn-admin', // too few digits (3 instead of 5)
+                'tunag-123456-stmn-admin', // too many digits (6 instead of 5)
+                'tunag-00002-STMN-admin', // uppercase in subdomain
+                'tunag-00002-Stmn-admin', // mixed case in subdomain
             ];
 
             invalidUsernames.forEach((username) => {

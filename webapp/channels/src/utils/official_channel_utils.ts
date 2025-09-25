@@ -9,10 +9,11 @@ import store from 'stores/redux_store';
 
 /**
  * Regex pattern for official tunag integration admin usernames.
- * Pattern: tunag-{digits}-{alphanumeric}-admin
+ * Pattern: tunag-{5digits}-{lowercase_alphanumeric_hyphens}-admin
+ * Subdomain rules: lowercase letters, numbers, hyphens
  * Example: tunag-00002-stmn-admin
  */
-const OFFICIAL_INTEGRATION_ADMIN_PATTERN = /^tunag-\d+-[a-zA-Z0-9]+-admin$/;
+const OFFICIAL_INTEGRATION_ADMIN_PATTERN = /^tunag-\d{5}-[a-z0-9-]+-admin$/;
 
 /**
  * Check if a channel is an official tunag channel based on its creator's username.
