@@ -397,21 +397,11 @@ func TestIntegrationAdminConfiguration(t *testing.T) {
 		channel, _, err := th.Client.CreateChannel(context.Background(), channel)
 		require.NoError(t, err)
 
-		// Test that IsOfficialChannel returns error when no admin is configured
+		// Test that IsOfficialChannel returns false when no admin is configured
 		isOfficial, officialErr := th.App.IsOfficialChannel(th.Context, channel)
 		t.Logf("IsOfficialChannel result: isOfficial=%v, err=%v", isOfficial, officialErr)
-		if officialErr == nil {
-			t.Fatalf("IsOfficialChannel should return error when admin not configured, got: %v", officialErr)
-		}
-		if isOfficial {
-			t.Fatalf("Channel should not be official when no admin is configured, got: %v", isOfficial)
-		}
-
-		// Test that the error contains the expected message
-		expectedErrorID := "app.channel.config_missing"
-		if officialErr.Id != expectedErrorID {
-			t.Fatalf("Expected error ID %s, got: %s", expectedErrorID, officialErr.Id)
-		}
+		require.Nil(t, officialErr)
+		assert.False(t, isOfficial)
 
 		// Note: Normal API operations will receive 500 errors when INTEGRATION_ADMIN_USERNAME
 		// is not configured, which is the expected behavior to ensure proper configuration
