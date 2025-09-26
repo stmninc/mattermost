@@ -133,28 +133,6 @@ func createChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// checkOfficialChannelPermission checks if the current user has permission to perform actions on an official channel
-// Returns true if the action is permitted, false otherwise. Sets c.Err if there's an error.
-func checkOfficialChannelPermission(c *Context, channelId string) bool {
-	channel, appErr := c.App.GetChannel(c.AppContext, channelId)
-	if appErr != nil {
-		c.Err = appErr
-		return false
-	}
-
-	isOfficial, appErr := c.App.IsOfficialChannel(c.AppContext, channel)
-	if appErr != nil {
-		c.Err = appErr
-		return false
-	}
-
-	if isOfficial && channel.CreatorId != c.AppContext.Session().UserId {
-		return false
-	}
-
-	return true
-}
-
 func updateChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.RequireChannelId()
 	if c.Err != nil {

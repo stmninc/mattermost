@@ -381,8 +381,10 @@ func TestIntegrationAdminConfiguration(t *testing.T) {
 		cleanup := testutils.ResetIntegrationAdmin("")
 		defer cleanup()
 
+		// Reset the app cache as well
 		th := Setup(t).InitBasic()
 		defer th.TearDown()
+		th.App.ResetIntegrationAdminUsernameCache()
 
 		// Create a test channel
 		th.LoginBasic()

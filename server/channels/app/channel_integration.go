@@ -26,6 +26,19 @@ func getIntegrationAdminUsername() string {
 	return integrationAdminUsername
 }
 
+// ResetIntegrationAdminUsernameCache resets the cached integration admin username for testing purposes.
+// This is primarily used by test utilities to ensure clean state between tests.
+func ResetIntegrationAdminUsernameCache() {
+	integrationAdminUsername = ""
+	integrationAdminOnce = sync.Once{}
+}
+
+// ResetIntegrationAdminUsernameCache resets the cached integration admin username for testing purposes.
+// This method allows access through App instance.
+func (a *App) ResetIntegrationAdminUsernameCache() {
+	ResetIntegrationAdminUsernameCache()
+}
+
 // IsOfficialChannel checks if a channel is official by comparing creator with integration admin user.
 func (a *App) IsOfficialChannel(c request.CTX, channel *model.Channel) (bool, *model.AppError) {
 	if channel == nil {
