@@ -221,7 +221,7 @@ func updateChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if channel.DisplayName != "" && channel.DisplayName != oldChannel.DisplayName {
+	if channel.DisplayName != oldChannel.DisplayName {
 		if !checkOfficialChannelPermission(c, oldChannel.Id) {
 			c.Err = model.NewAppError("updateChannel", "api.channel.update_channel.official_channel_title.forbidden", nil, "", http.StatusForbidden)
 			return
