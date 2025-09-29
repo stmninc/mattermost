@@ -8,8 +8,8 @@ import styled from 'styled-components';
 import type {Channel} from '@mattermost/types/channels';
 
 import Constants from 'utils/constants';
-import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 import {isKeyPressed} from 'utils/keyboard';
+import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 
 const Title = styled.div`
     flex:1;

@@ -5,10 +5,10 @@ import React from 'react';
 import {useIntl, FormattedMessage} from 'react-intl';
 import styled from 'styled-components';
 
+import type {Channel} from '@mattermost/types/channels';
+
 import useCopyText from 'components/common/hooks/useCopyText';
 import WithTooltip from 'components/with_tooltip';
-
-import type {Channel} from '@mattermost/types/channels';
 
 import Constants from 'utils/constants';
 import {isOfficialTunagChannel} from 'utils/official_channel_utils';
