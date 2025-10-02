@@ -114,7 +114,8 @@ export default function TopButtons({
         successCopyTimeout: 1000,
     });
 
-    const canAddPeople = (([Constants.OPEN_CHANNEL, Constants.PRIVATE_CHANNEL].includes(channelType) && propsCanAddPeople) || channelType === Constants.GM_CHANNEL) && !isOfficialTunagChannel(channel);
+    const canAddPeopleOriginal = ([Constants.OPEN_CHANNEL, Constants.PRIVATE_CHANNEL].includes(channelType) && propsCanAddPeople) || channelType === Constants.GM_CHANNEL;
+    const canAddPeople = canAddPeopleOriginal && !isOfficialTunagChannel(channel);
 
     const canCopyLink = [Constants.OPEN_CHANNEL, Constants.PRIVATE_CHANNEL].includes(channelType);
 
