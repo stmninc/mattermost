@@ -103,7 +103,7 @@ export default function SidebarTeamMenu(props: Props) {
                 />
             )}
             {(!isTeamGroupConstrained && experimentalPrimaryTeam !== props.currentTeam.name) && (
-                <div style={{ display: "none"}}>
+                <div style={{display: 'none'}}>
                     <LeaveTeamMenuItem/>
                 </div>
             )}
