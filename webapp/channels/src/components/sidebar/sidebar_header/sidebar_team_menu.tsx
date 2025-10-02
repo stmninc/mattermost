@@ -7,7 +7,6 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useHistory} from 'react-router-dom';
 
 import {
-    LightbulbOutlineIcon,
     AccountPlusOutlineIcon,
     AccountMultiplePlusOutlineIcon,
     SettingsOutlineIcon,
@@ -115,7 +114,7 @@ export default function SidebarTeamMenu(props: Props) {
                 />
             )}
             <Menu.Separator/>
-            <LearnAboutTeamsMenuItem/>
+            {/* <LearnAboutTeamsMenuItem/> */}
             <PluginMenuItems/>
         </Menu.Container>
     );
@@ -457,6 +456,7 @@ function RestrictedIndicatorForCreateTeam({isFreeTrial}: {isFreeTrial: boolean})
     );
 }
 
+/* Commented out as per issue request to remove "Learn about teams" menu item
 const MATTERMOST_ACADEMY_TEAM_TRAINING_LINK = 'https://mattermost.com/pl/mattermost-academy-team-training';
 
 function LearnAboutTeamsMenuItem() {
@@ -483,6 +483,7 @@ function LearnAboutTeamsMenuItem() {
         />
     );
 }
+*/
 
 function PluginMenuItems() {
     const pluginInMainMenu = useSelector(getMainMenuPluginComponents);
