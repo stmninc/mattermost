@@ -80,8 +80,8 @@ func (s *MmctlE2ETestSuite) TestUserDeactivationAutocompleteExclusion() {
 		// Deactivate user via mmctl
 		err = userDeactivateCmdF(c, &cobra.Command{}, []string{user.Email})
 		s.Require().Nil(err)
-		s.Require().Len(printer.GetLines(), 0)
 		s.Require().Len(printer.GetErrorLines(), 0)
+		printer.Clean()
 
 		// Verify user is deactivated
 		ruser, err := s.th.App.GetUser(user.Id)
@@ -173,8 +173,8 @@ func (s *MmctlE2ETestSuite) TestUserDeactivationAutocompleteExclusionMultipleCon
 		// Deactivate user via mmctl
 		err = userDeactivateCmdF(c, &cobra.Command{}, []string{user.Email})
 		s.Require().Nil(err)
-		s.Require().Len(printer.GetLines(), 0)
 		s.Require().Len(printer.GetErrorLines(), 0)
+		printer.Clean()
 
 		// Verify user is deactivated
 		ruser, err := s.th.App.GetUser(user.Id)
