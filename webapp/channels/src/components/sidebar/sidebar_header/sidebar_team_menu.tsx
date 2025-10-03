@@ -459,7 +459,6 @@ function RestrictedIndicatorForCreateTeam({isFreeTrial}: {isFreeTrial: boolean})
     );
 }
 
-/* disabled as per issue request to remove "Learn about teams" menu item
 const MATTERMOST_ACADEMY_TEAM_TRAINING_LINK = 'https://mattermost.com/pl/mattermost-academy-team-training';
 
 function LearnAboutTeamsMenuItem() {
