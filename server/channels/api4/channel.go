@@ -440,7 +440,6 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		c.Err = err
 		return
 	}
-	teamId := channel.TeamId
 
 	auditRec := c.MakeAuditRecord(model.AuditEventRestoreChannel, model.AuditStatusFail)
 	defer c.LogAuditRec(auditRec)
@@ -451,10 +450,18 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), teamId, model.PermissionManageTeam) &&
-		!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
-		c.SetPermissionError(model.PermissionManageTeam)
+	// For non-official channels, check team management permissions
+	isOfficial, err := c.App.IsOfficialChannel(c.AppContext, channel)
+	if err != nil {
+		c.Err = err
 		return
+	}
+	if !isOfficial {
+		if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), channel.TeamId, model.PermissionManageTeam) &&
+			!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
+			c.SetPermissionError(model.PermissionManageTeam)
+			return
+		}
 	}
 
 	channel, err = c.App.RestoreChannel(c.AppContext, channel, c.AppContext.Session().UserId)
