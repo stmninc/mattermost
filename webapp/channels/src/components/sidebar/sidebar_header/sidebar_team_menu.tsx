@@ -115,7 +115,9 @@ export default function SidebarTeamMenu(props: Props) {
                 />
             )}
             <Menu.Separator/>
+            <div style={{display: 'none'}}>
             <LearnAboutTeamsMenuItem/>
+            </div>
             <PluginMenuItems/>
         </Menu.Container>
     );
