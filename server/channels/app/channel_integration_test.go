@@ -91,7 +91,7 @@ func TestIsOfficialChannel(t *testing.T) {
 		assert.False(t, isOfficial)
 	})
 
-	t.Run("returns error when environment variable is not set", func(t *testing.T) {
+	t.Run("returns false when environment variable is not set", func(t *testing.T) {
 		// Reset cache for this test
 		resetIntegrationAdminUsernameForTesting()
 
@@ -107,9 +107,8 @@ func TestIsOfficialChannel(t *testing.T) {
 		}
 
 		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
-		require.NotNil(t, appErr)
+		require.Nil(t, appErr)
 		assert.False(t, isOfficial)
-		assert.Equal(t, "app.channel.config_missing", appErr.Id)
 	})
 
 	t.Run("returns error when channel is nil", func(t *testing.T) {
@@ -122,7 +121,7 @@ func TestIsOfficialChannel(t *testing.T) {
 		assert.Equal(t, "app.channel.invalid", appErr.Id)
 	})
 
-	t.Run("returns error when environment variable is empty string", func(t *testing.T) {
+	t.Run("returns false when environment variable is empty string", func(t *testing.T) {
 		// Reset cache for this test
 		resetIntegrationAdminUsernameForTesting()
 
@@ -138,9 +137,8 @@ func TestIsOfficialChannel(t *testing.T) {
 		}
 
 		isOfficial, appErr := th.App.IsOfficialChannel(th.Context, channel)
-		require.NotNil(t, appErr)
+		require.Nil(t, appErr)
 		assert.False(t, isOfficial)
-		assert.Equal(t, "app.channel.config_missing", appErr.Id)
 	})
 
 	t.Run("returns false when channel creator ID is empty", func(t *testing.T) {
