@@ -121,9 +121,7 @@ describe('components/sidebar/sidebar_header/sidebar_team_menu', () => {
             expect(screen.getByText('Manage members')).toBeInTheDocument();
             expect(screen.getByText('Leave team')).toBeInTheDocument();
             expect(screen.getByText('Create a team')).toBeInTheDocument();
-
-            // "Learn about teams" has been removed as per issue request
-            // expect(screen.getByText('Learn about teams')).toBeInTheDocument();
+            expect(screen.getByText('Learn about teams')).not.toBeVisible();
         });
     });
 
