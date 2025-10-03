@@ -29,7 +29,7 @@
     "@mattermost/types": "file:../../webapp/platform/types",
     "@playwright/test": "1.53.2",
     "cross-env": "7.0.3",
-    "dayjs": "1.11.13",
+    "dayjs": "1.11.18",
     "luxon": "3.6.1",
     "zod": "3.25.74"
   },
