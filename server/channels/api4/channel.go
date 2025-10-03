@@ -451,19 +451,10 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For non-official channels, check team management permissions
-	isOfficial, appErr := c.App.IsOfficialChannel(c.AppContext, channel)
-	if appErr != nil {
-		c.Err = appErr
+	if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), teamId, model.PermissionManageTeam) &&
+		!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
+		c.SetPermissionError(model.PermissionManageTeam)
 		return
-	}
-
-	if !isOfficial {
-		if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), teamId, model.PermissionManageTeam) &&
-			!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
-			c.SetPermissionError(model.PermissionManageTeam)
-			return
-		}
 	}
 
 	channel, err = c.App.RestoreChannel(c.AppContext, channel, c.AppContext.Session().UserId)
