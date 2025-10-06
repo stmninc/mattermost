@@ -14,7 +14,6 @@ import (
 
 func TestUserInactiveFiltering(t *testing.T) {
 	t.Run("search index behavior on user deactivation", func(t *testing.T) {
-		t.Parallel()
 		th := Setup(t).InitBasic()
 		defer th.TearDown()
 
@@ -46,7 +45,6 @@ func TestUserInactiveFiltering(t *testing.T) {
 	})
 
 	t.Run("mention autocomplete excludes deactivated users", func(t *testing.T) {
-		t.Parallel()
 		th := Setup(t).InitBasic()
 		defer th.TearDown()
 
