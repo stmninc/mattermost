@@ -445,23 +445,22 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	defer c.LogAuditRec(auditRec)
 	auditRec.AddEventPriorState(channel)
 
-	if !checkOfficialChannelPermission(c, channel.Id) {
-		c.Err = model.NewAppError("restoreChannel", "api.channel.restore_channel.official_channel.forbidden", nil, i18n.T("api.channel.restore_channel.official_channel.forbidden"), http.StatusForbidden)
+	// Check team management permissions (applies to all channels)
+	if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), channel.TeamId, model.PermissionManageTeam) &&
+		!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
+		c.SetPermissionError(model.PermissionManageTeam)
 		return
 	}
 
-	// For non-official channels, check team management permissions
+	// For official channels, additionally check if the user is the creator
 	isOfficial, err := c.App.IsOfficialChannel(c.AppContext, channel)
 	if err != nil {
 		c.Err = err
 		return
 	}
-	if !isOfficial {
-		if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), channel.TeamId, model.PermissionManageTeam) &&
-			!c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionSysconsoleWriteUserManagementChannels) {
-			c.SetPermissionError(model.PermissionManageTeam)
-			return
-		}
+	if isOfficial && channel.CreatorId != c.AppContext.Session().UserId {
+		c.Err = model.NewAppError("restoreChannel", "api.channel.restore_channel.official_channel.forbidden", nil, i18n.T("api.channel.restore_channel.official_channel.forbidden"), http.StatusForbidden)
+		return
 	}
 
 	channel, err = c.App.RestoreChannel(c.AppContext, channel, c.AppContext.Session().UserId)
