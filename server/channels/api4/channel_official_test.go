@@ -36,7 +36,8 @@ func TestOfficialChannelValidation(t *testing.T) {
 	require.Nil(t, appErr)
 
 	// Grant team admin role to official admin for restore channel tests
-	th.App.UpdateTeamMemberRoles(th.Context, th.BasicTeam.Id, officialAdmin.Id, model.TeamAdminRoleId+" "+model.TeamUserRoleId)
+	_, appErr = th.App.UpdateTeamMemberRoles(th.Context, th.BasicTeam.Id, officialAdmin.Id, model.TeamAdminRoleId+" "+model.TeamUserRoleId)
+	require.Nil(t, appErr)
 
 	// Create official channel (created by official admin)
 	_, _, err = th.Client.Login(context.Background(), officialAdmin.Email, "Pa$$word11")
