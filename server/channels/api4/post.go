@@ -81,7 +81,11 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 	post.SanitizeInput()
 	post.UserId = c.AppContext.Session().UserId
 
-	auditRec := c.MakeAuditRecord("createPost", audit.Fail)
+	// TODO: Remove this panic trigger for local Sentry testing
+	if post.Message == "trigger panic" {
+	panic("Test panic for Sentry - triggered by 'trigger panic' message")
+	}
+
 	defer c.LogAuditRecWithLevel(auditRec, app.LevelContent)
 	audit.AddEventParameterAuditable(auditRec, "post", &post)
 
