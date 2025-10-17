@@ -21,6 +21,11 @@ customize-assets:
 	sed -i '' -e 's/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g' $(CUSTOMIZE_SOURCE_DIR)/i18n/ja.json || true
 	sed -i '' -e 's/{{.Service}}/$(CUSTOM_SERVICE_NAME)/g' -e 's/Mattermost/$(CUSTOM_PLATFORM_NAME)/g' $(CUSTOMIZE_SOURCE_DIR)/i18n/*.json || true
 
+	# for debug
+	grep -r "$(CUSTOM_JP_PLATFORM_NAME)" $(CUSTOMIZE_SOURCE_DIR)/i18n
+	grep -r "$(CUSTOM_SERVICE_NAME)" $(CUSTOMIZE_SOURCE_DIR)/i18n
+	grep -r "$(CUSTOM_PLATFORM_NAME)" $(CUSTOMIZE_SOURCE_DIR)/i18n
+
 	# Remove GitLab icon from login screen
 	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'
 	file=$$(grep -l $${icon_str} $(CUSTOMIZE_SOURCE_DIR)/*.js || true)
@@ -28,6 +33,11 @@ customize-assets:
 		sed -i '' "s|$${icon_str}|\"span\",{}|g" "$$file"; \
 		sed -i '' "s/external-login-button-label//g" "$$file"; \
 	fi
+
+	# for debug
+	grep -r '"span",{}' $(CUSTOMIZE_SOURCE_DIR)/*.js
+	grep -r 'Gitlab Icon' $(CUSTOMIZE_SOURCE_DIR)/*.js
+	grep -r 'external-login-button-label' $(CUSTOMIZE_SOURCE_DIR)/*.js
 
 	# Hide Mattermost logo at the top left (before login)
 	hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b})}'
@@ -37,5 +47,11 @@ customize-assets:
 		sed -i '' "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$$file_hfroute_header"; \
 	fi
 
+	# for debug
+	grep -r 'style:{visibility:"hidden"}' $(CUSTOMIZE_SOURCE_DIR)/*.js
+
 	# Hide loading screen icon
 	echo ".LoadingAnimation__compass { display: none; }" >> $(CUSTOMIZE_SOURCE_DIR)/css/initial_loading_screen.css
+
+	# for debug
+	grep '.LoadingAnimation__compass { display: none; }' $(CUSTOMIZE_SOURCE_DIR)/css/initial_loading_screen.css
