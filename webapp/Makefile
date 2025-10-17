@@ -67,7 +67,7 @@ check-types: node_modules ## Checks TS file for TypeScript confirmity
 dist: node_modules ## Builds all web app packages
 	@echo Packaging Mattermost Web App
 
-	npm run build
+	#npm run build
 
 node_modules: package.json $(wildcard package-lock.json)
 	@echo Getting dependencies using npm
