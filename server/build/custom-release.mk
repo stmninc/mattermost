@@ -28,7 +28,8 @@ customize-assets:
 
 	# Remove GitLab icon from login screen
 	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'
-	file=$$(grep -l $${icon_str} $(CUSTOMIZE_SOURCE_DIR)/*.js || true)
+	file=$$(grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js || true)
+	echo "[DEBUG] file=$$file"
 	if [ -n "$$file" ]; then \
 		sed -i '' "s|$${icon_str}|\"span\",{}|g" "$$file"; \
 		sed -i '' "s/external-login-button-label//g" "$$file"; \
@@ -55,3 +56,4 @@ customize-assets:
 
 	# for debug
 	grep '.LoadingAnimation__compass { display: none; }' $(CUSTOMIZE_SOURCE_DIR)/css/initial_loading_screen.css
+
