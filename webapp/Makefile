@@ -66,12 +66,14 @@ check-types: node_modules ## Checks TS file for TypeScript confirmity
 .PHONY: dist
 dist: node_modules ## Builds all web app packages
 	@echo Packaging Mattermost Web App
+	pwd
 	ls -d node_modules 2>/dev/null || true
 
 	#npm run build
 
 node_modules: package.json $(wildcard package-lock.json)
 	@echo Getting dependencies using npm
+	pwd
 	ls -d node_modules 2>/dev/null || true
 
 ifeq ($(CI),false)
