@@ -69,7 +69,7 @@ dist: node_modules ## Builds all web app packages
 	pwd
 	ls -d node_modules 2>/dev/null || true
 
-	#npm run build
+	npm run build
 
 node_modules: package.json $(wildcard package-lock.json)
 	@echo Getting dependencies using npm
