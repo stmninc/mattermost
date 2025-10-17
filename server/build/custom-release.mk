@@ -7,6 +7,11 @@ $(error DIST_PATH is not set. Please run this Makefile via server/Makefile or se
 endif
 
 customize-assets:
+	echo "[DEBUG] Customizing web app assets for custom release..."
+	echo "DIST_PATH = $(DIST_PATH)"
+	pwd
+	ls -l
+
 	# Replace strings using variables
 	sed -i '' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g; }' $(DIST_PATH)/client/i18n/ja.*.json || true
 	sed -i '' -e 's/GitLab/$(CUSTOM_SERVICE_NAME)/g' -e 's/{service}/$(CUSTOM_SERVICE_NAME)/g' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_PLATFORM_NAME)/g; }' $(DIST_PATH)/client/i18n/*.json || true

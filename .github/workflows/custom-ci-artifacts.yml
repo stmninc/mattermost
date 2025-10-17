@@ -59,26 +59,29 @@ jobs:
       - name: Run setup-go-work
         run: make setup-go-work
 
-      - name: Test Build
-        env:
-          CUSTOM_JP_PLATFORM_NAME: ${{ vars.CUSTOM_JP_PLATFORM_NAME }}
-          CUSTOM_PLATFORM_NAME: ${{ vars.CUSTOM_PLATFORM_NAME }}
-          CUSTOM_SERVICE_NAME: ${{ vars.CUSTOM_SERVICE_NAME }}
-        run: |
-          make config-reset
-          make build-client BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
-
-#      - name: Build
+#      - name: Test Build
 #        env:
 #          CUSTOM_JP_PLATFORM_NAME: ${{ vars.CUSTOM_JP_PLATFORM_NAME }}
 #          CUSTOM_PLATFORM_NAME: ${{ vars.CUSTOM_PLATFORM_NAME }}
 #          CUSTOM_SERVICE_NAME: ${{ vars.CUSTOM_SERVICE_NAME }}
 #        run: |
 #          make config-reset
-#          make build-cmd BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
-#          make customize-assets
+#          make build-client BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
+
+      - name: Build
+        env:
+          CUSTOM_JP_PLATFORM_NAME: ${{ vars.CUSTOM_JP_PLATFORM_NAME }}
+          CUSTOM_PLATFORM_NAME: ${{ vars.CUSTOM_PLATFORM_NAME }}
+          CUSTOM_SERVICE_NAME: ${{ vars.CUSTOM_SERVICE_NAME }}
+        run: |
+          echo "CUSTOM_JP_PLATFORM_NAME=${CUSTOM_JP_PLATFORM_NAME}"
+          echo "CUSTOM_PLATFORM_NAME=${CUSTOM_PLATFORM_NAME}"
+          echo "CUSTOM_SERVICE_NAME=${CUSTOM_SERVICE_NAME}"
+          make config-reset
+          make build-cmd BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
+          make customize-assets
 #          make package BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
-#
+
 #      # In server-ci-artifacts.yml, this step uploads the artifacts to S3.
 #      # Here, we place the artifacts in a directory that will be used by the next job.
 #      - name: Upload Mattermost Package
