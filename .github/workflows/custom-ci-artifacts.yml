@@ -70,9 +70,9 @@ jobs:
 
       - name: Build
         env:
-          CUSTOM_JP_PLATFORM_NAME: ${{ vars.CUSTOM_JP_PLATFORM_NAME }}
-          CUSTOM_PLATFORM_NAME: ${{ vars.CUSTOM_PLATFORM_NAME }}
-          CUSTOM_SERVICE_NAME: ${{ vars.CUSTOM_SERVICE_NAME }}
+          CUSTOM_JP_PLATFORM_NAME: ${{ vars.CUSTOM_JP_PLATFORM_NAME || 'Tuxxxチャット' }}
+          CUSTOM_PLATFORM_NAME: ${{ vars.CUSTOM_PLATFORM_NAME || 'TuxxxChat' }}
+          CUSTOM_SERVICE_NAME: ${{ vars.CUSTOM_SERVICE_NAME || 'Tuxxx' }}
         run: |
           echo "CUSTOM_JP_PLATFORM_NAME=${CUSTOM_JP_PLATFORM_NAME}"
           echo "CUSTOM_PLATFORM_NAME=${CUSTOM_PLATFORM_NAME}"
