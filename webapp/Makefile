@@ -82,7 +82,8 @@ ifeq ($(CI),false)
 else
 	# This runs in CI with NODE_ENV=production which skips devDependencies without this flag
 	@echo npm ci including dev dependencies
-	npm ci --include=dev
+	# try add CPPFLAGS for local environments that might need it
+	CPPFLAGS="-DPNG_ARM_NEON_OPT=0" npm ci --include=dev
 endif
 
 	touch $@
