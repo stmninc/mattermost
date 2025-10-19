@@ -5,24 +5,22 @@ endif
 CUSTOMIZE_SOURCE_DIR = '$(BUILD_WEBAPP_DIR)/channels/dist'
 
 customize-assets:
-	echo "[DEBUG] Customizing web app assets for custom release..."
-	echo "DIST_PATH = $(DIST_PATH)"
-	echo "BUILD_WEBAPP_DIR = $(BUILD_WEBAPP_DIR)"
-	echo "CUSTOM_SERVICE_NAME = $(CUSTOM_SERVICE_NAME)"
-	echo "CUSTOM_PLATFORM_NAME = $(CUSTOM_PLATFORM_NAME)"
-	echo "CUSTOM_JP_PLATFORM_NAME = $(CUSTOM_JP_PLATFORM_NAME)"
-	echo "CUSTOMIZE_SOURCE_DIR = $(CUSTOMIZE_SOURCE_DIR)"
+	@echo "🚀 starting customize-assets"
+	@echo "DIST_PATH = $(DIST_PATH)"
+	@echo "BUILD_WEBAPP_DIR = $(BUILD_WEBAPP_DIR)"
+	@echo "CUSTOM_SERVICE_NAME = $(CUSTOM_SERVICE_NAME)"
+	@echo "CUSTOM_PLATFORM_NAME = $(CUSTOM_PLATFORM_NAME)"
+	@echo "CUSTOM_JP_PLATFORM_NAME = $(CUSTOM_JP_PLATFORM_NAME)"
+	@echo "CUSTOMIZE_SOURCE_DIR = $(CUSTOMIZE_SOURCE_DIR)"
 	pwd
-	ls -l
 
-	# Replace strings using variables
+	@echo "replacing service and platform names in i18n files..."
 	sed -i '' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g; }' $(CUSTOMIZE_SOURCE_DIR)/i18n/ja.*.json || true
 	sed -i '' -e 's/GitLab/$(CUSTOM_SERVICE_NAME)/g' -e 's/{service}/$(CUSTOM_SERVICE_NAME)/g' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_PLATFORM_NAME)/g; }' $(CUSTOMIZE_SOURCE_DIR)/i18n/*.json || true
 	sed -i '' -e 's/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g' $(CUSTOMIZE_SOURCE_DIR)/i18n/ja.json || true
 	sed -i '' -e 's/{{.Service}}/$(CUSTOM_SERVICE_NAME)/g' -e 's/Mattermost/$(CUSTOM_PLATFORM_NAME)/g' $(CUSTOMIZE_SOURCE_DIR)/i18n/*.json || true
 
-	# Remove GitLab icon from login screen
-	echo "Removing Gitlab icon from login screen..."
+	@echo "removing Gitlab icon from login screen..."
 	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'; \
 	echo "icon_str: $${icon_str}"; \
 	file=$$(grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
@@ -32,8 +30,7 @@ customize-assets:
  		sed -i '' -e "s/external-login-button-label//g" "$${file}"; \
 	fi;
 
-	# Hide Mattermost logo at the top left (before login)
-	echo "Hiding Mattermost logo at the top left..."
+	@echo "hiding Mattermost logo at the top left..."
 	hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b})}'; \
 	echo "hfroute_header:{ $${hfroute_header}}"; \
 	file_hfroute_header=$$(grep -l "$${hfroute_header}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
@@ -43,5 +40,7 @@ customize-assets:
 		sed -i '' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
 	fi
 
-	# Hide loading screen icon
+	@echo "hiding loading screen icon..."
 	echo ".LoadingAnimation__compass { display: none; }" >> $(CUSTOMIZE_SOURCE_DIR)/css/initial_loading_screen.css
+
+	@echo "✅ completed customize-assets"
