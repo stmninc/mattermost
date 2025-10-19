@@ -27,19 +27,21 @@ customize-assets:
 	grep -r "$(CUSTOM_PLATFORM_NAME)" $(CUSTOMIZE_SOURCE_DIR)/i18n
 
 	# Remove GitLab icon from login screen
-	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'
-	file=$$(grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js || true)
-	echo "[DEBUG] file=$$file"
-	if [ -n "$$file" ]; then \
-		sed -i '' "s|$${icon_str}|\"span\",{}|g" "$$file"; \
-		sed -i '' "s/external-login-button-label//g" "$$file"; \
-	fi
+	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'; \
+	echo "icon_str: $${icon_str}"; \
+	file=$$(grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
+	if [ -n "$${file}" ]; then \
+		echo "-> Found file: $${file}. Modifying content..."; \
+		sed -i '' -e "s|$${icon_str}|\"span\",{}|g" "$${file}"; \
+ 		sed -i '' -e "s/external-login-button-label//g" "$${file}"; \
+	fi;
 
 	# for debug
 	grep -r '"span",{}' $(CUSTOMIZE_SOURCE_DIR)/*.js
 	grep -r 'Gitlab Icon' $(CUSTOMIZE_SOURCE_DIR)/*.js
 	grep -r 'external-login-button-label' $(CUSTOMIZE_SOURCE_DIR)/*.js
 
+	# TODO: restart here
 	# Hide Mattermost logo at the top left (before login)
 	hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b})}'
 	file_hfroute_header=$$(grep -l "$${hfroute_header}" $(CUSTOMIZE_SOURCE_DIR)/*.js || true)
