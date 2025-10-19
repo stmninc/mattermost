@@ -41,13 +41,14 @@ customize-assets:
 	grep -r 'Gitlab Icon' $(CUSTOMIZE_SOURCE_DIR)/*.js
 	grep -r 'external-login-button-label' $(CUSTOMIZE_SOURCE_DIR)/*.js
 
-	# TODO: restart here
 	# Hide Mattermost logo at the top left (before login)
-	hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b})}'
-	file_hfroute_header=$$(grep -l "$${hfroute_header}" $(CUSTOMIZE_SOURCE_DIR)/*.js || true)
-	if [ -n "$$file_hfroute_header" ]; then \
+	hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b})}'; \
+	echo "hfroute_header:{ $${hfroute_header}}"; \
+	file_hfroute_header=$$(grep -l "$${hfroute_header}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
+	if [ -n "$${file_hfroute_header}" ]; then \
+	  	echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
 		hidden_hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b}),style:{visibility:"hidden"}}'; \
-		sed -i '' "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$$file_hfroute_header"; \
+		sed -i '' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
 	fi
 
 	# for debug
