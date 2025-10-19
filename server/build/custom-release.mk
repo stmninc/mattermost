@@ -27,6 +27,7 @@ customize-assets:
 	grep -r "$(CUSTOM_PLATFORM_NAME)" $(CUSTOMIZE_SOURCE_DIR)/i18n
 
 	# Remove GitLab icon from login screen
+	echo "Removing Gitlab icon from login screen..."
 	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'; \
 	echo "icon_str: $${icon_str}"; \
 	file=$$(grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
@@ -42,6 +43,7 @@ customize-assets:
 	grep -r 'external-login-button-label' $(CUSTOMIZE_SOURCE_DIR)/*.js
 
 	# Hide Mattermost logo at the top left (before login)
+	echo "Hiding Mattermost logo at the top left..."
 	hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b})}'; \
 	echo "hfroute_header:{ $${hfroute_header}}"; \
 	file_hfroute_header=$$(grep -l "$${hfroute_header}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
@@ -59,4 +61,3 @@ customize-assets:
 
 	# for debug
 	grep '.LoadingAnimation__compass { display: none; }' $(CUSTOMIZE_SOURCE_DIR)/css/initial_loading_screen.css
-
