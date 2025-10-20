@@ -66,23 +66,17 @@ check-types: node_modules ## Checks TS file for TypeScript confirmity
 .PHONY: dist
 dist: node_modules ## Builds all web app packages
 	@echo Packaging Mattermost Web App
-	pwd
-	ls -d node_modules 2>/dev/null || true
 
 	npm run build
 
 node_modules: package.json $(wildcard package-lock.json)
 	@echo Getting dependencies using npm
-	pwd
-	ls -d node_modules 2>/dev/null || true
 
 ifeq ($(CI),false)
-	@echo npm install with extra CPPFLAGS for Linux/ARM64 and Linux/PPC64 support
 	CPPFLAGS="$(CPPFLAGS)" npm install
 else
 	# This runs in CI with NODE_ENV=production which skips devDependencies without this flag
-	@echo npm ci including dev dependencies
-	# try add CPPFLAGS for local environments that might need it
+	# TODO: try add CPPFLAGS for local environments that might need it
 	CPPFLAGS="-DPNG_ARM_NEON_OPT=0" npm ci --include=dev
 endif
 
