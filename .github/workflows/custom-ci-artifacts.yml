@@ -59,15 +59,6 @@ jobs:
       - name: Run setup-go-work
         run: make setup-go-work
 
-#      - name: Test Build
-#        env:
-#          CUSTOM_JP_PLATFORM_NAME: ${{ vars.CUSTOM_JP_PLATFORM_NAME }}
-#          CUSTOM_PLATFORM_NAME: ${{ vars.CUSTOM_PLATFORM_NAME }}
-#          CUSTOM_SERVICE_NAME: ${{ vars.CUSTOM_SERVICE_NAME }}
-#        run: |
-#          make config-reset
-#          make build-client BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
-
       - name: Build
         env:
           CUSTOM_JP_PLATFORM_NAME: ${{ vars.CUSTOM_JP_PLATFORM_NAME || 'Tuxxxチャット' }}
@@ -80,15 +71,15 @@ jobs:
           make config-reset
           make build-cmd BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
           make customize-assets
-#          make package BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
+          make package BUILD_NUMBER='${GITHUB_HEAD_REF}-${GITHUB_RUN_ID}'
 
-#      # In server-ci-artifacts.yml, this step uploads the artifacts to S3.
-#      # Here, we place the artifacts in a directory that will be used by the next job.
-#      - name: Upload Mattermost Package
-#        uses: actions/upload-artifact@v4 # v4.0.0
-#        with:
-#          name: server-build-artifact
-#          path: server/dist/mattermost-team-linux-amd64.tar.gz
+      # In server-ci-artifacts.yml, this step uploads the artifacts to S3.
+      # Here, we place the artifacts in a directory that will be used by the next job.
+      - name: Upload Mattermost Package
+        uses: actions/upload-artifact@v4 # v4.0.0
+        with:
+          name: server-build-artifact
+          path: server/dist/mattermost-team-linux-amd64.tar.gz
 
   build-and-push-image:
     needs: build-artifacts
