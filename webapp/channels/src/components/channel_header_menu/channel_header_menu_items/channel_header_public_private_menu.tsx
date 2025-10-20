@@ -158,7 +158,7 @@ const ChannelHeaderPublicMenu = ({channel, user, isMuted, isDefault, isMobile, i
             {!isMobile && (
                 <MenuItemPluginItems pluginItems={pluginItems}/>
             )}
-            {!isDefault && ((!isGuest(user.roles) && !isOfficialTunagChannel(channel)) || (!isArchived && !isOfficialTunagChannel(channel))) && (
+            {!isDefault && !isOfficialTunagChannel(channel) && (!isGuest(user.roles) || !isArchived) && (
                 <Menu.Separator/>
             )}
             {!isDefault && !isGuest(user.roles) && !isOfficialTunagChannel(channel) && (
