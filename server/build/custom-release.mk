@@ -17,10 +17,10 @@ customize-assets:
 	ls -l ../webapp/channels/dist/i18n
 
 	@echo "replacing service and platform names in i18n files..."
-	sed -i '' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g; }' $(CUSTOMIZE_SOURCE_DIR)/i18n/ja.*.json
-	sed -i '' -e 's/GitLab/$(CUSTOM_SERVICE_NAME)/g' -e 's/{service}/$(CUSTOM_SERVICE_NAME)/g' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_PLATFORM_NAME)/g; }' $(CUSTOMIZE_SOURCE_DIR)/i18n/*.json
-	sed -i '' -e 's/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g' i18n/ja.json
-	sed -i '' -e 's/{{.Service}}/$(CUSTOM_SERVICE_NAME)/g' -e 's/Mattermost/$(CUSTOM_PLATFORM_NAME)/g' i18n/*.json
+	sed -i'' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g; }' $(CUSTOMIZE_SOURCE_DIR)/i18n/ja.*.json
+	sed -i'' -e 's/GitLab/$(CUSTOM_SERVICE_NAME)/g' -e 's/{service}/$(CUSTOM_SERVICE_NAME)/g' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_PLATFORM_NAME)/g; }' $(CUSTOMIZE_SOURCE_DIR)/i18n/*.json
+	sed -i'' -e 's/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g' i18n/ja.json
+	sed -i'' -e 's/{{.Service}}/$(CUSTOM_SERVICE_NAME)/g' -e 's/Mattermost/$(CUSTOM_PLATFORM_NAME)/g' i18n/*.json
 
 	@echo "removing Gitlab icon from login screen..."
 	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'; \
@@ -28,8 +28,8 @@ customize-assets:
 	file=$$(grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
 	if [ -n "$${file}" ]; then \
 		echo "-> Found file: $${file}. Modifying content..."; \
-		sed -i '' -e "s|$${icon_str}|\"span\",{}|g" "$${file}"; \
- 		sed -i '' -e "s/external-login-button-label//g" "$${file}"; \
+		sed -i'' -e "s|$${icon_str}|\"span\",{}|g" "$${file}"; \
+ 		sed -i'' -e "s/external-login-button-label//g" "$${file}"; \
 	fi;
 
 	@echo "hiding Mattermost logo at the top left..."
@@ -39,7 +39,7 @@ customize-assets:
 	if [ -n "$${file_hfroute_header}" ]; then \
 	  	echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
 		hidden_hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b}),style:{visibility:"hidden"}}'; \
-		sed -i '' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
+		sed -i'' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
 	fi
 
 	@echo "hiding loading screen icon..."
