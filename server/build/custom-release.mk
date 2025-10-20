@@ -12,9 +12,6 @@ customize-assets:
 	@echo "CUSTOM_PLATFORM_NAME = $(CUSTOM_PLATFORM_NAME)"
 	@echo "CUSTOM_JP_PLATFORM_NAME = $(CUSTOM_JP_PLATFORM_NAME)"
 	@echo "CUSTOMIZE_SOURCE_DIR = $(CUSTOMIZE_SOURCE_DIR)"
-	pwd
-	ls -l $(CUSTOMIZE_SOURCE_DIR)
-	ls -l ../webapp/channels/dist/i18n
 
 	@echo "replacing service and platform names in i18n files..."
 	sed -i'' -e '/"about\.notice"/!{ /"about\.copyright"/!s/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g; }' $(CUSTOMIZE_SOURCE_DIR)/i18n/ja.*.json
