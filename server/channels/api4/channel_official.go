@@ -3,29 +3,28 @@
 
 package api4
 
-// checkOfficialChannelPermission checks if the current user has permission to perform actions on an official channel
-// Returns true if the action is permitted, false otherwise. Sets c.Err if there's an error.
-// For non-official channels, always returns true (caller should handle permissions separately).
-func checkOfficialChannelPermission(c *Context, channelId string) bool {
-	channel, appErr := c.App.GetChannel(c.AppContext, channelId)
-	if appErr != nil {
-		c.Err = appErr
-		return false
-	}
+import (
+	"net/http"
 
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/shared/i18n"
+)
+
+// checkOfficialChannelPermission checks if the user can perform actions on an official channel.
+// Returns nil if permitted, or an AppError if the channel is official and the user is not the creator.
+func checkOfficialChannelPermission(c *Context, channel *model.Channel) *model.AppError {
 	isOfficial, appErr := c.App.IsOfficialChannel(c.AppContext, channel)
 	if appErr != nil {
-		c.Err = appErr
-		return false
+		return appErr
 	}
 
 	if isOfficial {
 		// For official channels, only the creator can perform actions
 		if channel.CreatorId != c.AppContext.Session().UserId {
-			return false
+			return model.NewAppError("checkOfficialChannelPermission", "api.channel.official_channel.forbidden", nil, i18n.T("api.channel.official_channel.forbidden"), http.StatusForbidden)
 		}
 	}
 
-	// For non-official channels, return true (caller handles permissions)
-	return true
+	// For non-official channels, return nil (no error)
+	return nil
 }

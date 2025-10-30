@@ -200,8 +200,8 @@ func updateChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if channel.DisplayName != oldChannel.DisplayName {
-		if !checkOfficialChannelPermission(c, oldChannel.Id) {
-			c.Err = model.NewAppError("updateChannel", "api.channel.update_channel.official_channel_title.forbidden", nil, i18n.T("api.channel.update_channel.official_channel_title.forbidden"), http.StatusForbidden)
+		if err := checkOfficialChannelPermission(c, oldChannel); err != nil {
+			c.Err = model.NewAppError("updateChannel", "api.channel.update_channel.official_channel.forbidden", nil, i18n.T("api.channel.update_channel.official_channel.forbidden"), http.StatusForbidden)
 			return
 		}
 	}
@@ -385,8 +385,8 @@ func patchChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if patch.DisplayName != nil && *patch.DisplayName != oldChannel.DisplayName {
-		if !checkOfficialChannelPermission(c, oldChannel.Id) {
-			c.Err = model.NewAppError("patchChannel", "api.channel.patch_channel.official_channel_title.forbidden", nil, i18n.T("api.channel.patch_channel.official_channel_title.forbidden"), http.StatusForbidden)
+		if err := checkOfficialChannelPermission(c, oldChannel); err != nil {
+			c.Err = model.NewAppError("patchChannel", "api.channel.patch_channel.official_channel.forbidden", nil, i18n.T("api.channel.patch_channel.official_channel.forbidden"), http.StatusForbidden)
 			return
 		}
 	}
@@ -452,13 +452,7 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For official channels, additionally check if the user is the creator
-	isOfficial, err := c.App.IsOfficialChannel(c.AppContext, channel)
-	if err != nil {
-		c.Err = err
-		return
-	}
-	if isOfficial && channel.CreatorId != c.AppContext.Session().UserId {
+	if permErr := checkOfficialChannelPermission(c, channel); permErr != nil {
 		c.Err = model.NewAppError("restoreChannel", "api.channel.restore_channel.official_channel.forbidden", nil, i18n.T("api.channel.restore_channel.official_channel.forbidden"), http.StatusForbidden)
 		return
 	}
@@ -1418,7 +1412,7 @@ func deleteChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !checkOfficialChannelPermission(c, channel.Id) {
+	if permErr := checkOfficialChannelPermission(c, channel); permErr != nil {
 		c.Err = model.NewAppError("deleteChannel", "api.channel.delete_channel.official_channel.forbidden", nil, i18n.T("api.channel.delete_channel.official_channel.forbidden"), http.StatusForbidden)
 		return
 	}
@@ -1750,11 +1744,15 @@ func updateChannelMemberRoles(c *Context, w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	channel, appErr := c.App.GetChannel(c.AppContext, c.Params.ChannelId)
+	if appErr != nil {
+		c.Err = appErr
+		return
+	}
+
 	// Check official channel permission
-	if !checkOfficialChannelPermission(c, c.Params.ChannelId) {
-		if c.Err == nil {
-			c.Err = model.NewAppError("updateChannelMemberRoles", "api.channel.update_member_roles.official_channel.forbidden", nil, i18n.T("api.channel.update_member_roles.official_channel.forbidden"), http.StatusForbidden)
-		}
+	if err := checkOfficialChannelPermission(c, channel); err != nil {
+		c.Err = model.NewAppError("updateChannelMemberRoles", "api.channel.update_member_roles.official_channel.forbidden", nil, i18n.T("api.channel.update_member_roles.official_channel.forbidden"), http.StatusForbidden)
 		return
 	}
 
@@ -1790,11 +1788,15 @@ func updateChannelMemberSchemeRoles(c *Context, w http.ResponseWriter, r *http.R
 		return
 	}
 
+	channel, appErr := c.App.GetChannel(c.AppContext, c.Params.ChannelId)
+	if appErr != nil {
+		c.Err = appErr
+		return
+	}
+
 	// Check official channel permission
-	if !checkOfficialChannelPermission(c, c.Params.ChannelId) {
-		if c.Err == nil {
-			c.Err = model.NewAppError("updateChannelMemberSchemeRoles", "api.channel.update_member_scheme_roles.official_channel.forbidden", nil, i18n.T("api.channel.update_member_scheme_roles.official_channel.forbidden"), http.StatusForbidden)
-		}
+	if err := checkOfficialChannelPermission(c, channel); err != nil {
+		c.Err = model.NewAppError("updateChannelMemberSchemeRoles", "api.channel.update_member_scheme_roles.official_channel.forbidden", nil, i18n.T("api.channel.update_member_scheme_roles.official_channel.forbidden"), http.StatusForbidden)
 		return
 	}
 
@@ -1932,10 +1934,8 @@ func addChannelMember(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check official channel permission
-	if !checkOfficialChannelPermission(c, c.Params.ChannelId) {
-		if c.Err == nil {
-			c.Err = model.NewAppError("addChannelMember", "api.channel.add_member.official_channel.forbidden", nil, i18n.T("api.channel.add_member.official_channel.forbidden"), http.StatusForbidden)
-		}
+	if err := checkOfficialChannelPermission(c, channel); err != nil {
+		c.Err = model.NewAppError("addUserToChannel", "api.channel.add_user_to_channel.official_channel.forbidden", nil, i18n.T("api.channel.add_user_to_channel.official_channel.forbidden"), http.StatusForbidden)
 		return
 	}
 
@@ -2096,7 +2096,7 @@ func removeChannelMember(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if this is an official channel and if the user has permission
-	if !checkOfficialChannelPermission(c, channel.Id) {
+	if permErr := checkOfficialChannelPermission(c, channel); permErr != nil {
 		var errID string
 		if c.Params.UserId != c.AppContext.Session().UserId {
 			// Removing other members

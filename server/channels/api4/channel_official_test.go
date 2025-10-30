@@ -113,11 +113,11 @@ func TestOfficialChannelValidation(t *testing.T) {
 
 	t.Run("patchChannel - Official Channel Title Restriction", func(t *testing.T) {
 		// Test 1: Official admin can patch title
-		_, _, err := th.SystemAdminClient.Login(context.Background(), officialAdmin.Email, "Pa$$word11")
+		_, _, err := th.Client.Login(context.Background(), officialAdmin.Email, "Pa$$word11")
 		require.NoError(t, err)
 		newTitle := "Patched Official Title"
 		patch := &model.ChannelPatch{DisplayName: &newTitle}
-		_, _, err = th.SystemAdminClient.PatchChannel(context.Background(), officialChannel.Id, patch)
+		_, _, err = th.Client.PatchChannel(context.Background(), officialChannel.Id, patch)
 		assert.NoError(t, err, "Official admin should be able to patch title")
 
 		// Test 2: Regular user cannot patch title
@@ -306,9 +306,9 @@ func TestOfficialChannelValidation(t *testing.T) {
 		testUser := th.CreateUser()
 		_, _, appErr := th.App.AddUserToTeam(th.Context, th.BasicTeam.Id, testUser.Id, "")
 		require.Nil(t, appErr)
-		_, _, err := th.SystemAdminClient.Login(context.Background(), officialAdmin.Email, "Pa$$word11")
+		_, _, err := th.Client.Login(context.Background(), officialAdmin.Email, "Pa$$word11")
 		require.NoError(t, err)
-		_, _, err2 := th.SystemAdminClient.AddChannelMember(context.Background(), officialChannel.Id, testUser.Id)
+		_, _, err2 := th.Client.AddChannelMember(context.Background(), officialChannel.Id, testUser.Id)
 		require.NoError(t, err2)
 
 		// Test 1: Official admin can update scheme roles
@@ -317,7 +317,7 @@ func TestOfficialChannelValidation(t *testing.T) {
 			SchemeUser:  true,
 			SchemeGuest: false,
 		}
-		_, err3 := th.SystemAdminClient.UpdateChannelMemberSchemeRoles(context.Background(), officialChannel.Id, testUser.Id, schemeRoles)
+		_, err3 := th.Client.UpdateChannelMemberSchemeRoles(context.Background(), officialChannel.Id, testUser.Id, schemeRoles)
 		assert.NoError(t, err3, "Official admin should be able to update scheme roles")
 
 		// Test 2: Non-creator cannot update scheme roles
