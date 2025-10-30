@@ -452,14 +452,10 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For official channels, additionally check if the user is the creator
-	isOfficial, err := c.App.IsOfficialChannel(c.AppContext, channel)
-	if err != nil {
-		c.Err = err
-		return
-	}
-	if isOfficial && channel.CreatorId != c.AppContext.Session().UserId {
-		c.Err = model.NewAppError("restoreChannel", "api.channel.restore_channel.official_channel.forbidden", nil, i18n.T("api.channel.restore_channel.official_channel.forbidden"), http.StatusForbidden)
+	if !checkOfficialChannelPermission(c, c.Params.ChannelId) {
+		if c.Err == nil {
+			c.Err = model.NewAppError("restoreChannel", "api.channel.restore_channel.official_channel.forbidden", nil, i18n.T("api.channel.restore_channel.official_channel.forbidden"), http.StatusForbidden)
+		}
 		return
 	}
 
