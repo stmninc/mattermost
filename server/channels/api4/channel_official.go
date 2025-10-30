@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/mattermost/mattermost/server/public/model"
-	"github.com/mattermost/mattermost/server/v8/i18n"
+	"github.com/mattermost/mattermost/server/public/shared/i18n"
 )
 
 // checkOfficialChannelPermission checks if the user can perform actions on an official channel.
