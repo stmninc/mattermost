@@ -452,8 +452,8 @@ func restoreChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := checkOfficialChannelPermission(c, channel); err != nil {
-		c.Err = err
+	if permErr := checkOfficialChannelPermission(c, channel); permErr != nil {
+		c.Err = permErr
 		return
 	}
 
@@ -1412,8 +1412,8 @@ func deleteChannel(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := checkOfficialChannelPermission(c, channel); err != nil {
-		c.Err = err
+	if permErr := checkOfficialChannelPermission(c, channel); permErr != nil {
+		c.Err = permErr
 		return
 	}
 
@@ -2096,7 +2096,7 @@ func removeChannelMember(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if this is an official channel and if the user has permission
-	if err := checkOfficialChannelPermission(c, channel); err != nil {
+	if permErr := checkOfficialChannelPermission(c, channel); permErr != nil {
 		var errID string
 		if c.Params.UserId != c.AppContext.Session().UserId {
 			// Removing other members
