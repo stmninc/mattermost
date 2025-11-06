@@ -6,8 +6,6 @@ CUSTOMIZE_SOURCE_DIR = '$(BUILD_WEBAPP_DIR)/channels/dist'
 
 customize-assets:
 	@echo "🚀 Starting customize-assets"
-	@echo "DIST_PATH = $(DIST_PATH)"
-	@echo "BUILD_WEBAPP_DIR = $(BUILD_WEBAPP_DIR)"
 	@echo "CUSTOM_SERVICE_NAME = $(CUSTOM_SERVICE_NAME)"
 	@echo "CUSTOM_PLATFORM_NAME = $(CUSTOM_PLATFORM_NAME)"
 	@echo "CUSTOM_JP_PLATFORM_NAME = $(CUSTOM_JP_PLATFORM_NAME)"
