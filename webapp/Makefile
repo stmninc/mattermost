@@ -76,8 +76,7 @@ ifeq ($(CI),false)
 	CPPFLAGS="$(CPPFLAGS)" npm install
 else
 	# This runs in CI with NODE_ENV=production which skips devDependencies without this flag
-	# TODO: try add CPPFLAGS for local environments that might need it
-	CPPFLAGS="-DPNG_ARM_NEON_OPT=0" npm ci --include=dev
+	npm ci --include=dev
 endif
 
 	touch $@
