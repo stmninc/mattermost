@@ -2,7 +2,7 @@ ifneq ($(origin CUSTOMIZE_SOURCE_DIR), undefined)
 	$(error CUSTOMIZE_SOURCE_DIR is already set (origin=$(origin CUSTOMIZE_SOURCE_DIR)))
 endif
 
-CUSTOMIZE_SOURCE_DIR = '$(BUILD_WEBAPP_DIR)/channels/dist'
+CUSTOMIZE_SOURCE_DIR = $(BUILD_WEBAPP_DIR)/channels/dist
 
 customize-assets:
 	@echo "🚀 Starting customize-assets"
