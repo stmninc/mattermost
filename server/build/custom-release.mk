@@ -27,6 +27,9 @@ customize-assets:
 				-e "s|$${icon_str}|\"span\",{}|g" \
 				-e 's/external-login-button-label//g' \
 				"$${file}"; \
+		else \
+			echo "::error title=Removing GitLab icon Error::GitLab icon pattern not found."; \
+			exit 1; \
 		fi; \
 	done;
 
@@ -38,6 +41,9 @@ customize-assets:
 			echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
 			hidden_hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b}),style:{visibility:"hidden"}}'; \
 			sed -i'' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
+		else \
+			echo "::error title=Hiding Mattermost logo Error::hfroute-header not found."; \
+			exit 1; \
 		fi; \
 	done
 
