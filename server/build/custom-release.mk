@@ -32,7 +32,7 @@ customize-assets:
 	echo "hfroute_header: $${hfroute_header}"; \
 	file_hfroute_header=$$(grep -l "$${hfroute_header}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
 	if [ -n "$${file_hfroute_header}" ]; then \
-	  	echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
+		echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
 		hidden_hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b}),style:{visibility:"hidden"}}'; \
 		sed -i'' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
 	fi
