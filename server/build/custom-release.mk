@@ -19,20 +19,20 @@ customize-assets:
 
 	@echo "removing Gitlab icon from login screen..."
 	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'; \
-	@echo "icon_str: $${icon_str}"; \
+	echo "icon_str: $${icon_str}"; \
 	file=$$(grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
 	if [ -n "$${file}" ]; then \
-		@echo "-> Found file: $${file}. Modifying content..."; \
+		echo "-> Found file: $${file}. Modifying content..."; \
 		sed -i'' -e "s|$${icon_str}|\"span\",{}|g" "$${file}"; \
  		sed -i'' -e "s/external-login-button-label//g" "$${file}"; \
 	fi;
 
 	@echo "hiding Mattermost logo at the top left..."
 	hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b})}'; \
-	@echo "hfroute_header: $${hfroute_header}"; \
+	echo "hfroute_header: $${hfroute_header}"; \
 	file_hfroute_header=$$(grep -l "$${hfroute_header}" $(CUSTOMIZE_SOURCE_DIR)/*.js); \
 	if [ -n "$${file_hfroute_header}" ]; then \
-	  	@echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
+	  	echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
 		hidden_hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b}),style:{visibility:"hidden"}}'; \
 		sed -i'' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
 	fi
