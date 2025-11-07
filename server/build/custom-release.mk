@@ -24,7 +24,7 @@ customize-assets:
 	if [ -n "$${file}" ]; then \
 		echo "-> Found file: $${file}. Modifying content..."; \
 		sed -i'' -e "s|$${icon_str}|\"span\",{}|g" "$${file}"; \
- 		sed -i'' -e "s/external-login-button-label//g" "$${file}"; \
+		sed -i'' -e "s/external-login-button-label//g" "$${file}"; \
 	fi;
 
 	@echo "hiding Mattermost logo at the top left..."
