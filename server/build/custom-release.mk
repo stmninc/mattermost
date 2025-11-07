@@ -17,7 +17,7 @@ customize-assets:
 	sed -i'' -e 's/Mattermost/$(CUSTOM_JP_PLATFORM_NAME)/g' i18n/ja.json
 	sed -i'' -e 's/{{.Service}}/$(CUSTOM_SERVICE_NAME)/g' -e 's/Mattermost/$(CUSTOM_PLATFORM_NAME)/g' i18n/*.json
 
-	@echo "removing Gitlab icon from login screen..."
+	@echo "removing GitLab icon from login screen..."
 	icon_str='"svg",{width:"[0-9]\+",height:"[0-9]\+",viewBox:"0 0 [0-9]\+ [0-9]\+",fill:"none",xmlns:"http:\/\/www.w3.org\/2000\/svg","aria-label":t({id:"generic_icons.login.gitlab",defaultMessage:"Gitlab Icon"})}'; \
 	echo "icon_str: $${icon_str}"; \
 	grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js | while read -r file; do \
