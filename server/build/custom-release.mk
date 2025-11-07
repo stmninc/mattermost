@@ -23,11 +23,10 @@ customize-assets:
 	grep -l "$${icon_str}" $(CUSTOMIZE_SOURCE_DIR)/*.js | while read -r file; do \
 		if [ -n "$${file}" ]; then \
 			echo "-> Found file: $${file}. Modifying content..."; \
-			sed -i.bak \
+			sed -i'' \
 				-e "s|$${icon_str}|\"span\",{}|g" \
 				-e 's/external-login-button-label//g' \
 				"$${file}"; \
-			rm -f "$${file}.bak"; \
 		fi; \
 	done;
 
@@ -38,8 +37,7 @@ customize-assets:
 		if [ -n "$${file_hfroute_header}" ]; then \
 			echo "-> Found file: $${file_hfroute_header}. Modifying content..."; \
 			hidden_hfroute_header='o().createElement("div",{className:c()("hfroute-header",{"has-free-banner":r,"has-custom-site-name":b}),style:{visibility:"hidden"}}'; \
-			sed -i.bak -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
-			rm -f "$${file_hfroute_header}.bak"; \
+			sed -i'' -e "s|$${hfroute_header}|$${hidden_hfroute_header}|g" "$${file_hfroute_header}"; \
 		fi; \
 	done
 
