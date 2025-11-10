@@ -4,11 +4,16 @@
 package web
 
 import (
+	// "errors"
+	// "fmt"
 	"net/http"
 	"path"
 	"strings"
 
+	// "time"
+
 	"github.com/avct/uasurfer"
+	// "github.com/getsentry/sentry-go"
 	"github.com/gorilla/mux"
 
 	"github.com/mattermost/mattermost/server/public/model"
@@ -33,6 +38,7 @@ func New(srv *app.Server) *Web {
 	web.InitOAuth()
 	web.InitWebhooks()
 	web.InitSaml()
+	// web.SetupTestSentryRoute()
 	web.InitStatic()
 
 	return web
@@ -109,3 +115,28 @@ func ReturnStatusOK(w http.ResponseWriter) {
 		mlog.Warn("Error writing status OK response", mlog.Err(err))
 	}
 }
+
+// func (w *Web) SetupTestSentryRoute() {
+// w.MainRouter.HandleFunc("/test_sentry", handleTestSentry).Methods("GET")
+// }
+
+// func handleTestSentry(responseWriter http.ResponseWriter, request *http.Request) {
+// Sentryにテストメッセージを送信
+// eventID1 := sentry.CaptureMessage("Test message from Mattermost web endpoint")
+// mlog.Info("Captured Sentry message", mlog.String("event_id", string(*eventID1)))
+
+// テストエラーを作成して送信
+// testError := errors.New("Test error for Sentry verification")
+// eventID2 := sentry.CaptureException(testError)
+// mlog.Info("Captured Sentry exception", mlog.String("event_id", string(*eventID2)))
+
+// 重要: Sentryにイベントを強制的に送信
+// if sentry.Flush(2 * time.Second) {
+// mlog.Info("Sentry events flushed successfully")
+// } else {
+// mlog.Warn("Failed to flush Sentry events")
+// }
+
+// responseWriter.WriteHeader(http.StatusOK)
+// responseWriter.Write([]byte(fmt.Sprintf("Test data sent to Sentry! Event IDs: %s, %s", *eventID1, *eventID2)))
+// }

@@ -85,7 +85,7 @@ const (
 	debugScheduledPostJobInterval = 2 * time.Second
 )
 
-var SentryDSN = "https://04337f87f1ff7e0031b9be256ee99535@o4510146945548288.ingest.us.sentry.io/4510147136389120"
+var SentryDSN = "https://c7c9dceea6665652d4b3512e3b2b1ba8@o4510146945548288.ingest.us.sentry.io/4510164601470976"
 
 // This is a placeholder to allow the existing release pipelines to run without failing to insert
 // the key that's now hard-coded above. Remove this once we converge on the unified delivery
@@ -274,11 +274,16 @@ func NewServer(options ...Option) (*Server, error) {
 	// below this. Otherwise, please add it to Channels struct in app/channels.go.
 	// -------------------------------------------------------------------------
 
+	// mlog.Debug("Sentry configuration during server initialization",
+	// mlog.Bool("EnableSentry", *s.platform.Config().LogSettings.EnableSentry),
+	// mlog.String("ServiceEnvironment", string(model.GetServiceEnvironment())))
+
 	if *s.platform.Config().LogSettings.EnableSentry {
 		switch model.GetServiceEnvironment() {
 		case model.ServiceEnvironmentDev:
-			mlog.Warn("Sentry reporting is enabled, but service environment is dev. Disabling reporting.")
+			// mlog.Warn("Sentry reporting is enabled, but service environment is dev. Disabling reporting.")
 		case model.ServiceEnvironmentProduction, model.ServiceEnvironmentTest:
+			// mlog.Info("Initializing Sentry for error tracking")
 			if err2 := sentry.Init(sentry.ClientOptions{
 				Dsn:              SentryDSN,
 				Release:          model.BuildHash,
@@ -298,7 +303,10 @@ func NewServer(options ...Option) (*Server, error) {
 					return 0.0
 				}),
 			}); err2 != nil {
-				mlog.Warn("Sentry could not be initiated, probably bad DSN?", mlog.Err(err2))
+				// mlog.Warn("Sentry could not be initiated, probably bad DSN?", mlog.Err(err2))
+			} else {
+				// mlog.Info("Sentry initialized successfully",
+				// mlog.String("Release", model.BuildHash))
 			}
 		}
 	}
@@ -866,15 +874,22 @@ func (s *Server) Start() error {
 
 	var handler http.Handler = s.RootRouter
 
+	// mlog.Info("Configuring HTTP handler with Sentry middleware",
+	// mlog.Bool("EnableSentry", *s.platform.Config().LogSettings.EnableSentry),
+	// mlog.String("ServiceEnvironment", string(model.GetServiceEnvironment())))
+
 	switch model.GetServiceEnvironment() {
 	case model.ServiceEnvironmentProduction, model.ServiceEnvironmentTest:
 		if *s.platform.Config().LogSettings.EnableSentry {
+			// mlog.Info("Attaching Sentry HTTP handler")
 			sentryHandler := sentryhttp.New(sentryhttp.Options{
 				Repanic: true,
 			})
 			handler = sentryHandler.Handle(handler)
+			// mlog.Info("Sentry HTTP handler attached successfully")
 		}
 	case model.ServiceEnvironmentDev:
+		// mlog.Debug("Skipping Sentry HTTP handler in development environment")
 	}
 
 	if allowedOrigins := *s.platform.Config().ServiceSettings.AllowCorsFrom; allowedOrigins != "" {
