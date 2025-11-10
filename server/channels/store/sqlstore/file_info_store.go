@@ -632,10 +632,21 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 		if terms == "" && excludedTerms == "" {
 			// we've already confirmed that we have a channel or user to search for
 		} else if fs.DriverName() == model.DatabaseDriverPostgres {
-			// Perse text for LIKE wildcards
-			if wildcard, err := regexp.Compile(`\*($| )`); err == nil {
-				terms = wildcard.ReplaceAllLiteralString(terms, "%")
-				excludedTerms = wildcard.ReplaceAllLiteralString(excludedTerms, "%")
+			// Escape wildcards of LIKE searches used within strings with a backslash("\").
+			term := sanitizeSearchTerm(terms, "\\")
+			excludedTerms := sanitizeSearchTerm(excludedTerms, "\\")
+
+			var conditions sq.And
+
+			likeQuery := fs.buildLikeQueryForFileInfo(terms, "FileInfo.Name", "FileInfo.Content")
+			if likeQuery != nil {
+				conditions = append(conditions, likeQuery)
+			}
+
+			if terms != "" {
+				if likeClause := fs.buildFileInfoLIKEClause(terms, "FileInfo.Name", "FileInfo.Content"); likeClause != nil {
+					conditions = append(conditions, likeClause)
+				}
 			}
 
 			query = query.Where(sqOr{
