@@ -35,6 +35,26 @@ func saveReaction(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check DM/GM permissions
+	post, appErr := c.App.GetSinglePost(c.AppContext, reaction.PostId, false)
+	if appErr == nil {
+		channel, chErr := c.App.GetChannel(c.AppContext, post.ChannelId)
+		if chErr == nil {
+			switch channel.Type {
+			case model.ChannelTypeDirect:
+				if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
+					c.SetPermissionError(model.PermissionCreateDirectChannel)
+					return
+				}
+			case model.ChannelTypeGroup:
+				if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
+					c.SetPermissionError(model.PermissionCreateGroupChannel)
+					return
+				}
+			}
+		}
+	}
+
 	if !c.App.SessionHasPermissionToChannelByPost(*c.AppContext.Session(), reaction.PostId, model.PermissionAddReaction) {
 		c.SetPermissionError(model.PermissionAddReaction)
 		return
