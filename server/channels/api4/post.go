@@ -90,18 +90,21 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	channel, err := c.App.GetChannel(c.AppContext, post.ChannelId)
-	if err == nil {
-		switch channel.Type {
-		case model.ChannelTypeDirect:
-			if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-				c.SetPermissionError(model.PermissionCreateDirectChannel)
-				return
-			}
-		case model.ChannelTypeGroup:
-			if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-				c.SetPermissionError(model.PermissionCreateGroupChannel)
-				return
-			}
+	if err != nil {
+		c.SetInvalidURLParam("channel_id")
+		return
+	}
+
+	switch channel.Type {
+	case model.ChannelTypeDirect:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
+			c.SetPermissionError(model.PermissionCreateDirectChannel)
+			return
+		}
+	case model.ChannelTypeGroup:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
+			c.SetPermissionError(model.PermissionCreateGroupChannel)
+			return
 		}
 	}
 
@@ -625,18 +628,21 @@ func deletePost(c *Context, w http.ResponseWriter, _ *http.Request) {
 	auditRec.AddEventObjectType("post")
 
 	channel, chErr := c.App.GetChannel(c.AppContext, post.ChannelId)
-	if chErr == nil {
-		switch channel.Type {
-		case model.ChannelTypeDirect:
-			if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-				c.SetPermissionError(model.PermissionCreateDirectChannel)
-				return
-			}
-		case model.ChannelTypeGroup:
-			if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-				c.SetPermissionError(model.PermissionCreateGroupChannel)
-				return
-			}
+	if chErr != nil {
+		c.SetInvalidURLParam("channel_id")
+		return
+	}
+
+	switch channel.Type {
+	case model.ChannelTypeDirect:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
+			c.SetPermissionError(model.PermissionCreateDirectChannel)
+			return
+		}
+	case model.ChannelTypeGroup:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
+			c.SetPermissionError(model.PermissionCreateGroupChannel)
+			return
 		}
 	}
 
@@ -922,18 +928,21 @@ func updatePost(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	channel, chErr := c.App.GetChannel(c.AppContext, originalPost.ChannelId)
-	if chErr == nil {
-		switch channel.Type {
-		case model.ChannelTypeDirect:
-			if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-				c.SetPermissionError(model.PermissionCreateDirectChannel)
-				return
-			}
-		case model.ChannelTypeGroup:
-			if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-				c.SetPermissionError(model.PermissionCreateGroupChannel)
-				return
-			}
+	if chErr != nil {
+		c.SetInvalidURLParam("channel_id")
+		return
+	}
+
+	switch channel.Type {
+	case model.ChannelTypeDirect:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
+			c.SetPermissionError(model.PermissionCreateDirectChannel)
+			return
+		}
+	case model.ChannelTypeGroup:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
+			c.SetPermissionError(model.PermissionCreateGroupChannel)
+			return
 		}
 	}
 
@@ -1030,6 +1039,26 @@ func postPatchChecks(c *Context, auditRec *model.AuditRecord, message *string) {
 	}
 	auditRec.AddEventPriorState(originalPost)
 	auditRec.AddEventObjectType("post")
+
+	// Check DM/GM permissions
+	channel, chErr := c.App.GetChannel(c.AppContext, originalPost.ChannelId)
+	if chErr != nil {
+		c.Err = chErr
+		return
+	}
+
+	switch channel.Type {
+	case model.ChannelTypeDirect:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
+			c.SetPermissionError(model.PermissionCreateDirectChannel)
+			return
+		}
+	case model.ChannelTypeGroup:
+		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
+			c.SetPermissionError(model.PermissionCreateGroupChannel)
+			return
+		}
+	}
 
 	var permission *model.Permission
 
