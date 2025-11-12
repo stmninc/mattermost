@@ -95,17 +95,9 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch channel.Type {
-	case model.ChannelTypeDirect:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-			c.SetPermissionError(model.PermissionCreateDirectChannel)
-			return
-		}
-	case model.ChannelTypeGroup:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-			c.SetPermissionError(model.PermissionCreateGroupChannel)
-			return
-		}
+	checkDMGMChannelPermissions(c, channel)
+	if c.Err != nil {
+		return
 	}
 
 	createPostChecks("Api4.createPost", c, &post)
@@ -633,17 +625,9 @@ func deletePost(c *Context, w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	switch channel.Type {
-	case model.ChannelTypeDirect:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-			c.SetPermissionError(model.PermissionCreateDirectChannel)
-			return
-		}
-	case model.ChannelTypeGroup:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-			c.SetPermissionError(model.PermissionCreateGroupChannel)
-			return
-		}
+	checkDMGMChannelPermissions(c, channel)
+	if c.Err != nil {
+		return
 	}
 
 	if c.AppContext.Session().UserId == post.UserId {
@@ -933,17 +917,9 @@ func updatePost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch channel.Type {
-	case model.ChannelTypeDirect:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-			c.SetPermissionError(model.PermissionCreateDirectChannel)
-			return
-		}
-	case model.ChannelTypeGroup:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-			c.SetPermissionError(model.PermissionCreateGroupChannel)
-			return
-		}
+	checkDMGMChannelPermissions(c, channel)
+	if c.Err != nil {
+		return
 	}
 
 	if !c.App.SessionHasPermissionToChannel(c.AppContext, *c.AppContext.Session(), originalPost.ChannelId, model.PermissionEditPost) {
@@ -1047,17 +1023,9 @@ func postPatchChecks(c *Context, auditRec *model.AuditRecord, message *string) {
 		return
 	}
 
-	switch channel.Type {
-	case model.ChannelTypeDirect:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-			c.SetPermissionError(model.PermissionCreateDirectChannel)
-			return
-		}
-	case model.ChannelTypeGroup:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-			c.SetPermissionError(model.PermissionCreateGroupChannel)
-			return
-		}
+	checkDMGMChannelPermissions(c, channel)
+	if c.Err != nil {
+		return
 	}
 
 	var permission *model.Permission

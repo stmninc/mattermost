@@ -41,27 +41,19 @@ func saveReaction(c *Context, w http.ResponseWriter, r *http.Request) {
 		c.Err = appErr
 		return
 	}
-	
+
 	channel, chErr := c.App.GetChannel(c.AppContext, post.ChannelId)
 	if chErr != nil {
 		c.Err = chErr
 		return
 	}
-	
-	switch channel.Type {
-	case model.ChannelTypeDirect:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateDirectChannel) {
-			c.SetPermissionError(model.PermissionCreateDirectChannel)
-			return
-		}
-	case model.ChannelTypeGroup:
-		if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateGroupChannel) {
-			c.SetPermissionError(model.PermissionCreateGroupChannel)
-			return
-		}
+
+	checkDMGMChannelPermissions(c, channel)
+	if c.Err != nil {
+		return
 	}
 
-	if !c.App.SessionHasPermissionToChannelByPost(*c.AppContext.Session(), reaction.PostId, model.PermissionAddReaction) {
+	if !c.App.SessionHasPermissionToChannel(c.AppContext, *c.AppContext.Session(), post.ChannelId, model.PermissionAddReaction) {
 		c.SetPermissionError(model.PermissionAddReaction)
 		return
 	}
