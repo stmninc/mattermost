@@ -32,7 +32,7 @@ func newSqlSessionStore(sqlStore *SqlStore) store.SessionStore {
 	}
 
 	s.sessionSelectQuery = s.getQueryBuilder().
-		Select("Id", "Token", "CreateAt", "ExpiresAt", "LastActivityAt", "UserId", "DeviceId", "Roles", "IsOAuth", "ExpiredNotify", "Props").
+		Select("Id", "Token", "CreateAt", "ExpiresAt", "LastActivityAt", "UserId", "DeviceId", "VoipDeviceId", "Roles", "IsOAuth", "ExpiredNotify", "Props").
 		From("Sessions")
 
 	return s
@@ -59,8 +59,8 @@ func (me SqlSessionStore) Save(c request.CTX, session *model.Session) (*model.Se
 
 	query, args, err := me.getQueryBuilder().
 		Insert("Sessions").
-		Columns("Id", "Token", "CreateAt", "ExpiresAt", "LastActivityAt", "UserId", "DeviceId", "Roles", "IsOAuth", "ExpiredNotify", "Props").
-		Values(session.Id, session.Token, session.CreateAt, session.ExpiresAt, session.LastActivityAt, session.UserId, session.DeviceId, session.Roles, session.IsOAuth, session.ExpiredNotify, jsonProps).
+		Columns("Id", "Token", "CreateAt", "ExpiresAt", "LastActivityAt", "UserId", "DeviceId", "VoipDeviceId", "Roles", "IsOAuth", "ExpiredNotify", "Props").
+		Values(session.Id, session.Token, session.CreateAt, session.ExpiresAt, session.LastActivityAt, session.UserId, session.DeviceId, session.VoipDeviceId, session.Roles, session.IsOAuth, session.ExpiredNotify, jsonProps).
 		ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "sessions_tosql")
@@ -186,12 +186,8 @@ func (me SqlSessionStore) GetSessionsWithActiveDeviceIds(userId string) ([]*mode
 		Where(sq.GtOrEq{"ExpiresAt": now}).
 		Where(sq.NotEq{"DeviceId": ""})
 
-	// Add the last_removed_device_id condition based on the driver
-	if me.DriverName() == model.DatabaseDriverMysql {
-		builder = builder.Where("DeviceId != COALESCE(Props->>'$.last_removed_device_id', '')")
-	} else {
-		builder = builder.Where("DeviceId != COALESCE(Props->>'last_removed_device_id', '')")
-	}
+	// Add the last_removed_device_id condition
+	builder = builder.Where("DeviceId != COALESCE(Props->>'last_removed_device_id', '')")
 
 	sessions := []*model.Session{}
 
@@ -205,11 +201,6 @@ func (me SqlSessionStore) GetMobileSessionMetadata() ([]*model.MobileSessionMeta
 	versionProp := model.SessionPropMobileVersion
 	notificationDisabledProp := model.SessionPropDeviceNotificationDisabled
 	platformQuery := "NULLIF(SPLIT_PART(deviceid, ':', 1), '')"
-	if me.DriverName() == model.DatabaseDriverMysql {
-		versionProp = "$." + versionProp
-		notificationDisabledProp = "$." + notificationDisabledProp
-		platformQuery = "NULLIF(SUBSTRING_INDEX(deviceid, ':', 1), deviceid)"
-	}
 
 	query, args, err := me.getQueryBuilder().
 		Select(fmt.Sprintf(
@@ -330,10 +321,10 @@ func (me SqlSessionStore) UpdateRoles(userId, roles string) (string, error) {
 	return userId, nil
 }
 
-func (me SqlSessionStore) UpdateDeviceId(id string, deviceId string, expiresAt int64) (string, error) {
-	query := "UPDATE Sessions SET DeviceId = ?, ExpiresAt = ?, ExpiredNotify = false WHERE Id = ?"
+func (me SqlSessionStore) UpdateDeviceId(id string, deviceId string, voipDeviceId string, expiresAt int64) (string, error) {
+	query := "UPDATE Sessions SET DeviceId = ?, VoipDeviceId = ?, ExpiresAt = ?, ExpiredNotify = false WHERE Id = ?"
 
-	_, err := me.GetMaster().Exec(query, deviceId, expiresAt, id)
+	_, err := me.GetMaster().Exec(query, deviceId, voipDeviceId, expiresAt, id)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to update Session with id=%s", id)
 	}

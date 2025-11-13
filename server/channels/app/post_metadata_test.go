@@ -44,7 +44,7 @@ func TestPreparePostListForClient(t *testing.T) {
 	defer th.TearDown()
 
 	postList := model.NewPostList()
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		postList.AddPost(&model.Post{})
 	}
 
@@ -2590,7 +2590,7 @@ func TestGetLinkMetadata(t *testing.T) {
 		assert.Nil(t, img)
 		assert.Error(t, err)
 		assert.IsType(t, &url.Error{}, err)
-		assert.Equal(t, httpservice.ErrAddressForbidden, err.(*url.Error).Err)
+		assert.ErrorContains(t, err, httpservice.ErrAddressForbidden.Error())
 
 		requestURL = th.App.GetSiteURL() + "/api/v4/image?url=" + url.QueryEscape(requestURL)
 

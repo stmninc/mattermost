@@ -10,7 +10,6 @@ import (
 	"context"
 	timepkg "time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
 
@@ -18,8 +17,6 @@ import (
 	"github.com/mattermost/mattermost/server/public/shared/request"
 	"github.com/mattermost/mattermost/server/v8/channels/store"
 )
-
-const mySQLDeadlockCode = uint16(1213)
 
 type RetryLayer struct {
 	store.Store
@@ -537,14 +534,9 @@ type RetryLayerWebhookStore struct {
 
 func isRepeatableError(err error) bool {
 	var pqErr *pq.Error
-	var mysqlErr *mysql.MySQLError
 	switch {
 	case errors.As(errors.Cause(err), &pqErr):
 		if pqErr.Code == "40001" || pqErr.Code == "40P01" {
-			return true
-		}
-	case errors.As(errors.Cause(err), &mysqlErr):
-		if mysqlErr.Number == mySQLDeadlockCode {
 			return true
 		}
 	}
@@ -11390,11 +11382,11 @@ func (s *RetryLayerSessionStore) Save(c request.CTX, session *model.Session) (*m
 
 }
 
-func (s *RetryLayerSessionStore) UpdateDeviceId(id string, deviceID string, expiresAt int64) (string, error) {
+func (s *RetryLayerSessionStore) UpdateDeviceId(id string, deviceID string, voipDeviceID string, expiresAt int64) (string, error) {
 
 	tries := 0
 	for {
-		result, err := s.SessionStore.UpdateDeviceId(id, deviceID, expiresAt)
+		result, err := s.SessionStore.UpdateDeviceId(id, deviceID, voipDeviceID, expiresAt)
 		if err == nil {
 			return result, nil
 		}
