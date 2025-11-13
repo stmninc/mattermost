@@ -122,7 +122,7 @@ func completeSaml(c *Context, w http.ResponseWriter, r *http.Request) {
 		relayProps = model.MapFromJSON(strings.NewReader(stateStr))
 	}
 
-	auditRec := c.MakeAuditRecord("completeSaml", model.AuditStatusFail)
+	auditRec := c.MakeAuditRecord(model.AuditEventCompleteSaml, model.AuditStatusFail)
 	defer c.LogAuditRec(auditRec)
 	c.LogAudit("attempt")
 
@@ -267,7 +267,8 @@ func completeSaml(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Legacy: create a session and attach tokens (web/mobile without SAML code exchange)
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, "", isMobile, false, true)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, "", "", isMobile, false, true)
+
 	if err != nil {
 		handleError(err)
 		return

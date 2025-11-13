@@ -85,7 +85,7 @@ const (
 	debugScheduledPostJobInterval = 2 * time.Second
 )
 
-var SentryDSN = "https://9d7c9cccf549479799f880bcf4f26323@o94110.ingest.sentry.io/5212327"
+var SentryDSN = "https://04337f87f1ff7e0031b9be256ee99535@o4510146945548288.ingest.us.sentry.io/4510147136389120"
 
 // This is a placeholder to allow the existing release pipelines to run without failing to insert
 // the key that's now hard-coded above. Remove this once we converge on the unified delivery
@@ -274,7 +274,7 @@ func NewServer(options ...Option) (*Server, error) {
 	// below this. Otherwise, please add it to Channels struct in app/channels.go.
 	// -------------------------------------------------------------------------
 
-	if *s.platform.Config().LogSettings.EnableDiagnostics && *s.platform.Config().LogSettings.EnableSentry {
+	if *s.platform.Config().LogSettings.EnableSentry {
 		switch model.GetServiceEnvironment() {
 		case model.ServiceEnvironmentDev:
 			mlog.Warn("Sentry reporting is enabled, but service environment is dev. Disabling reporting.")
@@ -400,31 +400,6 @@ func NewServer(options ...Option) (*Server, error) {
 	s.platform.AddConfigListener(func(_, _ *model.Config) {
 		s.EmailService.InitEmailBatching()
 	})
-
-	isTrial := false
-	if licence := s.License(); licence != nil {
-		isTrial = licence.IsTrial
-	}
-
-	logCurrentVersion := fmt.Sprintf("Current version is %v (%v/%v/%v/%v)", model.CurrentVersion, model.BuildNumber, model.BuildDate, model.BuildHash, model.BuildHashEnterprise)
-	mlog.Info(
-		logCurrentVersion,
-		mlog.String("current_version", model.CurrentVersion),
-		mlog.String("build_number", model.BuildNumber),
-		mlog.String("build_date", model.BuildDate),
-		mlog.String("build_hash", model.BuildHash),
-		mlog.String("build_hash_enterprise", model.BuildHashEnterprise),
-		mlog.String("service_environment", model.GetServiceEnvironment()),
-	)
-	if model.BuildEnterpriseReady == "true" {
-		mlog.Info(
-			"Enterprise Build",
-			mlog.Bool("enterprise_build", true),
-			mlog.Bool("is_trial", isTrial),
-		)
-	} else {
-		mlog.Info("Team Edition Build", mlog.Bool("enterprise_build", false))
-	}
 
 	pwd, _ := os.Getwd()
 	mlog.Info("Printing current working", mlog.String("directory", pwd))
@@ -893,7 +868,7 @@ func (s *Server) Start() error {
 
 	switch model.GetServiceEnvironment() {
 	case model.ServiceEnvironmentProduction, model.ServiceEnvironmentTest:
-		if *s.platform.Config().LogSettings.EnableDiagnostics && *s.platform.Config().LogSettings.EnableSentry {
+		if *s.platform.Config().LogSettings.EnableSentry {
 			sentryHandler := sentryhttp.New(sentryhttp.Options{
 				Repanic: true,
 			})
@@ -1421,7 +1396,6 @@ func (s *Server) doLicenseExpirationCheck() {
 
 	// send email to admin(s)
 	for _, user := range users {
-		user := user
 		if user.Email == "" {
 			mlog.Error("Invalid system admin email.", mlog.String("user_email", user.Email))
 			continue
