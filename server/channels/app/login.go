@@ -32,7 +32,7 @@ func (a *App) CheckForClientSideCert(r *http.Request) (string, string, string) {
 	email := ""
 
 	if subject != "" {
-		for _, v := range strings.Split(subject, "/") {
+		for v := range strings.SplitSeq(subject, "/") {
 			kv := strings.Split(v, "=")
 			if len(kv) == 2 && kv[0] == "emailAddress" {
 				email = kv[1]
@@ -156,7 +156,7 @@ func (a *App) GetUserForLogin(c request.CTX, id, loginId string) (*model.User, *
 	return nil, model.NewAppError("GetUserForLogin", "store.sql_user.get_for_login.app_error", nil, "", http.StatusBadRequest)
 }
 
-func (a *App) DoLogin(c request.CTX, w http.ResponseWriter, r *http.Request, user *model.User, deviceID string, isMobile, isOAuthUser, isSaml bool) (*model.Session, *model.AppError) {
+func (a *App) DoLogin(c request.CTX, w http.ResponseWriter, r *http.Request, user *model.User, deviceID string, voipDeviceID string, isMobile, isOAuthUser, isSaml bool) (*model.Session, *model.AppError) {
 	var rejectionReason string
 	pluginContext := pluginContext(c)
 	a.ch.RunMultiHook(func(hooks plugin.Hooks, _ *model.Manifest) bool {
@@ -168,7 +168,7 @@ func (a *App) DoLogin(c request.CTX, w http.ResponseWriter, r *http.Request, use
 		return nil, model.NewAppError("DoLogin", "Login rejected by plugin: "+rejectionReason, nil, "", http.StatusBadRequest)
 	}
 
-	session := &model.Session{UserId: user.Id, Roles: user.GetRawRoles(), DeviceId: deviceID, IsOAuth: false, Props: map[string]string{
+	session := &model.Session{UserId: user.Id, Roles: user.GetRawRoles(), DeviceId: deviceID, VoipDeviceId: voipDeviceID, IsOAuth: false, Props: map[string]string{
 		model.UserAuthServiceIsMobile: strconv.FormatBool(isMobile),
 		model.UserAuthServiceIsSaml:   strconv.FormatBool(isSaml),
 		model.UserAuthServiceIsOAuth:  strconv.FormatBool(isOAuthUser),

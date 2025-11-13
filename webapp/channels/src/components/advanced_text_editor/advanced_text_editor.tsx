@@ -13,9 +13,9 @@ import {savePreferences} from 'mattermost-redux/actions/preferences';
 import {Permissions} from 'mattermost-redux/constants';
 import {getChannel, makeGetChannel, getDirectChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig, getFeatureFlagValue} from 'mattermost-redux/selectors/entities/general';
-import {get, getBool, getInt} from 'mattermost-redux/selectors/entities/preferences';
+import {get, getBool, getInt, getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
-import {getCurrentUserId, isCurrentUserGuestUser, getStatusForUserId, makeGetDisplayName} from 'mattermost-redux/selectors/entities/users';
+import {getCurrentUserId, isCurrentUserGuestUser, getStatusForUserId, makeGetDisplayName, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
 
 import * as GlobalActions from 'actions/global_actions';
 import type {CreatePostOptions} from 'actions/post_actions';
@@ -43,6 +43,7 @@ import SuggestionList from 'components/suggestion/suggestion_list';
 import Textbox from 'components/textbox';
 import type {TextboxElement} from 'components/textbox';
 import type TextboxClass from 'components/textbox/textbox';
+import {convertDisplayPositionToRawPosition, convertRawPositionToDisplayPosition} from 'components/textbox/util';
 import {OnboardingTourSteps, OnboardingTourStepsForGuestUsers, TutorialTourName} from 'components/tours/constant';
 import {SendMessageTour} from 'components/tours/onboarding_tour';
 
@@ -203,6 +204,9 @@ const AdvancedTextEditor = ({
         return enableTutorial && (tutorialStep === tourStep);
     });
 
+    const usersByUsername = useSelector((state: GlobalState) => getUsersByUsername(state));
+    const teammateNameDisplay = useSelector((state: GlobalState) => getTeammateNameDisplaySetting(state));
+
     const editorActionsRef = useRef<HTMLDivElement>(null);
     const editorBodyRef = useRef<HTMLDivElement>(null);
     const textboxRef = useRef<TextboxClass>(null);
@@ -291,7 +295,9 @@ const AdvancedTextEditor = ({
 
         setTimeout(() => {
             const textbox = textboxRef.current?.getInputBox();
-            Utils.setSelectionRange(textbox, res.selectionStart, res.selectionEnd);
+            const displaySelectionStart = convertRawPositionToDisplayPosition(res.selectionStart, res.message, usersByUsername, teammateNameDisplay);
+            const displaySelectionEnd = convertRawPositionToDisplayPosition(res.selectionEnd, res.message, usersByUsername, teammateNameDisplay);
+            Utils.setSelectionRange(textbox, displaySelectionStart, displaySelectionEnd);
         });
     }, [showPreview, handleDraftChange, draft]);
 
@@ -336,6 +342,8 @@ const AdvancedTextEditor = ({
         handleDraftChange,
         showPreview,
         focusTextbox,
+        usersByUsername,
+        teammateNameDisplay,
     );
     const {
         labels: priorityLabels,
@@ -363,7 +371,17 @@ const AdvancedTextEditor = ({
     );
 
     const handleSubmitWithErrorHandling = useCallback((submittingDraft?: PostDraft, schedulingInfo?: SchedulingInfo, options?: CreatePostOptions) => {
-        handleSubmit(submittingDraft, schedulingInfo, options);
+        let finalDraft = submittingDraft || draft;
+
+        if (textboxRef.current && typeof textboxRef.current.getRawValue === 'function') {
+            const rawValue = textboxRef.current.getRawValue();
+            finalDraft = {
+                ...finalDraft,
+                message: rawValue,
+            };
+        }
+
+        handleSubmit(finalDraft, schedulingInfo, options);
         if (!errorClass) {
             const messageStatusElement = messageStatusRef.current;
             const messageStatusInnerText = messageStatusElement?.textContent;
@@ -373,7 +391,7 @@ const AdvancedTextEditor = ({
                 messageStatusElement!.textContent = 'Message Sent';
             }
         }
-    }, [errorClass, handleSubmit]);
+    }, [errorClass, handleSubmit, draft, textboxRef]);
 
     const handleCancel = useCallback(() => {
         handleDraftChange({
@@ -408,6 +426,14 @@ const AdvancedTextEditor = ({
         handleSubmitWithErrorHandling();
     }, [dispatch, draft, handleSubmitWithErrorHandling, isInEditMode, isRHS]);
 
+    const getCurrentRawValue = useCallback(() => {
+        let rawValue = '';
+        if (textboxRef.current && typeof textboxRef.current.getRawValue === 'function') {
+            rawValue = textboxRef.current.getRawValue();
+        }
+        return rawValue.length === 0 ? getCurrentValue() : rawValue;
+    }, [textboxRef]);
+
     const [handleKeyDown, postMsgKeyPress] = useKeyHandler(
         draft,
         channelId,
@@ -427,6 +453,9 @@ const AdvancedTextEditor = ({
         toggleEmojiPicker,
         isInEditMode,
         handleCancel,
+        getCurrentRawValue,
+        usersByUsername,
+        teammateNameDisplay,
     );
 
     const handleSubmitWithEvent = useCallback((e: React.FormEvent) => {
@@ -474,12 +503,23 @@ const AdvancedTextEditor = ({
 
     const getCurrentSelection = useCallback(() => {
         const input = textboxRef.current?.getInputBox();
+        if (!input) {
+            return {start: 0, end: 0};
+        }
+
+        const displayStart = input.selectionStart || 0;
+        const displayEnd = input.selectionEnd || 0;
+
+        const rawValue = getCurrentRawValue();
+
+        const rawStart = convertDisplayPositionToRawPosition(displayStart, rawValue, usersByUsername, teammateNameDisplay);
+        const rawEnd = convertDisplayPositionToRawPosition(displayEnd, rawValue, usersByUsername, teammateNameDisplay);
 
         return {
-            start: input.selectionStart,
-            end: input.selectionEnd,
+            start: rawStart,
+            end: rawEnd,
         };
-    }, [textboxRef]);
+    }, [textboxRef, getCurrentRawValue, usersByUsername, teammateNameDisplay]);
 
     const handleWidthChange = useCallback((width: number) => {
         const input = textboxRef.current?.getInputBox();
@@ -687,7 +727,7 @@ const AdvancedTextEditor = ({
             slot1={(
                 <FormattingBar
                     applyMarkdown={applyMarkdown}
-                    getCurrentMessage={getCurrentValue}
+                    getCurrentMessage={getCurrentRawValue}
                     getCurrentSelection={getCurrentSelection}
                     disableControls={showPreview}
                     additionalControls={additionalControls}
@@ -803,6 +843,9 @@ const AdvancedTextEditor = ({
                             rootId={rootId}
                             onWidthChange={handleWidthChange}
                             isInEditMode={isInEditMode}
+                            usersByUsername={usersByUsername}
+                            teammateNameDisplay={teammateNameDisplay}
+                            isAdvanced={true}
                         />
                         {attachmentPreview}
                         {!isDisabled && (showFormattingBar || showPreview) && (
