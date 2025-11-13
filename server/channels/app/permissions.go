@@ -163,6 +163,14 @@ func (a *App) CheckDMGMChannelPermissions(c request.CTX, channel *model.Channel,
 		return nil
 	}
 
+	// Check if the user is a bot - bots should be allowed to post in DM/GM channels
+	if userID != "" {
+		user, err := a.GetUser(userID)
+		if err == nil && user.IsBot {
+			return nil
+		}
+	}
+
 	// System admins always have permission to DM/GM channels
 	if a.SessionHasPermissionTo(*session, model.PermissionManageSystem) {
 		return nil
