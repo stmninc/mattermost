@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/shared/request"
 )
 
 const permissionsExportBatchSize = 100
@@ -149,4 +150,35 @@ func (a *App) ExportPermissions(w io.Writer) error {
 
 	_, err = w.Write(schemeExport)
 	return err
+}
+
+func (a *App) CheckDMGMChannelPermissions(c request.CTX, channel *model.Channel, userID string) *model.AppError {
+	session := c.Session()
+	if session == nil {
+		return nil // No session means no DM/GM permission check needed
+	}
+
+	switch channel.Type {
+	case model.ChannelTypeDirect:
+		if !a.SessionHasPermissionTo(*session, model.PermissionCreateDirectChannel) {
+			return model.NewAppError(
+				"CheckDMGMChannelPermissions",
+				"api.context.permissions.app_error",
+				nil,
+				"",
+				http.StatusForbidden,
+			)
+		}
+	case model.ChannelTypeGroup:
+		if !a.SessionHasPermissionTo(*session, model.PermissionCreateGroupChannel) {
+			return model.NewAppError(
+				"CheckDMGMChannelPermissions",
+				"api.context.permissions.app_error",
+				nil,
+				"",
+				http.StatusForbidden,
+			)
+		}
+	}
+	return nil
 }

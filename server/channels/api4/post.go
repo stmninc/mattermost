@@ -89,14 +89,6 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 		post.CreateAt = 0
 	}
 
-	channel, err := c.App.GetChannel(c.AppContext, post.ChannelId)
-	if err == nil {
-		checkDMGMChannelPermissions(c, channel)
-		if c.Err != nil {
-			return
-		}
-	}
-
 	createPostChecks("Api4.createPost", c, &post)
 	if c.Err != nil {
 		return
@@ -616,14 +608,6 @@ func deletePost(c *Context, w http.ResponseWriter, _ *http.Request) {
 	auditRec.AddEventPriorState(post)
 	auditRec.AddEventObjectType("post")
 
-	channel, chErr := c.App.GetChannel(c.AppContext, post.ChannelId)
-	if chErr == nil {
-		checkDMGMChannelPermissions(c, channel)
-		if c.Err != nil {
-			return
-		}
-	}
-
 	if c.AppContext.Session().UserId == post.UserId {
 		if !c.App.SessionHasPermissionToChannel(c.AppContext, *c.AppContext.Session(), post.ChannelId, model.PermissionDeletePost) {
 			c.SetPermissionError(model.PermissionDeletePost)
@@ -905,14 +889,6 @@ func updatePost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channel, chErr := c.App.GetChannel(c.AppContext, originalPost.ChannelId)
-	if chErr == nil {
-		checkDMGMChannelPermissions(c, channel)
-		if c.Err != nil {
-			return
-		}
-	}
-
 	if !c.App.SessionHasPermissionToChannel(c.AppContext, *c.AppContext.Session(), originalPost.ChannelId, model.PermissionEditPost) {
 		c.SetPermissionError(model.PermissionEditPost)
 		return
@@ -1006,15 +982,6 @@ func postPatchChecks(c *Context, auditRec *model.AuditRecord, message *string) {
 	}
 	auditRec.AddEventPriorState(originalPost)
 	auditRec.AddEventObjectType("post")
-
-	// Check DM/GM permissions first if channel exists
-	channel, chErr := c.App.GetChannel(c.AppContext, originalPost.ChannelId)
-	if chErr == nil {
-		checkDMGMChannelPermissions(c, channel)
-		if c.Err != nil {
-			return
-		}
-	}
 
 	var permission *model.Permission
 
