@@ -158,6 +158,11 @@ func (a *App) CheckDMGMChannelPermissions(c request.CTX, channel *model.Channel,
 		return nil // No session means no DM/GM permission check needed
 	}
 
+	// If channel is nil, skip DM/GM permission check
+	if channel == nil {
+		return nil
+	}
+
 	// System admins always have permission to DM/GM channels
 	if a.SessionHasPermissionTo(*session, model.PermissionManageSystem) {
 		return nil
