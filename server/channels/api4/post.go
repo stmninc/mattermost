@@ -90,14 +90,11 @@ func createPost(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	channel, err := c.App.GetChannel(c.AppContext, post.ChannelId)
-	if err != nil {
-		c.SetInvalidURLParam("channel_id")
-		return
-	}
-
-	checkDMGMChannelPermissions(c, channel)
-	if c.Err != nil {
-		return
+	if err == nil {
+		checkDMGMChannelPermissions(c, channel)
+		if c.Err != nil {
+			return
+		}
 	}
 
 	createPostChecks("Api4.createPost", c, &post)
@@ -620,14 +617,11 @@ func deletePost(c *Context, w http.ResponseWriter, _ *http.Request) {
 	auditRec.AddEventObjectType("post")
 
 	channel, chErr := c.App.GetChannel(c.AppContext, post.ChannelId)
-	if chErr != nil {
-		c.SetInvalidURLParam("channel_id")
-		return
-	}
-
-	checkDMGMChannelPermissions(c, channel)
-	if c.Err != nil {
-		return
+	if chErr == nil {
+		checkDMGMChannelPermissions(c, channel)
+		if c.Err != nil {
+			return
+		}
 	}
 
 	if c.AppContext.Session().UserId == post.UserId {
@@ -912,14 +906,11 @@ func updatePost(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	channel, chErr := c.App.GetChannel(c.AppContext, originalPost.ChannelId)
-	if chErr != nil {
-		c.SetInvalidURLParam("channel_id")
-		return
-	}
-
-	checkDMGMChannelPermissions(c, channel)
-	if c.Err != nil {
-		return
+	if chErr == nil {
+		checkDMGMChannelPermissions(c, channel)
+		if c.Err != nil {
+			return
+		}
 	}
 
 	if !c.App.SessionHasPermissionToChannel(c.AppContext, *c.AppContext.Session(), originalPost.ChannelId, model.PermissionEditPost) {
@@ -1016,16 +1007,13 @@ func postPatchChecks(c *Context, auditRec *model.AuditRecord, message *string) {
 	auditRec.AddEventPriorState(originalPost)
 	auditRec.AddEventObjectType("post")
 
-	// Check DM/GM permissions
+	// Check DM/GM permissions first if channel exists
 	channel, chErr := c.App.GetChannel(c.AppContext, originalPost.ChannelId)
-	if chErr != nil {
-		c.Err = chErr
-		return
-	}
-
-	checkDMGMChannelPermissions(c, channel)
-	if c.Err != nil {
-		return
+	if chErr == nil {
+		checkDMGMChannelPermissions(c, channel)
+		if c.Err != nil {
+			return
+		}
 	}
 
 	var permission *model.Permission
