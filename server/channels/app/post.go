@@ -53,7 +53,7 @@ func (a *App) CreatePostAsUser(c request.CTX, post *model.Post, currentSessionId
 		return nil, err
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(c, channel, post.UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, c.Session().UserId); permErr != nil {
 		return nil, permErr
 	}
 
