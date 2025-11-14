@@ -111,6 +111,7 @@ const SearchInput = forwardRef<HTMLInputElement, Props>(({searchTerms, searchTyp
                 value={searchTerms}
                 onChange={inputChangeCallback}
                 type='search'
+                delayInputUpdate={true}
                 clearable={true}
                 autoFocus={true}
                 onKeyDown={onKeyDown}
