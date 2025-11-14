@@ -154,7 +154,7 @@ func (a *App) ExportPermissions(w io.Writer) error {
 
 func (a *App) CheckDMGMChannelPermissions(c request.CTX, channel *model.Channel, userID string) *model.AppError {
 	session := c.Session()
-	if session == nil {
+	if session == nil || session.Id == "" {
 		return nil // No session means no DM/GM permission check needed
 	}
 
