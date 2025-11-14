@@ -166,7 +166,12 @@ func (a *App) CheckDMGMChannelPermissions(c request.CTX, channel *model.Channel,
 	// Check if the user is a bot - bots should be allowed to post in DM/GM channels
 	if userID != "" {
 		user, err := a.GetUser(userID)
-		if err == nil && user.IsBot {
+		if err != nil {
+			if err.StatusCode != http.StatusNotFound {
+				return err
+			}
+			// User not found, so not a bot. Continue to permission checks.
+		} else if user.IsBot {
 			return nil
 		}
 	}

@@ -734,7 +734,7 @@ func (a *App) UpdatePost(c request.CTX, receivedUpdatedPost *model.Post, updateP
 		return nil, model.NewAppError("UpdatePost", "api.post.update_post.can_not_update_post_in_deleted.error", nil, "", http.StatusBadRequest)
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(c, channel, oldPost.UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, c.Session().UserId); permErr != nil {
 		return nil, permErr
 	}
 
@@ -980,7 +980,7 @@ func (a *App) PatchPost(c request.CTX, postID string, patch *model.PostPatch, pa
 		return nil, err
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(c, channel, post.UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, c.Session().UserId); permErr != nil {
 		return nil, permErr
 	}
 
