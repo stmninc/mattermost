@@ -186,13 +186,10 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 		return list, nil
 	}
 
-	// Use perPage for limit, default to 60 if not specified
 	limit := uint64(perPage)
 	if perPage <= 0 {
 		limit = 60
 	}
-	// Fetch N+1 results to determine if there are more pages (HasNext)
-	// fetchLimit := limit + 1
 
 	baseQuery := s.getQueryBuilder().Select(
 		"*",
@@ -201,7 +198,6 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 		Where("q2.DeleteAt = 0").
 		Where(fmt.Sprintf("q2.Type NOT LIKE '%s%%'", model.PostSystemMessagePrefix)).
 		OrderByClause("q2.CreateAt DESC").
-		// Limit(fetchLimitimit)
 		Limit(limit)
 
 	if page > 0 {
@@ -224,9 +220,6 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 
 	// Combine the Terms & excludedTerms stored within each params into a single entity
 	for _, params := range paramsList {
-		// terms := params.Terms
-		// excludedTerms := params.ExcludedTerms
-
 		if params.IsHashtag {
 			for term := range strings.SplitSeq(params.Terms, " ") {
 				if term != "" {
@@ -299,23 +292,12 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 		mlog.Warn("Query error searching posts.", mlog.String("error", trimInput(err.Error())))
 		// Don't return the error to the caller as it is of no use to the user. Instead return an empty set of search results.
 	} else {
-		// Check if we got more results than requested (N+1(=fetchlimit) pattern for HasNext)
-		// hasNext := len(posts) > int(limit)
-		// if hasNext {
-		// 	// Remove the extra post we fetched
-		// 	posts = posts[:limit]
-		// }
-		// posts = posts[:limit]
-
 		for _, p := range posts {
 			if p.DeleteAt == 0 {
 				list.AddPost(p)
 				list.AddOrder(p.Id)
 			}
 		}
-
-		// Set HasNext flag on the list of result
-		// list.HasNext = &hasNext
 	}
 	list.MakeNonNil()
 	return list, nil
