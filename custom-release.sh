@@ -6,7 +6,7 @@
 # 4. If a conflict occurs during cherry-pick, abort the process
 # 5. Allow resuming cherry-pick from where it left off when the script is re-executed
 
-set -e
+set -euo pipefail
 
 # Path to the state file
 STATE_FILE=".custom_release_state"
@@ -55,8 +55,8 @@ if [ "$1" == "--continue" ]; then
     # Check if there's an ongoing cherry-pick
     if [ -d ".git/sequencer" ] || [ -f ".git/CHERRY_PICK_HEAD" ]; then
         # Check if conflicts are resolved
-        if git diff --quiet && git diff --cached --quiet; then
-            echo "Error: Conflicts not resolved or changes not staged"
+        if [ -n "$(git ls-files -u)" ]; then
+            echo "Error: Conflicts not resolved. You have unmerged files."
             echo "Please resolve conflicts and stage them with 'git add' before running --continue"
             exit 1
         fi
@@ -117,9 +117,7 @@ else
     echo "Number of commits to cherry-pick: $COMMIT_COUNT"
     
     # Save to state file
-    echo "BASE_COMMIT='$BASE_COMMIT'" > "$STATE_FILE"
-    echo "TARGET_COMMIT='$TARGET_COMMIT'" >> "$STATE_FILE"
-    echo "COMMITS='$COMMITS'" >> "$STATE_FILE"
+    declare -p BASE_COMMIT TARGET_COMMIT COMMITS > "$STATE_FILE"
     echo "CURRENT_INDEX=0" >> "$STATE_FILE"
     
     RESUME=false
@@ -149,8 +147,8 @@ for COMMIT in $COMMITS; do
     # Execute cherry-pick
     if git cherry-pick "$COMMIT"; then
         # Update state on success
-        sed -i.bak "s/CURRENT_INDEX=.*/CURRENT_INDEX=$INDEX/" "$STATE_FILE"
-        rm -f "${STATE_FILE}.bak"
+        CURRENT_INDEX=$INDEX
+        declare -p BASE_COMMIT TARGET_COMMIT COMMITS CURRENT_INDEX > "$STATE_FILE"
         echo "✓ Completed"
     else
         # When conflict occurs
@@ -169,8 +167,8 @@ for COMMIT in $COMMITS; do
         echo ""
         
         # Save state
-        sed -i.bak "s/CURRENT_INDEX=.*/CURRENT_INDEX=$INDEX/" "$STATE_FILE"
-        rm -f "${STATE_FILE}.bak"
+        CURRENT_INDEX=$INDEX
+        declare -p BASE_COMMIT TARGET_COMMIT COMMITS CURRENT_INDEX > "$STATE_FILE"
         
         exit 1
     fi
