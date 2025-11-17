@@ -1467,7 +1467,7 @@ func (a *App) DeletePost(rctx request.CTX, postID, deleteByID string) (*model.Po
 		return nil, model.NewAppError("DeletePost", "api.post.delete_post.can_not_delete_post_in_deleted.error", nil, "", http.StatusBadRequest)
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(rctx, channel, deleteByID); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(rctx, channel, rctx.Session().UserId); permErr != nil {
 		return nil, permErr
 	}
 
