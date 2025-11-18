@@ -531,11 +531,6 @@ func (fs SqlFileInfoStore) PermanentDeleteByUser(rctx request.CTX, userId string
 }
 
 func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.FileInfoList, error) {
-	// Since we don't support paging for DB search, we just return nothing for later pages
-	if page > 0 {
-	} else if false {
-		return model.NewFileInfoList(), nil
-	}
 	if err := model.IsSearchParamsListValid(paramsList); err != nil {
 		return nil, err
 	}
@@ -657,14 +652,16 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 
 			// Use LIKE search with pg_bigm indexes for FileInfo.Name and FileInfo.Content
 			var likeConditions sq.And
-
 			var termQuery []sq.Sqlizer
+
+			// Make args lowercase for case-insensitive search.
+			phrases, excludedPhrases, terms, excludedTerms = toLowerSearchTerms(phrases, excludedPhrases, terms, excludedTerms)
 
 			termWords := strings.Fields(terms)
 			for _, term := range termWords {
 				termQuery = append(termQuery, sq.Or{
-					sq.Expr("LOWER(FileInfo.Name) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(term, false)),
-					sq.Expr("LOWER(FileInfo.Content) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(term, false)),
+					sq.Expr("LOWER(FileInfo.Name) LIKE ? ESCAPE '\\'", addWildcardToTerm(term, false)),
+					sq.Expr("LOWER(FileInfo.Content) LIKE ? ESCAPE '\\'", addWildcardToTerm(term, false)),
 				})
 			}
 			for _, phrase := range phrases {
@@ -673,8 +670,8 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 					continue
 				}
 				termQuery = append(termQuery, sq.Or{
-					sq.Expr("LOWER(FileInfo.Name) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(phrase, true)),
-					sq.Expr("LOWER(FileInfo.Content) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(phrase, true)),
+					sq.Expr("LOWER(FileInfo.Name) LIKE ? ESCAPE '\\'", addWildcardToTerm(phrase, true)),
+					sq.Expr("LOWER(FileInfo.Content) LIKE ? ESCAPE '\\'", addWildcardToTerm(phrase, true)),
 				})
 			}
 
@@ -686,11 +683,11 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 				}
 			}
 
-			excludedTerms := strings.Fields(excludedTerms)
-			for _, term := range excludedTerms {
+			excludedTermWord := strings.Fields(excludedTerms)
+			for _, term := range excludedTermWord {
 				likeConditions = append(likeConditions, sq.Expr("NOT (?)", sq.Or{
-					sq.Expr("LOWER(FileInfo.Name) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(term, false)),
-					sq.Expr("LOWER(FileInfo.Content) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(term, false)),
+					sq.Expr("LOWER(FileInfo.Name) LIKE ? ESCAPE '\\'", addWildcardToTerm(term, false)),
+					sq.Expr("LOWER(FileInfo.Content) LIKE ? ESCAPE '\\'", addWildcardToTerm(term, false)),
 				}))
 			}
 			for _, phrase := range excludedPhrases {
@@ -699,8 +696,8 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 					continue
 				}
 				likeConditions = append(likeConditions, sq.Expr("NOT (?)", sq.Or{
-					sq.Expr("LOWER(FileInfo.Name) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(phrase, true)),
-					sq.Expr("LOWER(FileInfo.Content) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(phrase, true)),
+					sq.Expr("LOWER(FileInfo.Name) LIKE ? ESCAPE '\\'", addWildcardToTerm(phrase, true)),
+					sq.Expr("LOWER(FileInfo.Content) LIKE ? ESCAPE '\\'", addWildcardToTerm(phrase, true)),
 				}))
 			}
 

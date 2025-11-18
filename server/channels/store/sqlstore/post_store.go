@@ -2796,6 +2796,7 @@ func (s *SqlPostStore) GetDirectPostParentsForExportAfter(limit int, afterId str
 	return result, nil
 }
 
+//nolint:unparam
 func (s *SqlPostStore) SearchPostsForUser(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.PostSearchResults, error) {
 	if err := model.IsSearchParamsListValid(paramsList); err != nil {
 		return nil, err

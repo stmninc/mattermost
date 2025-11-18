@@ -496,7 +496,7 @@ func TestGenerateLikeSearchQuery(t *testing.T) {
 		assert.Equal(t, "%regular%", args[4])
 	})
 
-	t.Run("mixed hashtags, mentions and regular terms", func(t *testing.T) {
+	t.Run("mixed hashtags, mentions and regular terms in japanese", func(t *testing.T) {
 		baseQuery := sq.Select("*").From("Posts")
 		params := &model.SearchParams{OrTerms: false}
 		phrases := []string{}

@@ -26,7 +26,7 @@ func addWildcardToTerm(term string, alwaysMiddleMatch bool) string {
 	return term
 }
 
-func toLowerSearchTermsForPosts(phrases, excludedPhrases []string, terms, excludedTerms string) ([]string, []string, string, string) {
+func toLowerSearchTerms(phrases, excludedPhrases []string, terms, excludedTerms string) ([]string, []string, string, string) {
 	for i, p := range phrases {
 		phrases[i] = strings.ToLower(p)
 	}
@@ -122,12 +122,11 @@ The query built in this func assumes the existence of a functional index of LOWE
 func (s *SqlPostStore) generateLikeSearchQueryForPosts(baseQuery sq.SelectBuilder, params *model.SearchParams, phrases, excludedPhrases []string, hashtagTerms, terms, excludedTerms string) sq.SelectBuilder {
 	var searchClauses []string
 	var searchArgs []any
-	var searchType string
 
-	searchType = "Message"
+	searchType := "Message"
 
 	// Make args lowercase for case-insensitive search.
-	phrases, excludedPhrases, terms, excludedTerms = toLowerSearchTermsForPosts(phrases, excludedPhrases, terms, excludedTerms)
+	phrases, excludedPhrases, terms, excludedTerms = toLowerSearchTerms(phrases, excludedPhrases, terms, excludedTerms)
 	hashtagTerms = toLowerHashtagTermsForPosts(hashtagTerms)
 	searchType = toLowerSearchTypeForPosts(searchType)
 
@@ -251,7 +250,7 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 		hashtagTerms = sanitizeSearchTerm(hashtagTerms, "\\")
 
 		phrases := quotedStringsRegex.FindAllString(terms, -1)
-		terms = quotedStringsRegex.ReplaceAllString(terms, " ")
+		terms = quotedStringsRegex.ReplaceAllLiteralString(terms, " ")
 		excludedPhrases := quotedStringsRegex.FindAllString(excludedTerms, -1)
 		excludedTerms = quotedStringsRegex.ReplaceAllLiteralString(excludedTerms, " ")
 
