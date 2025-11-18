@@ -5,11 +5,8 @@ import React, {useCallback, useEffect} from 'react';
 import {FormattedMessage} from 'react-intl';
 import styled from 'styled-components';
 
-import type {Channel} from '@mattermost/types/channels';
-
 import Constants from 'utils/constants';
 import {isKeyPressed} from 'utils/keyboard';
-import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 
 const Title = styled.div`
     flex:1;
@@ -60,7 +57,6 @@ const ButtonIcon = styled.i`
 
 export interface Props {
     className?: string;
-    channel: Channel;
     channelType: string;
     membersCount: number;
     canManageMembers: boolean;
@@ -72,9 +68,8 @@ export interface Props {
     };
 }
 
-const ActionBar = ({className, channel, channelType, membersCount, canManageMembers, editing, actions}: Props) => {
-    const showManageButton = channelType !== Constants.GM_CHANNEL && membersCount > 1 && !isOfficialTunagChannel(channel);
-    const showAddButton = !isOfficialTunagChannel(channel);
+const ActionBar = ({className, channelType, membersCount, canManageMembers, editing, actions}: Props) => {
+    const showManageButton = channelType !== Constants.GM_CHANNEL && membersCount > 1;
 
     const handleShortcut = useCallback((e) => {
         if (isKeyPressed(e, Constants.KeyCodes.ESCAPE) && editing) {
@@ -132,21 +127,19 @@ const ActionBar = ({className, channel, channelType, membersCount, canManageMemb
                                     />
                                 </Button>
                             )}
-                            {showAddButton && (
-                                <Button
-                                    onClick={actions.inviteMembers}
-                                    className='add-members'
-                                >
-                                    <ButtonIcon
-                                        className='icon-account-plus-outline'
-                                        title='Add Icon'
-                                    />
-                                    <FormattedMessage
-                                        id='channel_members_rhs.action_bar.add_button'
-                                        defaultMessage='Add'
-                                    />
-                                </Button>
-                            )}
+                            <Button
+                                onClick={actions.inviteMembers}
+                                className='add-members'
+                            >
+                                <ButtonIcon
+                                    className='icon-account-plus-outline'
+                                    title='Add Icon'
+                                />
+                                <FormattedMessage
+                                    id='channel_members_rhs.action_bar.add_button'
+                                    defaultMessage='Add'
+                                />
+                            </Button>
                         </>
                     )}
 

@@ -152,7 +152,6 @@ const ChannelInfoRhs = ({
                 onClose={actions.closeRightHandSide}
             />
             <TopButtons
-                channel={channel}
                 channelType={channel.type}
                 channelURL={channelURL}
                 isFavorite={isFavorite}

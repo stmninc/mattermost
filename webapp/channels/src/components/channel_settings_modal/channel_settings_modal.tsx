@@ -23,7 +23,6 @@ import {
 
 import {focusElement} from 'utils/a11y_utils';
 import Constants from 'utils/constants';
-import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 
 import type {GlobalState} from 'types/store';
 
@@ -198,7 +197,6 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
             iconTitle: formatMessage({id: 'generic_icons.archive', defaultMessage: 'Archive Icon'}),
             newGroup: true,
             display: channel.name !== Constants.DEFAULT_CHANNEL && // archive is not available for the default channel
-                !isOfficialTunagChannel(channel) && // hide archive for official TUNAG channels
                 ((channel.type === Constants.PRIVATE_CHANNEL && canArchivePrivateChannels) ||
                 (channel.type === Constants.OPEN_CHANNEL && canArchivePublicChannels)),
         },

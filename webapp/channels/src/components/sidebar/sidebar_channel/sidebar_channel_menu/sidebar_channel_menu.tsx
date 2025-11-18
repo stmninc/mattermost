@@ -23,7 +23,6 @@ import ChannelMoveToSubmenu from 'components/channel_move_to_sub_menu';
 import * as Menu from 'components/menu';
 
 import Constants, {ModalIdentifiers} from 'utils/constants';
-import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 import {copyToClipboard} from 'utils/utils';
 
 import type {PropsFromRedux, OwnProps} from './index';
@@ -246,7 +245,7 @@ const SidebarChannelMenu = ({
     }
 
     let leaveChannelMenuItem: JSX.Element | null = null;
-    if (channel.name !== Constants.DEFAULT_CHANNEL && !isOfficialTunagChannel(channel)) {
+    if (channel.name !== Constants.DEFAULT_CHANNEL) {
         let leaveChannelText = (
             <FormattedMessage
                 id='sidebar_left.sidebar_channel_menu.leaveChannel'

@@ -30,7 +30,6 @@ import SaveChangesPanel, {type SaveChangesPanelState} from 'components/widgets/m
 import PublicPrivateSelector from 'components/widgets/public-private-selector/public-private-selector';
 
 import Constants from 'utils/constants';
-import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 
 import type {GlobalState} from 'types/store';
 
@@ -365,7 +364,7 @@ function ChannelSettingsInfoTab({
                 onErrorStateChange={handleChannelNameError}
                 urlError={internalUrlError}
                 currentUrl={channelUrl}
-                readOnly={!canManageChannelProperties || isOfficialTunagChannel(channel)}
+                readOnly={!canManageChannelProperties}
             />
 
             {/* Channel Type Section*/}

@@ -263,7 +263,6 @@ export default function ChannelMembersRHS({
             )}
 
             <ActionBar
-                channel={channel}
                 channelType={channel.type}
                 membersCount={membersCount}
                 canManageMembers={canManageMembers}
