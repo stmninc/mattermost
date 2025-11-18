@@ -53,7 +53,7 @@ func (a *App) SaveReactionForPost(c request.CTX, reaction *model.Reaction) (*mod
 		return nil, model.NewAppError("SaveReactionForPost", "api.reaction.save.archived_channel.app_error", nil, "", http.StatusForbidden)
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(c, channel, c.Session().UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, reaction.UserId); permErr != nil {
 		return nil, permErr
 	}
 

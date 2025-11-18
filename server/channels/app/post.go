@@ -53,7 +53,7 @@ func (a *App) CreatePostAsUser(c request.CTX, post *model.Post, currentSessionId
 		return nil, err
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(c, channel, c.Session().UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, post.UserId); permErr != nil {
 		return nil, permErr
 	}
 
@@ -734,7 +734,7 @@ func (a *App) UpdatePost(c request.CTX, receivedUpdatedPost *model.Post, updateP
 		return nil, model.NewAppError("UpdatePost", "api.post.update_post.can_not_update_post_in_deleted.error", nil, "", http.StatusBadRequest)
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(c, channel, c.Session().UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, oldPost.UserId); permErr != nil {
 		return nil, permErr
 	}
 
@@ -980,7 +980,7 @@ func (a *App) PatchPost(c request.CTX, postID string, patch *model.PostPatch, pa
 		return nil, err
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(c, channel, c.Session().UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, post.UserId); permErr != nil {
 		return nil, permErr
 	}
 
@@ -1467,7 +1467,7 @@ func (a *App) DeletePost(rctx request.CTX, postID, deleteByID string) (*model.Po
 		return nil, model.NewAppError("DeletePost", "api.post.delete_post.can_not_delete_post_in_deleted.error", nil, "", http.StatusBadRequest)
 	}
 
-	if permErr := a.CheckDMGMChannelPermissions(rctx, channel, rctx.Session().UserId); permErr != nil {
+	if permErr := a.CheckDMGMChannelPermissions(rctx, channel, post.UserId); permErr != nil {
 		return nil, permErr
 	}
 
