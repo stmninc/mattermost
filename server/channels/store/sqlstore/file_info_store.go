@@ -643,7 +643,9 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 		if terms == "" && excludedTerms == "" {
 			// we've already confirmed that we have a channel or user to search for
 		} else if fs.DriverName() == model.DatabaseDriverPostgres {
-			// } else if false {
+			// Query generation customized for Japanese by bypassing the original implementation
+			// build LIKE search query using pg_bigm index
+
 			// Escape wildcards of LIKE searches used within strings with a backslash("\").
 			terms = sanitizeSearchTerm(terms, "\\")
 			excludedTerms = sanitizeSearchTerm(excludedTerms, "\\")
@@ -690,10 +692,9 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 					sq.Expr("LOWER(FileInfo.Name) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(term, false)),
 					sq.Expr("LOWER(FileInfo.Content) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(term, false)),
 				}))
-
 			}
 			for _, phrase := range excludedPhrases {
-				phrase := strings.Trim(phrase, `"`)
+				phrase = strings.Trim(phrase, `"`)
 				if phrase == "" {
 					continue
 				}
@@ -702,6 +703,7 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 					sq.Expr("LOWER(FileInfo.Content) LIKE LOWER(?) ESCAPE '\\'", addWildcardToTerm(phrase, true)),
 				}))
 			}
+
 			query = query.Where(likeConditions)
 		} else if false {
 			// Parse text for wildcards
