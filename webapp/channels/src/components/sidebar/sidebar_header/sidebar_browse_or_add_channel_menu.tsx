@@ -25,6 +25,8 @@ type Props = {
     onCreateNewChannelClick: () => void;
     canJoinPublicChannel: boolean;
     onBrowseChannelClick: () => void;
+    canCreateDirectChannel: boolean;
+    canCreateGroupChannel: boolean;
     onOpenDirectMessageClick: () => void;
     canCreateCustomGroups: boolean;
     onCreateNewUserGroupClick: () => void;
@@ -76,20 +78,24 @@ export default function SidebarBrowserOrAddChannelMenu(props: Props) {
         );
     }
 
-    const createDirectMessageMenuItem = (
-        <Menu.Item
-            id='openDirectMessageMenuItem'
-            onClick={props.onOpenDirectMessageClick}
-            leadingElement={<AccountOutlineIcon size={18}/>}
-            labels={(
-                <FormattedMessage
-                    id='sidebarLeft.browserOrCreateChannelMenu.openDirectMessageMenuItem.primaryLabel'
-                    defaultMessage='Open a direct message'
-                />
-            )}
-            aria-haspopup='true'
-        />
-    );
+    // DM/GM作成権限に基づいてメニュー項目を表示
+    let createDirectMessageMenuItem: JSX.Element | null = null;
+    if (props.canCreateDirectChannel || props.canCreateGroupChannel) {
+        createDirectMessageMenuItem = (
+            <Menu.Item
+                id='openDirectMessageMenuItem'
+                onClick={props.onOpenDirectMessageClick}
+                leadingElement={<AccountOutlineIcon size={18}/>}
+                labels={(
+                    <FormattedMessage
+                        id='sidebarLeft.browserOrCreateChannelMenu.openDirectMessageMenuItem.primaryLabel'
+                        defaultMessage='Open a direct message'
+                    />
+                )}
+                aria-haspopup='true'
+            />
+        );
+    }
 
     let createUserGroupMenuItem: JSX.Element | null = null;
     if (props.canCreateCustomGroups) {

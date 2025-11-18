@@ -44,6 +44,8 @@ type Props = {
     draggingState: DraggingState;
     currentUserId: string;
     isAdmin: boolean;
+    canCreateDirectChannel: boolean;
+    canCreateGroupChannel: boolean;
     actions: {
         setCategoryCollapsed: (categoryId: string, collapsed: boolean) => void;
         setCategorySorting: (categoryId: string, sorting: CategorySorting) => void;
@@ -269,12 +271,10 @@ export default class SidebarCategory extends React.PureComponent<Props, State> {
         } else if (category.type === CategoryTypes.DIRECT_MESSAGES) {
             const addHelpLabel = localizeMessage({id: 'sidebar.createDirectMessage', defaultMessage: 'Create new direct message'});
 
-            categoryMenu = (
-                <>
-                    <SidebarCategorySortingMenu
-                        category={category}
-                        handleOpenDirectMessagesModal={this.handleOpenDirectMessagesModal}
-                    />
+            // DM/GM作成権限に基づいて「+」ボタンを表示
+            let directMessageAddButton: JSX.Element | null = null;
+            if (this.props.canCreateDirectChannel || this.props.canCreateGroupChannel) {
+                directMessageAddButton = (
                     <WithTooltip
                         title={
                             <>
@@ -296,6 +296,16 @@ export default class SidebarCategory extends React.PureComponent<Props, State> {
                             <i className='icon-plus'/>
                         </button>
                     </WithTooltip>
+                );
+            }
+
+            categoryMenu = (
+                <>
+                    <SidebarCategorySortingMenu
+                        category={category}
+                        handleOpenDirectMessagesModal={this.handleOpenDirectMessagesModal}
+                    />
+                    {directMessageAddButton}
                 </>
             );
 

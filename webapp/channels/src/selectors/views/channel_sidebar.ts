@@ -20,6 +20,9 @@ import {
     sortUnreadChannels,
 } from 'mattermost-redux/selectors/entities/channels';
 import {shouldShowUnreadsCategory, isCollapsedThreadsEnabled} from 'mattermost-redux/selectors/entities/preferences';
+import {General} from 'mattermost-redux/constants';
+import Permissions from 'mattermost-redux/constants/permissions';
+import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
 
@@ -27,6 +30,35 @@ import type {DraggingState, GlobalState} from 'types/store';
 
 export function isUnreadFilterEnabled(state: GlobalState): boolean {
     return state.views.channelSidebar.unreadFilterEnabled && !shouldShowUnreadsCategory(state);
+}
+
+// DM/GMチャンネルを表示する権限があるかどうかをチェック
+function shouldHideDMGMChannel(state: GlobalState, channel: Channel, currentChannelId: string): boolean {
+    // 現在表示中のチャンネルは常に表示する（直リンクアクセス対応）
+    if (channel.id === currentChannelId) {
+        return false;
+    }
+
+    const isDM = channel.type === General.DM_CHANNEL;
+    const isGM = channel.type === General.GM_CHANNEL;
+
+    if (!isDM && !isGM) {
+        return false;
+    }
+
+    // DM権限チェック
+    if (isDM) {
+        const canCreateDM = haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
+        return !canCreateDM;
+    }
+
+    // GM権限チェック
+    if (isGM) {
+        const canCreateGM = haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+        return !canCreateGM;
+    }
+
+    return false;
 }
 
 export const getCategoriesForCurrentTeam: (state: GlobalState) => ChannelCategory[] = (() => {
@@ -75,12 +107,18 @@ export const getChannelsInCategoryOrder = (() => {
         getCurrentChannelId,
         getUnreadChannelIdsSet,
         shouldShowUnreadsCategory,
-        (categories, channelsByCategory, currentChannelId, unreadChannelIds, showUnreadsCategory) => {
+        (state: GlobalState) => state,
+        (categories, channelsByCategory, currentChannelId, unreadChannelIds, showUnreadsCategory, state) => {
             return categories.map((category) => {
                 const channels = channelsByCategory[category.id];
 
                 return channels.filter((channel: Channel) => {
                     const isUnread = unreadChannelIds.has(channel.id);
+
+                    // 権限がない場合、DM/GMチャンネルを非表示にする（現在のチャンネルは除く）
+                    if (shouldHideDMGMChannel(state, channel, currentChannelId)) {
+                        return false;
+                    }
 
                     if (showUnreadsCategory) {
                         // Filter out channels that have been moved to the Unreads category
@@ -112,7 +150,8 @@ export const getUnreadChannels = (() => {
         getUnreadChannelIdsSet,
         getCurrentChannelId,
         isUnreadFilterEnabled,
-        (allChannels, unreadChannelIds, currentChannelId, unreadFilterEnabled) => {
+        (state: GlobalState) => state,
+        (allChannels, unreadChannelIds, currentChannelId, unreadFilterEnabled, state) => {
             const unreadChannels: Channel[] = [];
 
             for (const channelId of unreadChannelIds) {
@@ -121,6 +160,11 @@ export const getUnreadChannels = (() => {
                 if (channel) {
                     // Only include an archived channel if it's the current channel
                     if (channel.delete_at > 0 && channel.id !== currentChannelId) {
+                        continue;
+                    }
+
+                    // 権限がない場合、DM/GMチャンネルを非表示にする（現在のチャンネルは除く）
+                    if (shouldHideDMGMChannel(state, channel, currentChannelId)) {
                         continue;
                     }
 
@@ -198,12 +242,25 @@ export function makeGetFilteredChannelIdsForCategory(): (state: GlobalState, cat
         getChannelIdsForCategory,
         getUnreadChannelIdsSet,
         (state: GlobalState) => shouldShowUnreadsCategory(state),
-        (channelIds, unreadChannelIdsSet, showUnreadsCategory) => {
-            if (!showUnreadsCategory) {
-                return channelIds;
+        getCurrentChannelId,
+        getAllChannels,
+        (state: GlobalState) => state,
+        (channelIds, unreadChannelIdsSet, showUnreadsCategory, currentChannelId, allChannels, state) => {
+            let filtered = channelIds;
+
+            // Unreads categoryが有効な場合、未読チャンネルを除外
+            if (showUnreadsCategory) {
+                filtered = filtered.filter((id) => !unreadChannelIdsSet.has(id));
             }
 
-            const filtered = channelIds.filter((id) => !unreadChannelIdsSet.has(id));
+            // DM/GMチャンネルを権限に基づいてフィルタリング
+            filtered = filtered.filter((id) => {
+                const channel = allChannels[id];
+                if (!channel) {
+                    return true;
+                }
+                return !shouldHideDMGMChannel(state, channel, currentChannelId);
+            });
 
             return filtered.length === channelIds.length ? channelIds : filtered;
         },

@@ -3502,6 +3502,7 @@
   "channelSelectorModal.title": "<b>チャンネル選択</b> リストにチャンネルを追加",
   "channelView.archivedChannel": "<b>アーカイブされたチャンネル</b>を閲覧中です。新しいメッセージは投稿できません。",
   "channelView.archivedChannelWithDeactivatedUser": "<b>無効化されたユーザー</b>のいるアーカイブされたチャンネルを見ています。新しいメッセージは投稿できません。",
+  "channelView.dmgmRestricted": "<b>ダイレクトメッセージまたはグループメッセージ</b>を閲覧中です。メッセージを投稿する権限がありません。",
   "channelView.login.successfull": "ログイン成功",
   "channel_banner.aria_label": "チャンネルバナーテキスト",
   "channel_banner.banner_color.label": "バナーの色",

@@ -37,6 +37,8 @@ type Props = {
     canCreatePublicChannel: boolean;
     canCreatePrivateChannel: boolean;
     canJoinPublicChannel: boolean;
+    canCreateDirectChannel: boolean;
+    canCreateGroupChannel: boolean;
     isOpen: boolean;
     actions: {
         fetchMyCategories: (teamId: string) => void;
@@ -248,6 +250,8 @@ export default class Sidebar extends React.PureComponent<Props, State> {
                         showCreateCategoryModal={this.showCreateCategoryModal}
                         canCreateChannel={this.props.canCreatePrivateChannel || this.props.canCreatePublicChannel}
                         canJoinPublicChannel={this.props.canJoinPublicChannel}
+                        canCreateDirectChannel={this.props.canCreateDirectChannel}
+                        canCreateGroupChannel={this.props.canCreateGroupChannel}
                         handleOpenDirectMessagesModal={this.handleOpenMoreDirectChannelsModal}
                         unreadFilterEnabled={this.props.unreadFilterEnabled}
                         canCreateCustomGroups={this.props.canCreateCustomGroups}

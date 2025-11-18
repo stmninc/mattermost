@@ -4,18 +4,21 @@
 import classNames from 'classnames';
 import React, {useCallback} from 'react';
 import {useIntl} from 'react-intl';
+import {useSelector} from 'react-redux';
 
 import type {Emoji} from '@mattermost/types/emojis';
 
-import Permissions from 'mattermost-redux/constants/permissions';
 import {getEmojiName} from 'mattermost-redux/utils/emoji_utils';
+import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
 
 import useEmojiPicker from 'components/emoji_picker/use_emoji_picker';
-import ChannelPermissionGate from 'components/permissions_gates/channel_permission_gate';
 import EmojiIcon from 'components/widgets/icons/emoji_icon';
 import WithTooltip from 'components/with_tooltip';
+import Gate from 'components/permissions_gates/gate';
 
 import {Locations} from 'utils/constants';
+
+import type {GlobalState} from 'types/store';
 
 export type Props = {
     channelId?: string;
@@ -42,6 +45,13 @@ export default function PostReaction({
 }: Props) {
     const intl = useIntl();
 
+    const canAdd = useSelector((state: GlobalState) => {
+        if (!channelId) {
+            return false;
+        }
+        return canAddReactions(state, channelId);
+    });
+
     const handleEmojiClick = useCallback((emoji: Emoji) => {
         const emojiName = getEmojiName(emoji);
         toggleReaction(postId, emojiName);
@@ -63,11 +73,7 @@ export default function PostReaction({
     const ariaLabel = intl.formatMessage({id: 'post_info.tooltip.add_reactions', defaultMessage: 'Add Reaction'});
 
     return (
-        <ChannelPermissionGate
-            channelId={channelId}
-            teamId={teamId}
-            permissions={[Permissions.ADD_REACTION]}
-        >
+        <Gate hasPermission={canAdd}>
             <WithTooltip title={ariaLabel}>
                 <button
                     ref={setReference}
@@ -83,6 +89,6 @@ export default function PostReaction({
                 </button>
             </WithTooltip>
             {emojiPicker}
-        </ChannelPermissionGate>
+        </Gate>
     );
 }

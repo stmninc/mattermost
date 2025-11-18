@@ -13,6 +13,9 @@ import {
     isDeactivatedDirectChannel,
 } from 'mattermost-redux/selectors/entities/channels';
 import {getConfig, getLicense} from 'mattermost-redux/selectors/entities/general';
+import {General} from 'mattermost-redux/constants';
+import Permissions from 'mattermost-redux/constants/permissions';
+import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getRoles} from 'mattermost-redux/selectors/entities/roles_helpers';
 import {getCurrentRelativeTeamUrl} from 'mattermost-redux/selectors/entities/teams';
 import {isFirstAdmin} from 'mattermost-redux/selectors/entities/users';
@@ -30,6 +33,32 @@ function isMissingChannelRoles(state: GlobalState, channel?: Channel) {
     return !channelRoles.split(' ').some((v) => Boolean(getRoles(state)[v]));
 }
 
+// DM/GMチャンネルへの投稿権限があるかチェック
+function canPostInDMGMChannel(state: GlobalState, channel?: Channel): boolean {
+    if (!channel) {
+        return true;
+    }
+
+    const isDM = channel.type === General.DM_CHANNEL;
+    const isGM = channel.type === General.GM_CHANNEL;
+
+    if (!isDM && !isGM) {
+        return true;
+    }
+
+    // DM権限チェック
+    if (isDM) {
+        return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
+    }
+
+    // GM権限チェック
+    if (isGM) {
+        return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+    }
+
+    return true;
+}
+
 function mapStateToProps(state: GlobalState) {
     const channel = getCurrentChannel(state);
 
@@ -40,6 +69,7 @@ function mapStateToProps(state: GlobalState) {
     const enableWebSocketEventScope = config.FeatureFlagWebSocketEventScope === 'true';
 
     const missingChannelRole = isMissingChannelRoles(state, channel);
+    const canPostInDMGM = canPostInDMGMChannel(state, channel);
 
     return {
         channelId: channel ? channel.id : '',
@@ -53,6 +83,7 @@ function mapStateToProps(state: GlobalState) {
         enableWebSocketEventScope,
         isChannelBookmarksEnabled: getIsChannelBookmarksEnabled(state),
         missingChannelRole,
+        canPostInDMGM,
     };
 }
 

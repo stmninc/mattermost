@@ -5,13 +5,15 @@ import React from 'react';
 
 import type {Emoji} from '@mattermost/types/emojis';
 
-import Permissions from 'mattermost-redux/constants/permissions';
 import {getEmojiName} from 'mattermost-redux/utils/emoji_utils';
+import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
 
-import ChannelPermissionGate from 'components/permissions_gates/channel_permission_gate';
+import Gate from 'components/permissions_gates/gate';
 import WithTooltip from 'components/with_tooltip';
 
 import {Locations} from 'utils/constants';
+
+import type {GlobalState} from 'types/store';
 
 import EmojiItem from './recent_reactions_emoji_item';
 
@@ -26,6 +28,7 @@ type Props = {
     emojis: Emoji[];
     size: number;
     defaultEmojis: Emoji[];
+    canAddReactions: boolean;
     actions: {
         toggleReaction: (postId: string, emojiName: string) => void;
     };
@@ -85,11 +88,9 @@ export default class PostRecentReactions extends React.PureComponent<Props, Stat
         }
 
         return emojis.map((emoji, n) => (
-            <ChannelPermissionGate
+            <Gate
                 key={this.emojiName(emoji, this.props.locale)} // emojis will be unique therefore no duplication expected.
-                channelId={channelId}
-                teamId={teamId}
-                permissions={[Permissions.ADD_REACTION]}
+                hasPermission={this.props.canAddReactions}
             >
                 <WithTooltip
                     title={this.emojiName(emoji, this.props.locale)}
@@ -104,7 +105,7 @@ export default class PostRecentReactions extends React.PureComponent<Props, Stat
                         />
                     </li>
                 </WithTooltip>
-            </ChannelPermissionGate>
+            </Gate>
         ),
         );
     }

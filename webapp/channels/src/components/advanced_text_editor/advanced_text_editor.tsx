@@ -10,11 +10,11 @@ import type {ServerError} from '@mattermost/types/errors';
 import type {SchedulingInfo} from '@mattermost/types/schedule_post';
 
 import {savePreferences} from 'mattermost-redux/actions/preferences';
-import {Permissions} from 'mattermost-redux/constants';
+import {General, Permissions} from 'mattermost-redux/constants';
 import {getChannel, makeGetChannel, getDirectChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig, getFeatureFlagValue} from 'mattermost-redux/selectors/entities/general';
 import {get, getBool, getInt, getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
-import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
+import {haveIChannelPermission, haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentUserId, isCurrentUserGuestUser, getStatusForUserId, makeGetDisplayName, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
 
 import * as GlobalActions from 'actions/global_actions';
@@ -168,7 +168,31 @@ const AdvancedTextEditor = ({
     const draftFromStore = useSelector((state: GlobalState) => getDraftSelector(state, channelId, rootId, storageKey));
     const badConnection = useSelector((state: GlobalState) => connectionErrorCount(state) > 1);
     const maxPostSize = useSelector((state: GlobalState) => parseInt(getConfig(state).MaxPostSize || '', 10) || Constants.DEFAULT_CHARACTER_LIMIT);
-    const canUploadFiles = useSelector((state: GlobalState) => canUploadFilesAccordingToConfig(getConfig(state)));
+    const canUploadFiles = useSelector((state: GlobalState) => {
+        const configCanUpload = canUploadFilesAccordingToConfig(getConfig(state));
+        if (!configCanUpload) {
+            return false;
+        }
+
+        // DM/GMチャンネルの権限チェック
+        const channel = getChannel(state, channelId);
+        if (!channel) {
+            return true;
+        }
+
+        const isDM = channel.type === General.DM_CHANNEL;
+        const isGM = channel.type === General.GM_CHANNEL;
+
+        if (isDM) {
+            return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
+        }
+
+        if (isGM) {
+            return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+        }
+
+        return true;
+    });
     const fullWidthTextBox = useSelector((state: GlobalState) => get(state, Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.CHANNEL_DISPLAY_MODE, Preferences.CHANNEL_DISPLAY_MODE_DEFAULT) === Preferences.CHANNEL_DISPLAY_MODE_FULL_SCREEN);
     const isFormattingBarHidden = useSelector((state: GlobalState) => {
         const preferenceName = getFormattingBarPreferenceName();

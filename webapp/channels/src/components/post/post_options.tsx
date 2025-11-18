@@ -5,11 +5,16 @@ import classnames from 'classnames';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import type {ReactNode} from 'react';
 import {FormattedMessage} from 'react-intl';
+import {useSelector} from 'react-redux';
 
 import type {Emoji} from '@mattermost/types/emojis';
 import type {Post} from '@mattermost/types/posts';
 
-import {Posts} from 'mattermost-redux/constants/index';
+import {General, Posts} from 'mattermost-redux/constants/index';
+import {getChannel} from 'mattermost-redux/selectors/entities/channels';
+import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
+import Permissions from 'mattermost-redux/constants/permissions';
+import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {isPostEphemeral} from 'mattermost-redux/utils/post_utils';
 
 import ActionsMenu from 'components/actions_menu';
@@ -23,6 +28,7 @@ import PostRecentReactions from 'components/post_view/post_recent_reactions';
 import {Locations, Constants} from 'utils/constants';
 import {isSystemMessage, fromAutoResponder} from 'utils/post_utils';
 
+import type {GlobalState} from 'types/store';
 import type {PostActionComponent} from 'types/store/plugins';
 
 type Props = {
@@ -118,6 +124,35 @@ const PostOptions = (props: Props): JSX.Element => {
         props.handleDropdownOpened!(open);
     };
 
+    const canAdd = useSelector((state: GlobalState) => {
+        return canAddReactions(state, post.channel_id);
+    });
+
+    // DM/GMチャンネルへの投稿権限チェック
+    const canPostInDMGM = useSelector((state: GlobalState) => {
+        const channel = getChannel(state, post.channel_id);
+        if (!channel) {
+            return true;
+        }
+
+        const isDM = channel.type === General.DM_CHANNEL;
+        const isGM = channel.type === General.GM_CHANNEL;
+
+        if (!isDM && !isGM) {
+            return true;
+        }
+
+        if (isDM) {
+            return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
+        }
+
+        if (isGM) {
+            return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+        }
+
+        return true;
+    });
+
     const isPostDeleted = post && post.state === Posts.POST_DELETED;
     const hoverLocal = props.hover || showEmojiPicker || showDotMenu || showActionsMenu;
     const showCommentIcon = isFromAutoResponder || (!systemMessage && (isMobileView ||
@@ -139,7 +174,7 @@ const PostOptions = (props: Props): JSX.Element => {
         );
     }
 
-    const showRecentlyUsedReactions = (!isMobileView && !isReadOnly && !isEphemeral && !post.failed && !systemMessage && !channelIsArchived && oneClickReactionsEnabled && props.enableEmojiPicker && hoverLocal);
+    const showRecentlyUsedReactions = (!isMobileView && !isReadOnly && !isEphemeral && !post.failed && !systemMessage && !channelIsArchived && oneClickReactionsEnabled && props.enableEmojiPicker && hoverLocal && canAdd);
 
     let showRecentReactions: ReactNode;
     if (showRecentlyUsedReactions) {
@@ -158,7 +193,7 @@ const PostOptions = (props: Props): JSX.Element => {
         );
     }
 
-    const showReactionIcon = !systemMessage && !isReadOnly && !isEphemeral && !post.failed && props.enableEmojiPicker && !channelIsArchived;
+    const showReactionIcon = !systemMessage && !isReadOnly && !isEphemeral && !post.failed && props.enableEmojiPicker && !channelIsArchived && canAdd;
     let postReaction;
     if (showReactionIcon) {
         postReaction = (
@@ -221,7 +256,8 @@ const PostOptions = (props: Props): JSX.Element => {
             }) || [];
     }
 
-    const dotMenu = (
+    // DM/GMチャンネルの権限がない場合、DotMenuを非表示にする
+    const dotMenu = canPostInDMGM ? (
         <li>
             <DotMenu
                 post={props.post}
@@ -235,7 +271,7 @@ const PostOptions = (props: Props): JSX.Element => {
                 enableEmojiPicker={props.enableEmojiPicker}
             />
         </li>
-    );
+    ) : null;
 
     // Build post options
     let options: ReactNode;

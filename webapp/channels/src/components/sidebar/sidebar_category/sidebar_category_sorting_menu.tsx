@@ -21,8 +21,10 @@ import {CategorySorting} from '@mattermost/types/channel_categories';
 
 import {setCategorySorting} from 'mattermost-redux/actions/channel_categories';
 import {savePreferences} from 'mattermost-redux/actions/preferences';
+import Permissions from 'mattermost-redux/constants/permissions';
 import {Preferences} from 'mattermost-redux/constants';
 import {getVisibleDmGmLimit} from 'mattermost-redux/selectors/entities/preferences';
+import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 
 import {trackEvent} from 'actions/telemetry_actions';
@@ -30,6 +32,7 @@ import {trackEvent} from 'actions/telemetry_actions';
 import * as Menu from 'components/menu';
 
 import Constants from 'utils/constants';
+import type {GlobalState} from 'types/store';
 
 type Props = {
     category: ChannelCategory;
@@ -46,6 +49,8 @@ const SidebarCategorySortingMenu = ({
     const dispatch = useDispatch();
     const selectedDmNumber = useSelector(getVisibleDmGmLimit);
     const currentUserId = useSelector(getCurrentUserId);
+    const canCreateDirectChannel = useSelector((state: GlobalState) => haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL}));
+    const canCreateGroupChannel = useSelector((state: GlobalState) => haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL}));
 
     function handleSortDirectMessages(sorting: CategorySorting) {
         dispatch(setCategorySorting(category.id, sorting));
@@ -163,19 +168,23 @@ const SidebarCategorySortingMenu = ({
 
     );
 
-    const openDirectMessageMenuItem = (
-        <Menu.Item
-            id={`openDirectMessage-${category.id}`}
-            onClick={handleOpenDirectMessagesModal}
-            leadingElement={<AccountPlusOutlineIcon size={18}/>}
-            labels={(
-                <FormattedMessage
-                    id='sidebar.openDirectMessage'
-                    defaultMessage='Open a direct message'
-                />
-            )}
-        />
-    );
+    // DM/GM作成権限に基づいてメニュー項目を表示
+    let openDirectMessageMenuItem: JSX.Element | null = null;
+    if (canCreateDirectChannel || canCreateGroupChannel) {
+        openDirectMessageMenuItem = (
+            <Menu.Item
+                id={`openDirectMessage-${category.id}`}
+                onClick={handleOpenDirectMessagesModal}
+                leadingElement={<AccountPlusOutlineIcon size={18}/>}
+                labels={(
+                    <FormattedMessage
+                        id='sidebar.openDirectMessage'
+                        defaultMessage='Open a direct message'
+                    />
+                )}
+            />
+        );
+    }
 
     function handleMenuToggle(isOpen: boolean) {
         setIsMenuOpen(isOpen);
@@ -209,8 +218,12 @@ const SidebarCategorySortingMenu = ({
             >
                 {sortDirectMessagesMenuItem}
                 {showMessagesCountMenuItem}
-                <Menu.Separator/>
-                {openDirectMessageMenuItem}
+                {openDirectMessageMenuItem && (
+                    <>
+                        <Menu.Separator/>
+                        {openDirectMessageMenuItem}
+                    </>
+                )}
             </Menu.Container>
         </div>
     );

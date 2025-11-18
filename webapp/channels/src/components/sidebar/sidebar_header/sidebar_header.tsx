@@ -19,6 +19,8 @@ export type Props = {
     showCreateCategoryModal: () => void;
     canCreateChannel: boolean;
     canJoinPublicChannel: boolean;
+    canCreateDirectChannel: boolean;
+    canCreateGroupChannel: boolean;
     handleOpenDirectMessagesModal: () => void;
     unreadFilterEnabled: boolean;
     canCreateCustomGroups: boolean;
@@ -40,6 +42,8 @@ const SidebarHeader = (props: Props) => {
                     onCreateNewChannelClick={props.showNewChannelModal}
                     canJoinPublicChannel={props.canJoinPublicChannel}
                     onBrowseChannelClick={props.showMoreChannelsModal}
+                    canCreateDirectChannel={props.canCreateDirectChannel}
+                    canCreateGroupChannel={props.canCreateGroupChannel}
                     onOpenDirectMessageClick={props.handleOpenDirectMessagesModal}
                     canCreateCustomGroups={props.canCreateCustomGroups}
                     onCreateNewUserGroupClick={props.showCreateUserGroupModal}

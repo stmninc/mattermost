@@ -10,6 +10,9 @@ import type {UserProfile} from '@mattermost/types/users';
 
 import {makeGetChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getPost, getLimitedViews} from 'mattermost-redux/selectors/entities/posts';
+import {General} from 'mattermost-redux/constants';
+import Permissions from 'mattermost-redux/constants/permissions';
+import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 
 import AdvancedCreateComment from 'components/advanced_create_comment';
 import BasicSeparator from 'components/widgets/separator/basic-separator';
@@ -82,6 +85,49 @@ const CreateComment = forwardRef<HTMLDivElement, Props>(({
                         defaultMessage='You are viewing a thread from an <strong>archived channel</strong>. New messages cannot be posted.'
                         values={{
                             strong: (chunks: string) => <strong>{chunks}</strong>,
+                        }}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    // DM/GMチャンネルへの投稿権限チェック
+    const canPostInDMGM = useSelector((state: GlobalState) => {
+        const isDM = channel.type === General.DM_CHANNEL;
+        const isGM = channel.type === General.GM_CHANNEL;
+
+        if (!isDM && !isGM) {
+            return true;
+        }
+
+        if (isDM) {
+            return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
+        }
+
+        if (isGM) {
+            return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+        }
+
+        return true;
+    });
+
+    if (!canPostInDMGM) {
+        return (
+            <div
+                className='post-create__container'
+                ref={ref}
+                data-testid='comment-create'
+            >
+                <div
+                    id='dmgmRestrictedMessage'
+                    className='channel-archived__message'
+                >
+                    <FormattedMessage
+                        id='channelView.dmgmRestricted'
+                        defaultMessage='You are viewing a <b>direct or group message</b>. You do not have permission to post messages.'
+                        values={{
+                            b: (chunks: string) => <b>{chunks}</b>,
                         }}
                     />
                 </div>

@@ -4,16 +4,19 @@
 import classNames from 'classnames';
 import React, {useCallback, useState} from 'react';
 import {useIntl} from 'react-intl';
+import {useSelector} from 'react-redux';
 
 import type {Emoji} from '@mattermost/types/emojis';
 import type {Post} from '@mattermost/types/posts';
 
-import {Permissions} from 'mattermost-redux/constants';
+import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
 
 import useEmojiPicker from 'components/emoji_picker/use_emoji_picker';
-import ChannelPermissionGate from 'components/permissions_gates/channel_permission_gate';
 import AddReactionIcon from 'components/widgets/icons/add_reaction_icon';
 import WithTooltip from 'components/with_tooltip';
+import Gate from 'components/permissions_gates/gate';
+
+import type {GlobalState} from 'types/store';
 
 type Props = {
     post: Post;
@@ -29,6 +32,10 @@ export default function AddReactionButton({
     onEmojiClick,
 }: Props) {
     const intl = useIntl();
+
+    const canAdd = useSelector((state: GlobalState) => {
+        return canAddReactions(state, post.channel_id);
+    });
 
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -52,11 +59,7 @@ export default function AddReactionButton({
 
     return (
         <span className='emoji-picker__container'>
-            <ChannelPermissionGate
-                channelId={post.channel_id}
-                teamId={teamId}
-                permissions={[Permissions.ADD_REACTION]}
-            >
+            <Gate hasPermission={canAdd}>
                 <WithTooltip title={ariaLabel}>
                     <button
                         id={`addReaction-${post.id}`}
@@ -70,7 +73,7 @@ export default function AddReactionButton({
                         <AddReactionIcon/>
                     </button>
                 </WithTooltip>
-            </ChannelPermissionGate>
+            </Gate>
             {emojiPicker}
         </span>
     );

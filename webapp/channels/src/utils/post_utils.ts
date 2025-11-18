@@ -17,14 +17,14 @@ import type {Reaction} from '@mattermost/types/reactions';
 import type {UserProfile} from '@mattermost/types/users';
 
 import {Client4} from 'mattermost-redux/client';
-import {Permissions, Posts} from 'mattermost-redux/constants';
+import {General, Permissions, Posts} from 'mattermost-redux/constants';
 import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getAllGroupsForReferenceByName} from 'mattermost-redux/selectors/entities/groups';
 import {isPostFlagged, makeGetReactionsForPost} from 'mattermost-redux/selectors/entities/posts';
 import {getTeammateNameDisplaySetting, isCollapsedThreadsEnabled} from 'mattermost-redux/selectors/entities/preferences';
-import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
+import {haveIChannelPermission, haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentTeamId, getTeam} from 'mattermost-redux/selectors/entities/teams';
 import {makeGetDisplayName, getCurrentUserId, getUser, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
 import type {UserMentionKey} from 'mattermost-redux/selectors/entities/users';
@@ -96,12 +96,43 @@ export function getImageSrc(src: string, hasImageProxy = false): string {
     return src;
 }
 
+// DM/GMチャンネルへの編集・削除権限があるかチェック
+function canEditDeleteInDMGMChannel(state: GlobalState, channel?: Channel): boolean {
+    if (!channel) {
+        return true;
+    }
+
+    const isDM = channel.type === General.DM_CHANNEL;
+    const isGM = channel.type === General.GM_CHANNEL;
+
+    if (!isDM && !isGM) {
+        return true;
+    }
+
+    // DM権限チェック
+    if (isDM) {
+        return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
+    }
+
+    // GM権限チェック
+    if (isGM) {
+        return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+    }
+
+    return true;
+}
+
 export function canDeletePost(state: GlobalState, post: Post, channel?: Channel): boolean {
     if (post.type === Constants.PostTypes.FAKE_PARENT_DELETED) {
         return false;
     }
 
     if (channel && channel.delete_at !== 0) {
+        return false;
+    }
+
+    // DM/GM権限チェック
+    if (!canEditDeleteInDMGMChannel(state, channel)) {
         return false;
     }
 
@@ -119,6 +150,11 @@ export function canEditPost(
     channel?: Channel,
     userId?: string,
 ): boolean {
+    // DM/GM権限チェック
+    if (!canEditDeleteInDMGMChannel(state, channel)) {
+        return false;
+    }
+
     return canEditPostRedux(state, config, license, channel?.team_id ?? '', channel?.id ?? '', userId ?? '', post);
 }
 
