@@ -6,14 +6,11 @@ import React from 'react';
 import type {Emoji} from '@mattermost/types/emojis';
 
 import {getEmojiName} from 'mattermost-redux/utils/emoji_utils';
-import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
 
 import Gate from 'components/permissions_gates/gate';
 import WithTooltip from 'components/with_tooltip';
 
 import {Locations} from 'utils/constants';
-
-import type {GlobalState} from 'types/store';
 
 import EmojiItem from './recent_reactions_emoji_item';
 
@@ -77,11 +74,6 @@ export default class PostRecentReactions extends React.PureComponent<Props, Stat
     };
 
     render() {
-        const {
-            channelId,
-            teamId,
-        } = this.props;
-
         let emojis = [...this.props.emojis].slice(0, this.props.size);
         if (emojis.length < this.props.size) {
             emojis = this.complementEmojis(emojis);

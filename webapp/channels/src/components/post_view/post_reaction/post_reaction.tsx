@@ -8,13 +8,13 @@ import {useSelector} from 'react-redux';
 
 import type {Emoji} from '@mattermost/types/emojis';
 
-import {getEmojiName} from 'mattermost-redux/utils/emoji_utils';
 import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
+import {getEmojiName} from 'mattermost-redux/utils/emoji_utils';
 
 import useEmojiPicker from 'components/emoji_picker/use_emoji_picker';
+import Gate from 'components/permissions_gates/gate';
 import EmojiIcon from 'components/widgets/icons/emoji_icon';
 import WithTooltip from 'components/with_tooltip';
-import Gate from 'components/permissions_gates/gate';
 
 import {Locations} from 'utils/constants';
 
@@ -23,7 +23,6 @@ import type {GlobalState} from 'types/store';
 export type Props = {
     channelId?: string;
     postId: string;
-    teamId: string;
     location?: keyof typeof Locations;
     setShowEmojiPicker: (showEmojiPicker: boolean) => void;
     showEmojiPicker: boolean;
@@ -36,7 +35,6 @@ export default function PostReaction({
     channelId,
     location = Locations.CENTER,
     postId,
-    teamId,
     showEmojiPicker,
     setShowEmojiPicker,
     actions: {

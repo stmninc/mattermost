@@ -10,11 +10,11 @@ import type {ServerError} from '@mattermost/types/errors';
 import type {SchedulingInfo} from '@mattermost/types/schedule_post';
 
 import {savePreferences} from 'mattermost-redux/actions/preferences';
-import {General, Permissions} from 'mattermost-redux/constants';
+import {Permissions} from 'mattermost-redux/constants';
 import {getChannel, makeGetChannel, getDirectChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig, getFeatureFlagValue} from 'mattermost-redux/selectors/entities/general';
 import {get, getBool, getInt, getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
-import {haveIChannelPermission, haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
+import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentUserId, isCurrentUserGuestUser, getStatusForUserId, makeGetDisplayName, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
 
 import * as GlobalActions from 'actions/global_actions';
@@ -59,7 +59,7 @@ import Constants, {
 import {canUploadFiles as canUploadFilesAccordingToConfig} from 'utils/file_utils';
 import type {ApplyMarkdownOptions} from 'utils/markdown/apply_markdown';
 import {applyMarkdown as applyMarkdownUtil} from 'utils/markdown/apply_markdown';
-import {isErrorInvalidSlashCommand} from 'utils/post_utils';
+import {isErrorInvalidSlashCommand, canPostInDMGMChannel} from 'utils/post_utils';
 import {allAtMentions} from 'utils/text_formatting';
 import * as Utils from 'utils/utils';
 
@@ -174,24 +174,8 @@ const AdvancedTextEditor = ({
             return false;
         }
 
-        // DM/GMチャンネルの権限チェック
         const channel = getChannel(state, channelId);
-        if (!channel) {
-            return true;
-        }
-
-        const isDM = channel.type === General.DM_CHANNEL;
-        const isGM = channel.type === General.GM_CHANNEL;
-
-        if (isDM) {
-            return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-        }
-
-        if (isGM) {
-            return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
-        }
-
-        return true;
+        return canPostInDMGMChannel(state, channel);
     });
     const fullWidthTextBox = useSelector((state: GlobalState) => get(state, Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.CHANNEL_DISPLAY_MODE, Preferences.CHANNEL_DISPLAY_MODE_DEFAULT) === Preferences.CHANNEL_DISPLAY_MODE_FULL_SCREEN);
     const isFormattingBarHidden = useSelector((state: GlobalState) => {

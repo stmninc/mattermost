@@ -6,6 +6,7 @@ import {CategorySorting} from '@mattermost/types/channel_categories';
 import type {Channel} from '@mattermost/types/channels';
 import type {RelationOneToOne} from '@mattermost/types/utilities';
 
+import {CategoryTypes} from 'mattermost-redux/constants/channel_categories';
 import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {
     makeGetCategoriesForTeam,
@@ -20,11 +21,10 @@ import {
     sortUnreadChannels,
 } from 'mattermost-redux/selectors/entities/channels';
 import {shouldShowUnreadsCategory, isCollapsedThreadsEnabled} from 'mattermost-redux/selectors/entities/preferences';
-import {General} from 'mattermost-redux/constants';
-import Permissions from 'mattermost-redux/constants/permissions';
-import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
+
+import {canPostInDMGMChannel, canCreateDMGMChannel} from 'utils/post_utils';
 
 import type {DraggingState, GlobalState} from 'types/store';
 
@@ -32,33 +32,12 @@ export function isUnreadFilterEnabled(state: GlobalState): boolean {
     return state.views.channelSidebar.unreadFilterEnabled && !shouldShowUnreadsCategory(state);
 }
 
-// DM/GMチャンネルを表示する権限があるかどうかをチェック
 function shouldHideDMGMChannel(state: GlobalState, channel: Channel, currentChannelId: string): boolean {
-    // 現在表示中のチャンネルは常に表示する（直リンクアクセス対応）
     if (channel.id === currentChannelId) {
         return false;
     }
 
-    const isDM = channel.type === General.DM_CHANNEL;
-    const isGM = channel.type === General.GM_CHANNEL;
-
-    if (!isDM && !isGM) {
-        return false;
-    }
-
-    // DM権限チェック
-    if (isDM) {
-        const canCreateDM = haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-        return !canCreateDM;
-    }
-
-    // GM権限チェック
-    if (isGM) {
-        const canCreateGM = haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
-        return !canCreateGM;
-    }
-
-    return false;
+    return !canPostInDMGMChannel(state, channel);
 }
 
 export const getCategoriesForCurrentTeam: (state: GlobalState) => ChannelCategory[] = (() => {
@@ -66,7 +45,13 @@ export const getCategoriesForCurrentTeam: (state: GlobalState) => ChannelCategor
 
     return memoizeResult((state: GlobalState) => {
         const currentTeamId = getCurrentTeamId(state);
-        return getCategoriesForTeam(state, currentTeamId);
+        const categories = getCategoriesForTeam(state, currentTeamId);
+
+        if (!canCreateDMGMChannel(state)) {
+            return categories.filter((category) => category.type !== CategoryTypes.DIRECT_MESSAGES);
+        }
+
+        return categories;
     });
 })();
 
@@ -115,7 +100,6 @@ export const getChannelsInCategoryOrder = (() => {
                 return channels.filter((channel: Channel) => {
                     const isUnread = unreadChannelIds.has(channel.id);
 
-                    // 権限がない場合、DM/GMチャンネルを非表示にする（現在のチャンネルは除く）
                     if (shouldHideDMGMChannel(state, channel, currentChannelId)) {
                         return false;
                     }
@@ -163,7 +147,6 @@ export const getUnreadChannels = (() => {
                         continue;
                     }
 
-                    // 権限がない場合、DM/GMチャンネルを非表示にする（現在のチャンネルは除く）
                     if (shouldHideDMGMChannel(state, channel, currentChannelId)) {
                         continue;
                     }
@@ -248,12 +231,10 @@ export function makeGetFilteredChannelIdsForCategory(): (state: GlobalState, cat
         (channelIds, unreadChannelIdsSet, showUnreadsCategory, currentChannelId, allChannels, state) => {
             let filtered = channelIds;
 
-            // Unreads categoryが有効な場合、未読チャンネルを除外
             if (showUnreadsCategory) {
                 filtered = filtered.filter((id) => !unreadChannelIdsSet.has(id));
             }
 
-            // DM/GMチャンネルを権限に基づいてフィルタリング
             filtered = filtered.filter((id) => {
                 const channel = allChannels[id];
                 if (!channel) {

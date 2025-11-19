@@ -247,6 +247,10 @@ export default class SidebarCategory extends React.PureComponent<Props, State> {
             return null;
         }
 
+        if (category.type === CategoryTypes.DIRECT_MESSAGES && !this.props.canCreateDirectChannel && !this.props.canCreateGroupChannel) {
+            return null;
+        }
+
         if (category.type === CategoryTypes.FAVORITES && !channelIds?.length) {
             return null;
         }
@@ -271,7 +275,6 @@ export default class SidebarCategory extends React.PureComponent<Props, State> {
         } else if (category.type === CategoryTypes.DIRECT_MESSAGES) {
             const addHelpLabel = localizeMessage({id: 'sidebar.createDirectMessage', defaultMessage: 'Create new direct message'});
 
-            // DM/GM作成権限に基づいて「+」ボタンを表示
             let directMessageAddButton: JSX.Element | null = null;
             if (this.props.canCreateDirectChannel || this.props.canCreateGroupChannel) {
                 directMessageAddButton = (

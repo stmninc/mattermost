@@ -12,23 +12,20 @@ import type {Post} from '@mattermost/types/posts';
 import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
 
 import useEmojiPicker from 'components/emoji_picker/use_emoji_picker';
+import Gate from 'components/permissions_gates/gate';
 import AddReactionIcon from 'components/widgets/icons/add_reaction_icon';
 import WithTooltip from 'components/with_tooltip';
-import Gate from 'components/permissions_gates/gate';
 
 import type {GlobalState} from 'types/store';
 
 type Props = {
     post: Post;
-    teamId: string;
 
     onEmojiClick: (emoji: Emoji) => void;
 }
 
 export default function AddReactionButton({
     post,
-    teamId,
-
     onEmojiClick,
 }: Props) {
     const intl = useIntl();

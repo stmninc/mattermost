@@ -21,6 +21,7 @@ import {isUnreadFilterEnabled} from 'selectors/views/channel_sidebar';
 import {isModalOpen} from 'selectors/views/modals';
 
 import {ModalIdentifiers} from 'utils/constants';
+import {canCreateDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 
@@ -42,9 +43,9 @@ function mapStateToProps(state: GlobalState) {
         canJoinPublicChannel = haveICurrentChannelPermission(state, Permissions.JOIN_PUBLIC_CHANNELS);
     }
 
-    // DM/GM権限チェック（システムレベル権限）
-    canCreateDirectChannel = haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-    canCreateGroupChannel = haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+    const canCreateDMGM = canCreateDMGMChannel(state);
+    canCreateDirectChannel = canCreateDMGM;
+    canCreateGroupChannel = canCreateDMGM;
 
     const canCreateCustomGroups = isCustomGroupsEnabled(state) && haveISystemPermission(state, {permission: Permissions.CREATE_CUSTOM_GROUP});
 

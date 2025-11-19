@@ -10,14 +10,12 @@ import type {UserProfile} from '@mattermost/types/users';
 
 import {makeGetChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getPost, getLimitedViews} from 'mattermost-redux/selectors/entities/posts';
-import {General} from 'mattermost-redux/constants';
-import Permissions from 'mattermost-redux/constants/permissions';
-import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 
 import AdvancedCreateComment from 'components/advanced_create_comment';
 import BasicSeparator from 'components/widgets/separator/basic-separator';
 
 import Constants from 'utils/constants';
+import {canPostInDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 
@@ -43,6 +41,14 @@ const CreateComment = forwardRef<HTMLDivElement, Props>(({
         }
         return getChannel(state, rootPost.channel_id);
     });
+    const canPostInDMGM = useSelector((state: GlobalState) => {
+        const currentChannel = threadIsLimited ? null : getChannel(state, rootPost.channel_id);
+        if (!currentChannel) {
+            return true;
+        }
+        return canPostInDMGMChannel(state, currentChannel);
+    });
+
     if (!channel || threadIsLimited) {
         return null;
     }
@@ -91,26 +97,6 @@ const CreateComment = forwardRef<HTMLDivElement, Props>(({
             </div>
         );
     }
-
-    // DM/GMチャンネルへの投稿権限チェック
-    const canPostInDMGM = useSelector((state: GlobalState) => {
-        const isDM = channel.type === General.DM_CHANNEL;
-        const isGM = channel.type === General.GM_CHANNEL;
-
-        if (!isDM && !isGM) {
-            return true;
-        }
-
-        if (isDM) {
-            return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-        }
-
-        if (isGM) {
-            return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
-        }
-
-        return true;
-    });
 
     if (!canPostInDMGM) {
         return (

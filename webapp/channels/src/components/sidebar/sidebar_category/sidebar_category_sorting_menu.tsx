@@ -21,10 +21,8 @@ import {CategorySorting} from '@mattermost/types/channel_categories';
 
 import {setCategorySorting} from 'mattermost-redux/actions/channel_categories';
 import {savePreferences} from 'mattermost-redux/actions/preferences';
-import Permissions from 'mattermost-redux/constants/permissions';
 import {Preferences} from 'mattermost-redux/constants';
 import {getVisibleDmGmLimit} from 'mattermost-redux/selectors/entities/preferences';
-import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 
 import {trackEvent} from 'actions/telemetry_actions';
@@ -32,6 +30,8 @@ import {trackEvent} from 'actions/telemetry_actions';
 import * as Menu from 'components/menu';
 
 import Constants from 'utils/constants';
+import {canCreateDMGMChannel} from 'utils/post_utils';
+
 import type {GlobalState} from 'types/store';
 
 type Props = {
@@ -49,8 +49,7 @@ const SidebarCategorySortingMenu = ({
     const dispatch = useDispatch();
     const selectedDmNumber = useSelector(getVisibleDmGmLimit);
     const currentUserId = useSelector(getCurrentUserId);
-    const canCreateDirectChannel = useSelector((state: GlobalState) => haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL}));
-    const canCreateGroupChannel = useSelector((state: GlobalState) => haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL}));
+    const canCreateDMGM = useSelector((state: GlobalState) => canCreateDMGMChannel(state));
 
     function handleSortDirectMessages(sorting: CategorySorting) {
         dispatch(setCategorySorting(category.id, sorting));
@@ -168,9 +167,8 @@ const SidebarCategorySortingMenu = ({
 
     );
 
-    // DM/GM作成権限に基づいてメニュー項目を表示
     let openDirectMessageMenuItem: JSX.Element | null = null;
-    if (canCreateDirectChannel || canCreateGroupChannel) {
+    if (canCreateDMGM) {
         openDirectMessageMenuItem = (
             <Menu.Item
                 id={`openDirectMessage-${category.id}`}

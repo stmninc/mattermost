@@ -9,12 +9,12 @@ import type {ChannelCategory} from '@mattermost/types/channel_categories';
 
 import {setCategoryCollapsed, setCategorySorting} from 'mattermost-redux/actions/channel_categories';
 import {savePreferences} from 'mattermost-redux/actions/preferences';
-import Permissions from 'mattermost-redux/constants/permissions';
-import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentUser, getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 import {isAdmin} from 'mattermost-redux/utils/user_utils';
 
 import {getDraggingState, makeGetFilteredChannelIdsForCategory} from 'selectors/views/channel_sidebar';
+
+import {canCreateDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 
@@ -33,8 +33,8 @@ function makeMapStateToProps() {
             draggingState: getDraggingState(state),
             currentUserId: getCurrentUserId(state),
             isAdmin: isAdmin(getCurrentUser(state).roles),
-            canCreateDirectChannel: haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL}),
-            canCreateGroupChannel: haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL}),
+            canCreateDirectChannel: canCreateDMGMChannel(state),
+            canCreateGroupChannel: canCreateDMGMChannel(state),
         };
     };
 }

@@ -10,11 +10,9 @@ import {useSelector} from 'react-redux';
 import type {Emoji} from '@mattermost/types/emojis';
 import type {Post} from '@mattermost/types/posts';
 
-import {General, Posts} from 'mattermost-redux/constants/index';
+import {Posts} from 'mattermost-redux/constants/index';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
 import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
-import Permissions from 'mattermost-redux/constants/permissions';
-import {haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {isPostEphemeral} from 'mattermost-redux/utils/post_utils';
 
 import ActionsMenu from 'components/actions_menu';
@@ -26,7 +24,7 @@ import PostReaction from 'components/post_view/post_reaction';
 import PostRecentReactions from 'components/post_view/post_recent_reactions';
 
 import {Locations, Constants} from 'utils/constants';
-import {isSystemMessage, fromAutoResponder} from 'utils/post_utils';
+import {isSystemMessage, fromAutoResponder, canPostInDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 import type {PostActionComponent} from 'types/store/plugins';
@@ -128,29 +126,9 @@ const PostOptions = (props: Props): JSX.Element => {
         return canAddReactions(state, post.channel_id);
     });
 
-    // DM/GMチャンネルへの投稿権限チェック
     const canPostInDMGM = useSelector((state: GlobalState) => {
         const channel = getChannel(state, post.channel_id);
-        if (!channel) {
-            return true;
-        }
-
-        const isDM = channel.type === General.DM_CHANNEL;
-        const isGM = channel.type === General.GM_CHANNEL;
-
-        if (!isDM && !isGM) {
-            return true;
-        }
-
-        if (isDM) {
-            return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-        }
-
-        if (isGM) {
-            return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
-        }
-
-        return true;
+        return canPostInDMGMChannel(state, channel);
     });
 
     const isPostDeleted = post && post.state === Posts.POST_DELETED;
@@ -256,7 +234,6 @@ const PostOptions = (props: Props): JSX.Element => {
             }) || [];
     }
 
-    // DM/GMチャンネルの権限がない場合、DotMenuを非表示にする
     const dotMenu = canPostInDMGM ? (
         <li>
             <DotMenu

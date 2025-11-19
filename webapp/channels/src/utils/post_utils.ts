@@ -96,8 +96,7 @@ export function getImageSrc(src: string, hasImageProxy = false): string {
     return src;
 }
 
-// DM/GMチャンネルへの編集・削除権限があるかチェック
-function canEditDeleteInDMGMChannel(state: GlobalState, channel?: Channel): boolean {
+function canInteractWithDMGMChannel(state: GlobalState, channel?: Channel): boolean {
     if (!channel) {
         return true;
     }
@@ -109,17 +108,25 @@ function canEditDeleteInDMGMChannel(state: GlobalState, channel?: Channel): bool
         return true;
     }
 
-    // DM権限チェック
     if (isDM) {
         return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
     }
 
-    // GM権限チェック
     if (isGM) {
         return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
     }
 
     return true;
+}
+
+export function canPostInDMGMChannel(state: GlobalState, channel?: Channel): boolean {
+    return canInteractWithDMGMChannel(state, channel);
+}
+
+export function canCreateDMGMChannel(state: GlobalState): boolean {
+    const canCreateDM = haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
+    const canCreateGM = haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
+    return canCreateDM || canCreateGM;
 }
 
 export function canDeletePost(state: GlobalState, post: Post, channel?: Channel): boolean {
@@ -131,8 +138,7 @@ export function canDeletePost(state: GlobalState, post: Post, channel?: Channel)
         return false;
     }
 
-    // DM/GM権限チェック
-    if (!canEditDeleteInDMGMChannel(state, channel)) {
+    if (!canPostInDMGMChannel(state, channel)) {
         return false;
     }
 
@@ -150,8 +156,7 @@ export function canEditPost(
     channel?: Channel,
     userId?: string,
 ): boolean {
-    // DM/GM権限チェック
-    if (!canEditDeleteInDMGMChannel(state, channel)) {
+    if (!canPostInDMGMChannel(state, channel)) {
         return false;
     }
 
