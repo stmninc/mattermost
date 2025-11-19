@@ -180,7 +180,6 @@ const PostOptions = (props: Props): JSX.Element => {
                     channelId={post.channel_id}
                     location={props.location}
                     postId={post.id}
-                    teamId={props.teamId}
                     showEmojiPicker={showEmojiPicker}
                     setShowEmojiPicker={toggleEmojiPicker}
                 />

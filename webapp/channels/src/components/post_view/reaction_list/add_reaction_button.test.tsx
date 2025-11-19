@@ -32,7 +32,6 @@ describe('AddReactionButton', () => {
     test('should show emoji picker when clicked and then close it when an emoji is selected', async () => {
         const props = {
             post: TestHelper.getPostMock({user_id: userId, channel_id: 'channelId'}),
-            teamId: 'teamId',
             onEmojiClick: jest.fn(),
         };
 

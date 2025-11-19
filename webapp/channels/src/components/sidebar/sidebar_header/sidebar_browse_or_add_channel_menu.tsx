@@ -78,7 +78,6 @@ export default function SidebarBrowserOrAddChannelMenu(props: Props) {
         );
     }
 
-    // DM/GM作成権限に基づいてメニュー項目を表示
     let createDirectMessageMenuItem: JSX.Element | null = null;
     if (props.canCreateDirectChannel || props.canCreateGroupChannel) {
         createDirectMessageMenuItem = (
