@@ -108,6 +108,10 @@ function canInteractWithDMGMChannel(state: GlobalState, channel?: Channel): bool
         return true;
     }
 
+    if (!state.entities?.roles?.roles) {
+        return false;
+    }
+
     if (isDM) {
         return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
     }
@@ -124,6 +128,10 @@ export function canPostInDMGMChannel(state: GlobalState, channel?: Channel): boo
 }
 
 export function canCreateDMGMChannel(state: GlobalState): boolean {
+    if (!state.entities?.roles?.roles) {
+        return false;
+    }
+
     const canCreateDM = haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
     const canCreateGM = haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
     return canCreateDM || canCreateGM;

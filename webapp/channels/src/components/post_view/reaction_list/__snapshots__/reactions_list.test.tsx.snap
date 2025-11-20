@@ -77,7 +77,6 @@ exports[`components/ReactionList should render when there are reactions 1`] = `
         "user_id": "user_id",
       }
     }
-    teamId="teamId"
   />
 </div>
 `;
