@@ -147,6 +147,12 @@ describe('Actions.User', () => {
             },
             users: {
                 currentUserId: 'current_user_id',
+                profiles: {
+                    current_user_id: {
+                        id: 'current_user_id',
+                        roles: 'system_user',
+                    } as UserProfile,
+                },
                 profilesInChannel: {
                     group_channel_2: new Set(['user_1', 'user_2']),
                 },
@@ -365,6 +371,13 @@ describe('Actions.User', () => {
                         [getPreferenceKey(Preferences.CATEGORY_SIDEBAR_SETTINGS, Preferences.LIMIT_VISIBLE_DMS_GMS)]: {value: '10'},
                         [getPreferenceKey(Preferences.CATEGORY_GROUP_CHANNEL_SHOW, gmChannel1.id)]: {value: 'true'},
                         [getPreferenceKey(Preferences.CATEGORY_GROUP_CHANNEL_SHOW, gmChannel2.id)]: {value: 'true'},
+                    },
+                },
+                roles: {
+                    roles: {
+                        system_user: {
+                            permissions: ['create_direct_channel', 'create_group_channel'],
+                        },
                     },
                 },
             },
@@ -587,6 +600,13 @@ describe('Actions.User', () => {
                 },
                 general: {
                     config: {},
+                },
+                roles: {
+                    roles: {
+                        system_user: {
+                            permissions: ['create_direct_channel', 'create_group_channel'],
+                        },
+                    },
                 },
             },
             storage: {
