@@ -34,8 +34,6 @@ function mapStateToProps(state: GlobalState) {
     let canCreatePublicChannel = false;
     let canCreatePrivateChannel = false;
     let canJoinPublicChannel = false;
-    let canCreateDirectChannel = false;
-    let canCreateGroupChannel = false;
 
     if (currentTeam) {
         canCreatePublicChannel = haveICurrentChannelPermission(state, Permissions.CREATE_PUBLIC_CHANNEL);
@@ -44,8 +42,6 @@ function mapStateToProps(state: GlobalState) {
     }
 
     const canCreateDMGM = canCreateDMGMChannel(state);
-    canCreateDirectChannel = canCreateDMGM;
-    canCreateGroupChannel = canCreateDMGM;
 
     const canCreateCustomGroups = isCustomGroupsEnabled(state) && haveISystemPermission(state, {permission: Permissions.CREATE_CUSTOM_GROUP});
 
@@ -54,8 +50,8 @@ function mapStateToProps(state: GlobalState) {
         canCreatePrivateChannel,
         canCreatePublicChannel,
         canJoinPublicChannel,
-        canCreateDirectChannel,
-        canCreateGroupChannel,
+        canCreateDirectChannel: canCreateDMGM,
+        canCreateGroupChannel: canCreateDMGM,
         isOpen: getIsLhsOpen(state),
         unreadFilterEnabled,
         isMobileView: getIsMobileView(state),

@@ -28,13 +28,14 @@ function makeMapStateToProps() {
     const getChannelIdsForCategory = makeGetFilteredChannelIdsForCategory();
 
     return (state: GlobalState, ownProps: OwnProps) => {
+        const canCreateDMGM = canCreateDMGMChannel(state);
         return {
             channelIds: getChannelIdsForCategory(state, ownProps.category),
             draggingState: getDraggingState(state),
             currentUserId: getCurrentUserId(state),
             isAdmin: isAdmin(getCurrentUser(state).roles),
-            canCreateDirectChannel: canCreateDMGMChannel(state),
-            canCreateGroupChannel: canCreateDMGMChannel(state),
+            canCreateDirectChannel: canCreateDMGM,
+            canCreateGroupChannel: canCreateDMGM,
         };
     };
 }
