@@ -698,21 +698,29 @@ describe('Actions.User', () => {
     });
 
     it('should not load DM profiles when user lacks create_direct_channel permission', async () => {
+        const gmChannel = {id: 'gmChannel', type: General.GM_CHANNEL, delete_at: 0};
+        const dmsCategory = {id: 'dmsCategory', type: CategoryTypes.DIRECT_MESSAGES, channel_ids: [gmChannel.id]};
+
         const state = {
             entities: {
                 channelCategories: {
-                    byId: {},
+                    byId: {
+                        dmsCategory,
+                    },
                     orderByTeam: {
-                        '': [],
+                        '': [dmsCategory.id],
                     },
                 },
                 channels: {
                     channels: {
-                        dmChannel: {id: 'dmChannel', type: General.DM_CHANNEL, name: 'user1__user2'},
+                        gmChannel,
                     },
                     channelsInTeam: {},
                     myMembers: {
-                        dmChannel: {},
+                        [gmChannel.id]: {last_viewed_at: 1000},
+                    },
+                    messageCounts: {
+                        [gmChannel.id]: {total: 10} as ChannelMessageCount,
                     },
                 },
                 users: {
@@ -725,7 +733,9 @@ describe('Actions.User', () => {
                     currentUserId: 'current_user_id',
                 },
                 preferences: {
-                    myPreferences: {},
+                    myPreferences: {
+                        [getPreferenceKey(Preferences.CATEGORY_GROUP_CHANNEL_SHOW, gmChannel.id)]: {value: 'true'},
+                    },
                 },
                 teams: {
                     currentTeamId: '',
@@ -758,30 +768,34 @@ describe('Actions.User', () => {
         (store.getState as jest.MockedFunction<() => GlobalState>).mockImplementation(testStore.getState);
         (store.dispatch as jest.MockedFunction<Dispatch<AnyAction>>).mockImplementation(testStore.dispatch);
 
-        await UserActions.getGMsForLoading(state);
-        const channels = Object.values(state.entities.channels.channels);
-        const gmChannels = channels.filter((c) => c.type === General.GM_CHANNEL);
-        expect(gmChannels).toEqual([]);
+        const result = UserActions.getGMsForLoading(state);
+        expect(result).toEqual([gmChannel]);
     });
 
     it('should not load any DM/GM profiles when user lacks both permissions', async () => {
+        const gmChannel = {id: 'gmChannel', type: General.GM_CHANNEL, delete_at: 0};
+        const dmsCategory = {id: 'dmsCategory', type: CategoryTypes.DIRECT_MESSAGES, channel_ids: [gmChannel.id]};
+
         const state = {
             entities: {
                 channelCategories: {
-                    byId: {},
+                    byId: {
+                        dmsCategory,
+                    },
                     orderByTeam: {
-                        '': [],
+                        '': [dmsCategory.id],
                     },
                 },
                 channels: {
                     channels: {
-                        dmChannel: {id: 'dmChannel', type: General.DM_CHANNEL, name: 'user1__user2'},
-                        gmChannel: {id: 'gmChannel', type: General.GM_CHANNEL, name: 'gmChannel'},
+                        gmChannel,
                     },
                     channelsInTeam: {},
                     myMembers: {
-                        dmChannel: {},
-                        gmChannel: {},
+                        [gmChannel.id]: {last_viewed_at: 1000},
+                    },
+                    messageCounts: {
+                        [gmChannel.id]: {total: 10} as ChannelMessageCount,
                     },
                 },
                 users: {
@@ -794,7 +808,9 @@ describe('Actions.User', () => {
                     currentUserId: 'current_user_id',
                 },
                 preferences: {
-                    myPreferences: {},
+                    myPreferences: {
+                        [getPreferenceKey(Preferences.CATEGORY_GROUP_CHANNEL_SHOW, gmChannel.id)]: {value: 'true'},
+                    },
                 },
                 teams: {
                     currentTeamId: '',
@@ -826,9 +842,8 @@ describe('Actions.User', () => {
         const testStore = mockStore(state);
         (store.getState as jest.MockedFunction<() => GlobalState>).mockImplementation(testStore.getState);
         (store.dispatch as jest.MockedFunction<Dispatch<AnyAction>>).mockImplementation(testStore.dispatch);
-        const actions = testStore.getActions();
 
-        await UserActions.loadProfilesForGM();
-        expect(actions).toEqual([]);
+        const result = UserActions.getGMsForLoading(state);
+        expect(result).toEqual([]);
     });
 });
