@@ -630,4 +630,205 @@ describe('Actions.User', () => {
         await UserActions.loadProfilesForGM();
         expect(actions).toEqual([{args: [['gmChannel']], type: 'MOCK_GET_PROFILES_IN_GROUP_CHANNELS'}]);
     });
+
+    it('should not load GM profiles when user lacks create_group_channel permission', async () => {
+        const state = {
+            entities: {
+                channelCategories: {
+                    byId: {},
+                    orderByTeam: {
+                        '': [],
+                    },
+                },
+                channels: {
+                    channels: {
+                        gmChannel: {id: 'gmChannel', type: General.GM_CHANNEL, name: 'gmChannel'},
+                    },
+                    channelsInTeam: {},
+                    myMembers: {
+                        gmChannel: {},
+                    },
+                },
+                users: {
+                    profiles: {
+                        current_user_id: {
+                            id: 'current_user_id',
+                            roles: 'system_user',
+                        },
+                    },
+                    currentUserId: 'current_user_id',
+                },
+                preferences: {
+                    myPreferences: {},
+                },
+                teams: {
+                    currentTeamId: '',
+                },
+                general: {
+                    config: {},
+                },
+                roles: {
+                    roles: {
+                        system_user: {
+                            permissions: ['create_direct_channel'], // Only DM, no GM permission
+                        },
+                    },
+                },
+            },
+            storage: {
+                storage: {},
+            },
+            views: {
+                channel: {
+                    lastViewedChannel: null,
+                },
+                channelSidebar: {
+                    unreadFilterEnabled: false,
+                },
+            },
+        } as unknown as GlobalState;
+
+        const testStore = mockStore(state);
+        (store.getState as jest.MockedFunction<() => GlobalState>).mockImplementation(testStore.getState);
+        (store.dispatch as jest.MockedFunction<Dispatch<AnyAction>>).mockImplementation(testStore.dispatch);
+        const actions = testStore.getActions();
+
+        await UserActions.loadProfilesForGM();
+        expect(actions).toEqual([]);
+    });
+
+    it('should not load DM profiles when user lacks create_direct_channel permission', async () => {
+        const state = {
+            entities: {
+                channelCategories: {
+                    byId: {},
+                    orderByTeam: {
+                        '': [],
+                    },
+                },
+                channels: {
+                    channels: {
+                        dmChannel: {id: 'dmChannel', type: General.DM_CHANNEL, name: 'user1__user2'},
+                    },
+                    channelsInTeam: {},
+                    myMembers: {
+                        dmChannel: {},
+                    },
+                },
+                users: {
+                    profiles: {
+                        current_user_id: {
+                            id: 'current_user_id',
+                            roles: 'system_user',
+                        },
+                    },
+                    currentUserId: 'current_user_id',
+                },
+                preferences: {
+                    myPreferences: {},
+                },
+                teams: {
+                    currentTeamId: '',
+                },
+                general: {
+                    config: {},
+                },
+                roles: {
+                    roles: {
+                        system_user: {
+                            permissions: ['create_group_channel'], // Only GM, no DM permission
+                        },
+                    },
+                },
+            },
+            storage: {
+                storage: {},
+            },
+            views: {
+                channel: {
+                    lastViewedChannel: null,
+                },
+                channelSidebar: {
+                    unreadFilterEnabled: false,
+                },
+            },
+        } as unknown as GlobalState;
+
+        const testStore = mockStore(state);
+        (store.getState as jest.MockedFunction<() => GlobalState>).mockImplementation(testStore.getState);
+        (store.dispatch as jest.MockedFunction<Dispatch<AnyAction>>).mockImplementation(testStore.dispatch);
+
+        await UserActions.getGMsForLoading(state);
+        const channels = Object.values(state.entities.channels.channels);
+        const gmChannels = channels.filter((c) => c.type === General.GM_CHANNEL);
+        expect(gmChannels).toEqual([]);
+    });
+
+    it('should not load any DM/GM profiles when user lacks both permissions', async () => {
+        const state = {
+            entities: {
+                channelCategories: {
+                    byId: {},
+                    orderByTeam: {
+                        '': [],
+                    },
+                },
+                channels: {
+                    channels: {
+                        dmChannel: {id: 'dmChannel', type: General.DM_CHANNEL, name: 'user1__user2'},
+                        gmChannel: {id: 'gmChannel', type: General.GM_CHANNEL, name: 'gmChannel'},
+                    },
+                    channelsInTeam: {},
+                    myMembers: {
+                        dmChannel: {},
+                        gmChannel: {},
+                    },
+                },
+                users: {
+                    profiles: {
+                        current_user_id: {
+                            id: 'current_user_id',
+                            roles: 'system_user',
+                        },
+                    },
+                    currentUserId: 'current_user_id',
+                },
+                preferences: {
+                    myPreferences: {},
+                },
+                teams: {
+                    currentTeamId: '',
+                },
+                general: {
+                    config: {},
+                },
+                roles: {
+                    roles: {
+                        system_user: {
+                            permissions: [], // No DM/GM permissions
+                        },
+                    },
+                },
+            },
+            storage: {
+                storage: {},
+            },
+            views: {
+                channel: {
+                    lastViewedChannel: null,
+                },
+                channelSidebar: {
+                    unreadFilterEnabled: false,
+                },
+            },
+        } as unknown as GlobalState;
+
+        const testStore = mockStore(state);
+        (store.getState as jest.MockedFunction<() => GlobalState>).mockImplementation(testStore.getState);
+        (store.dispatch as jest.MockedFunction<Dispatch<AnyAction>>).mockImplementation(testStore.dispatch);
+        const actions = testStore.getActions();
+
+        await UserActions.loadProfilesForGM();
+        expect(actions).toEqual([]);
+    });
 });

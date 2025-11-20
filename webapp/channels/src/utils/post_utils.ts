@@ -142,18 +142,20 @@ export function canDeletePost(state: GlobalState, post: Post, channel?: Channel)
         return false;
     }
 
-    if (channel && channel.delete_at !== 0) {
+    const targetChannel = channel ?? getChannel(state, post.channel_id);
+
+    if (targetChannel && targetChannel.delete_at !== 0) {
         return false;
     }
 
-    if (!canPostInDMGMChannel(state, channel)) {
+    if (!canPostInDMGMChannel(state, targetChannel)) {
         return false;
     }
 
     if (isPostOwner(state, post)) {
-        return haveIChannelPermission(state, channel && channel.team_id, post.channel_id, Permissions.DELETE_POST);
+        return haveIChannelPermission(state, targetChannel?.team_id, post.channel_id, Permissions.DELETE_POST);
     }
-    return haveIChannelPermission(state, channel && channel.team_id, post.channel_id, Permissions.DELETE_OTHERS_POSTS);
+    return haveIChannelPermission(state, targetChannel?.team_id, post.channel_id, Permissions.DELETE_OTHERS_POSTS);
 }
 
 export function canEditPost(
@@ -164,11 +166,21 @@ export function canEditPost(
     channel?: Channel,
     userId?: string,
 ): boolean {
-    if (!canPostInDMGMChannel(state, channel)) {
+    const targetChannel = channel ?? getChannel(state, post.channel_id);
+
+    if (!canPostInDMGMChannel(state, targetChannel)) {
         return false;
     }
 
-    return canEditPostRedux(state, config, license, channel?.team_id ?? '', channel?.id ?? '', userId ?? '', post);
+    return canEditPostRedux(
+        state,
+        config,
+        license,
+        targetChannel?.team_id ?? '',
+        targetChannel?.id ?? '',
+        userId ?? '',
+        post,
+    );
 }
 
 export function shouldShowDotMenu(state: GlobalState, post: Post, channel: Channel): boolean {
