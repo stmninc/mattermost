@@ -697,7 +697,7 @@ describe('Actions.User', () => {
         expect(actions).toEqual([]);
     });
 
-    it('should not load DM profiles when user lacks create_direct_channel permission', async () => {
+    it('should load GM profiles when user has create_group_channel permission', async () => {
         const gmChannel = {id: 'gmChannel', type: General.GM_CHANNEL, delete_at: 0};
         const dmsCategory = {id: 'dmsCategory', type: CategoryTypes.DIRECT_MESSAGES, channel_ids: [gmChannel.id]};
 
