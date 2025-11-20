@@ -19,9 +19,9 @@ import {getIsRhsOpen, getRhsState} from 'selectors/rhs';
 import {getIsMobileView} from 'selectors/views/browser';
 import {isUnreadFilterEnabled} from 'selectors/views/channel_sidebar';
 import {isModalOpen} from 'selectors/views/modals';
+import {canCreateDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 
 import {ModalIdentifiers} from 'utils/constants';
-import {canCreateDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 

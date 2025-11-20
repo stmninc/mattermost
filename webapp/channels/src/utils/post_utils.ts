@@ -25,15 +25,10 @@ import {getAllGroupsForReferenceByName} from 'mattermost-redux/selectors/entitie
 import {isPostFlagged, makeGetReactionsForPost} from 'mattermost-redux/selectors/entities/posts';
 import {getTeammateNameDisplaySetting, isCollapsedThreadsEnabled} from 'mattermost-redux/selectors/entities/preferences';
 import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
+import {canPostInDMGMChannel as canPostInDMGMChannelUtil, canCreateDMGMChannel as canCreateDMGMChannelUtil} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getCurrentTeamId, getTeam} from 'mattermost-redux/selectors/entities/teams';
 import {makeGetDisplayName, getCurrentUserId, getUser, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
 import type {UserMentionKey} from 'mattermost-redux/selectors/entities/users';
-
-import {
-    canInteractWithDMGMChannel,
-    canPostInDMGMChannel as canPostInDMGMChannelUtil,
-    canCreateDMGMChannel as canCreateDMGMChannelUtil,
-} from 'utils/dm_gm_permissions';
 import {getUserIdFromChannelName} from 'mattermost-redux/utils/channel_utils';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
 import * as PostListUtils from 'mattermost-redux/utils/post_list';

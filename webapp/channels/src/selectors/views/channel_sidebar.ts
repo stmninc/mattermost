@@ -6,7 +6,6 @@ import {CategorySorting} from '@mattermost/types/channel_categories';
 import type {Channel} from '@mattermost/types/channels';
 import type {RelationOneToOne} from '@mattermost/types/utilities';
 
-import {General} from 'mattermost-redux/constants';
 import {CategoryTypes} from 'mattermost-redux/constants/channel_categories';
 import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {
@@ -21,16 +20,12 @@ import {
     getUnreadChannelIds,
     sortUnreadChannels,
 } from 'mattermost-redux/selectors/entities/channels';
+import {canCreateDMGMChannel, shouldHideDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {shouldShowUnreadsCategory, isCollapsedThreadsEnabled} from 'mattermost-redux/selectors/entities/preferences';
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
 
 import type {DraggingState, GlobalState} from 'types/store';
-
-import {
-    canCreateDMGMChannel,
-    shouldHideDMGMChannel,
-} from 'utils/dm_gm_permissions';
 
 export function isUnreadFilterEnabled(state: GlobalState): boolean {
     return state.views.channelSidebar.unreadFilterEnabled && !shouldShowUnreadsCategory(state);

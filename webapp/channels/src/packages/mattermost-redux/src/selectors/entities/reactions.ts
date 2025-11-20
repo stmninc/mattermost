@@ -5,9 +5,8 @@ import type {GlobalState} from '@mattermost/types/store';
 
 import {Permissions} from 'mattermost-redux/constants';
 
-import {canInteractWithDMGMChannel} from 'utils/dm_gm_permissions';
-
 import {getChannel} from './channels';
+import {canInteractWithDMGMChannel} from './dm_gm_permissions';
 import {haveIChannelPermission} from './roles';
 
 export function canAddReactions(state: GlobalState, channelId: string) {

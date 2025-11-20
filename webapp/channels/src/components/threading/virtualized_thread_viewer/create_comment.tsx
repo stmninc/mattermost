@@ -9,13 +9,13 @@ import {ArchiveOutlineIcon} from '@mattermost/compass-icons/components';
 import type {UserProfile} from '@mattermost/types/users';
 
 import {makeGetChannel} from 'mattermost-redux/selectors/entities/channels';
+import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getPost, getLimitedViews} from 'mattermost-redux/selectors/entities/posts';
 
 import AdvancedCreateComment from 'components/advanced_create_comment';
 import BasicSeparator from 'components/widgets/separator/basic-separator';
 
 import Constants from 'utils/constants';
-import {canPostInDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 

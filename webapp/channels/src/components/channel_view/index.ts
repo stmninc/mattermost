@@ -18,10 +18,9 @@ import {getCurrentRelativeTeamUrl} from 'mattermost-redux/selectors/entities/tea
 import {isFirstAdmin} from 'mattermost-redux/selectors/entities/users';
 
 import {goToLastViewedChannel} from 'actions/views/channel';
+import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 
 import {getIsChannelBookmarksEnabled} from 'components/channel_bookmarks/utils';
-
-import {canPostInDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 

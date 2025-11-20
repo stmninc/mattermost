@@ -46,6 +46,7 @@ import type TextboxClass from 'components/textbox/textbox';
 import {convertDisplayPositionToRawPosition, convertRawPositionToDisplayPosition} from 'components/textbox/util';
 import {OnboardingTourSteps, OnboardingTourStepsForGuestUsers, TutorialTourName} from 'components/tours/constant';
 import {SendMessageTour} from 'components/tours/onboarding_tour';
+import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 
 import Constants, {
     Locations,
@@ -59,7 +60,7 @@ import Constants, {
 import {canUploadFiles as canUploadFilesAccordingToConfig} from 'utils/file_utils';
 import type {ApplyMarkdownOptions} from 'utils/markdown/apply_markdown';
 import {applyMarkdown as applyMarkdownUtil} from 'utils/markdown/apply_markdown';
-import {isErrorInvalidSlashCommand, canPostInDMGMChannel} from 'utils/post_utils';
+import {isErrorInvalidSlashCommand} from 'utils/post_utils';
 import {allAtMentions} from 'utils/text_formatting';
 import * as Utils from 'utils/utils';
 

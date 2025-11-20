@@ -26,11 +26,11 @@ import {getVisibleDmGmLimit} from 'mattermost-redux/selectors/entities/preferenc
 import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 
 import {trackEvent} from 'actions/telemetry_actions';
+import {canCreateDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 
 import * as Menu from 'components/menu';
 
 import Constants from 'utils/constants';
-import {canCreateDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 

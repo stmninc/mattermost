@@ -9,12 +9,11 @@ import type {ChannelCategory} from '@mattermost/types/channel_categories';
 
 import {setCategoryCollapsed, setCategorySorting} from 'mattermost-redux/actions/channel_categories';
 import {savePreferences} from 'mattermost-redux/actions/preferences';
+import {canCreateDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getCurrentUser, getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 import {isAdmin} from 'mattermost-redux/utils/user_utils';
 
 import {getDraggingState, makeGetFilteredChannelIdsForCategory} from 'selectors/views/channel_sidebar';
-
-import {canCreateDMGMChannel} from 'utils/post_utils';
 
 import type {GlobalState} from 'types/store';
 
