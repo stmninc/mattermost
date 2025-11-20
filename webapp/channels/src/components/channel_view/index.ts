@@ -12,13 +12,13 @@ import {
     getMyChannelMembership,
     isDeactivatedDirectChannel,
 } from 'mattermost-redux/selectors/entities/channels';
+import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getConfig, getLicense} from 'mattermost-redux/selectors/entities/general';
 import {getRoles} from 'mattermost-redux/selectors/entities/roles_helpers';
 import {getCurrentRelativeTeamUrl} from 'mattermost-redux/selectors/entities/teams';
 import {isFirstAdmin} from 'mattermost-redux/selectors/entities/users';
 
 import {goToLastViewedChannel} from 'actions/views/channel';
-import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 
 import {getIsChannelBookmarksEnabled} from 'components/channel_bookmarks/utils';
 

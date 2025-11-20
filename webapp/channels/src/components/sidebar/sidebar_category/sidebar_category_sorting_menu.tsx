@@ -22,11 +22,11 @@ import {CategorySorting} from '@mattermost/types/channel_categories';
 import {setCategorySorting} from 'mattermost-redux/actions/channel_categories';
 import {savePreferences} from 'mattermost-redux/actions/preferences';
 import {Preferences} from 'mattermost-redux/constants';
+import {canCreateDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getVisibleDmGmLimit} from 'mattermost-redux/selectors/entities/preferences';
 import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 
 import {trackEvent} from 'actions/telemetry_actions';
-import {canCreateDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 
 import * as Menu from 'components/menu';
 

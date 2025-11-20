@@ -12,6 +12,7 @@ import type {Post} from '@mattermost/types/posts';
 
 import {Posts} from 'mattermost-redux/constants/index';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
+import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
 import {isPostEphemeral} from 'mattermost-redux/utils/post_utils';
 
@@ -22,7 +23,6 @@ import DotMenu from 'components/dot_menu';
 import PostFlagIcon from 'components/post_view/post_flag_icon';
 import PostReaction from 'components/post_view/post_reaction';
 import PostRecentReactions from 'components/post_view/post_recent_reactions';
-import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 
 import {Locations, Constants} from 'utils/constants';
 import {isSystemMessage, fromAutoResponder} from 'utils/post_utils';
