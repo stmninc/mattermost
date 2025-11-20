@@ -21,6 +21,7 @@ describe('SidebarHeader', () => {
         showCreateCategoryModal: jest.fn(),
         canCreateChannel: true,
         canJoinPublicChannel: true,
+        canCreateDMGM: true,
         handleOpenDirectMessagesModal: jest.fn(),
         unreadFilterEnabled: true,
         showCreateUserGroupModal: jest.fn(),

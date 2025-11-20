@@ -12,6 +12,7 @@ import {
     getMyChannelMembership,
     isDeactivatedDirectChannel,
 } from 'mattermost-redux/selectors/entities/channels';
+import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getConfig, getLicense} from 'mattermost-redux/selectors/entities/general';
 import {getRoles} from 'mattermost-redux/selectors/entities/roles_helpers';
 import {getCurrentRelativeTeamUrl} from 'mattermost-redux/selectors/entities/teams';
@@ -40,6 +41,7 @@ function mapStateToProps(state: GlobalState) {
     const enableWebSocketEventScope = config.FeatureFlagWebSocketEventScope === 'true';
 
     const missingChannelRole = isMissingChannelRoles(state, channel);
+    const canPostInDMGM = canPostInDMGMChannel(state, channel);
 
     return {
         channelId: channel ? channel.id : '',
@@ -53,6 +55,7 @@ function mapStateToProps(state: GlobalState) {
         enableWebSocketEventScope,
         isChannelBookmarksEnabled: getIsChannelBookmarksEnabled(state),
         missingChannelRole,
+        canPostInDMGM,
     };
 }
 

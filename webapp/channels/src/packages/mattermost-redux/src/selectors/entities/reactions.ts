@@ -6,12 +6,17 @@ import type {GlobalState} from '@mattermost/types/store';
 import {Permissions} from 'mattermost-redux/constants';
 
 import {getChannel} from './channels';
+import {canInteractWithDMGMChannel} from './dm_gm_permissions';
 import {haveIChannelPermission} from './roles';
 
 export function canAddReactions(state: GlobalState, channelId: string) {
     const channel = getChannel(state, channelId);
 
     if (!channel || channel.delete_at > 0) {
+        return false;
+    }
+
+    if (!canInteractWithDMGMChannel(state, channel)) {
         return false;
     }
 
@@ -22,6 +27,10 @@ export function canRemoveReactions(state: GlobalState, channelId: string) {
     const channel = getChannel(state, channelId);
 
     if (!channel || channel.delete_at > 0) {
+        return false;
+    }
+
+    if (!canInteractWithDMGMChannel(state, channel)) {
         return false;
     }
 

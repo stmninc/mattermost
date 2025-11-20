@@ -12,6 +12,7 @@ import type {SchedulingInfo} from '@mattermost/types/schedule_post';
 import {savePreferences} from 'mattermost-redux/actions/preferences';
 import {Permissions} from 'mattermost-redux/constants';
 import {getChannel, makeGetChannel, getDirectChannel} from 'mattermost-redux/selectors/entities/channels';
+import {canPostInDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getConfig, getFeatureFlagValue} from 'mattermost-redux/selectors/entities/general';
 import {get, getBool, getInt, getTeammateNameDisplaySetting} from 'mattermost-redux/selectors/entities/preferences';
 import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
@@ -168,7 +169,15 @@ const AdvancedTextEditor = ({
     const draftFromStore = useSelector((state: GlobalState) => getDraftSelector(state, channelId, rootId, storageKey));
     const badConnection = useSelector((state: GlobalState) => connectionErrorCount(state) > 1);
     const maxPostSize = useSelector((state: GlobalState) => parseInt(getConfig(state).MaxPostSize || '', 10) || Constants.DEFAULT_CHARACTER_LIMIT);
-    const canUploadFiles = useSelector((state: GlobalState) => canUploadFilesAccordingToConfig(getConfig(state)));
+    const canUploadFiles = useSelector((state: GlobalState) => {
+        const configCanUpload = canUploadFilesAccordingToConfig(getConfig(state));
+        if (!configCanUpload) {
+            return false;
+        }
+
+        const channel = getChannel(state, channelId);
+        return canPostInDMGMChannel(state, channel);
+    });
     const fullWidthTextBox = useSelector((state: GlobalState) => get(state, Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.CHANNEL_DISPLAY_MODE, Preferences.CHANNEL_DISPLAY_MODE_DEFAULT) === Preferences.CHANNEL_DISPLAY_MODE_FULL_SCREEN);
     const isFormattingBarHidden = useSelector((state: GlobalState) => {
         const preferenceName = getFormattingBarPreferenceName();

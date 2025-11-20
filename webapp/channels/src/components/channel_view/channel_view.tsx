@@ -166,6 +166,26 @@ export default class ChannelView extends React.PureComponent<Props, State> {
                     </div>
                 </div>
             );
+        } else if (!this.props.canPostInDMGM) {
+            createPost = (
+                <div
+                    className='post-create__container'
+                    id='post-create'
+                >
+                    <div
+                        id='dmgmRestrictedMessage'
+                        className='channel-archived__message'
+                    >
+                        <FormattedMessage
+                            id='channelView.dmgmRestricted'
+                            defaultMessage='You are viewing a <b>direct or group message</b>. You do not have permission to post messages.'
+                            values={{
+                                b: (chunks: string) => <b>{chunks}</b>,
+                            }}
+                        />
+                    </div>
+                </div>
+            );
         } else if (this.props.missingChannelRole || this.state.waitForLoader) {
             createPost = <InputLoading updateWaitForLoader={this.onUpdateInputShowLoader}/>;
         } else {

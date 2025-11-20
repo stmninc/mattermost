@@ -6,6 +6,7 @@ import {CategorySorting} from '@mattermost/types/channel_categories';
 import type {Channel} from '@mattermost/types/channels';
 import type {RelationOneToOne} from '@mattermost/types/utilities';
 
+import {CategoryTypes} from 'mattermost-redux/constants/channel_categories';
 import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {
     makeGetCategoriesForTeam,
@@ -19,6 +20,7 @@ import {
     getUnreadChannelIds,
     sortUnreadChannels,
 } from 'mattermost-redux/selectors/entities/channels';
+import {canCreateDMGMChannel, shouldHideDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {shouldShowUnreadsCategory, isCollapsedThreadsEnabled} from 'mattermost-redux/selectors/entities/preferences';
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
@@ -34,7 +36,13 @@ export const getCategoriesForCurrentTeam: (state: GlobalState) => ChannelCategor
 
     return memoizeResult((state: GlobalState) => {
         const currentTeamId = getCurrentTeamId(state);
-        return getCategoriesForTeam(state, currentTeamId);
+        const categories = getCategoriesForTeam(state, currentTeamId);
+
+        if (!canCreateDMGMChannel(state)) {
+            return categories.filter((category) => category.type !== CategoryTypes.DIRECT_MESSAGES);
+        }
+
+        return categories;
     });
 })();
 
@@ -75,12 +83,17 @@ export const getChannelsInCategoryOrder = (() => {
         getCurrentChannelId,
         getUnreadChannelIdsSet,
         shouldShowUnreadsCategory,
-        (categories, channelsByCategory, currentChannelId, unreadChannelIds, showUnreadsCategory) => {
+        (state: GlobalState) => canCreateDMGMChannel(state),
+        (categories, channelsByCategory, currentChannelId, unreadChannelIds, showUnreadsCategory, hasPermissions) => {
             return categories.map((category) => {
                 const channels = channelsByCategory[category.id];
 
                 return channels.filter((channel: Channel) => {
                     const isUnread = unreadChannelIds.has(channel.id);
+
+                    if (shouldHideDMGMChannel(hasPermissions, channel, currentChannelId)) {
+                        return false;
+                    }
 
                     if (showUnreadsCategory) {
                         // Filter out channels that have been moved to the Unreads category
@@ -112,7 +125,8 @@ export const getUnreadChannels = (() => {
         getUnreadChannelIdsSet,
         getCurrentChannelId,
         isUnreadFilterEnabled,
-        (allChannels, unreadChannelIds, currentChannelId, unreadFilterEnabled) => {
+        (state: GlobalState) => canCreateDMGMChannel(state),
+        (allChannels, unreadChannelIds, currentChannelId, unreadFilterEnabled, hasPermissions) => {
             const unreadChannels: Channel[] = [];
 
             for (const channelId of unreadChannelIds) {
@@ -121,6 +135,10 @@ export const getUnreadChannels = (() => {
                 if (channel) {
                     // Only include an archived channel if it's the current channel
                     if (channel.delete_at > 0 && channel.id !== currentChannelId) {
+                        continue;
+                    }
+
+                    if (shouldHideDMGMChannel(hasPermissions, channel, currentChannelId)) {
                         continue;
                     }
 
@@ -198,12 +216,23 @@ export function makeGetFilteredChannelIdsForCategory(): (state: GlobalState, cat
         getChannelIdsForCategory,
         getUnreadChannelIdsSet,
         (state: GlobalState) => shouldShowUnreadsCategory(state),
-        (channelIds, unreadChannelIdsSet, showUnreadsCategory) => {
-            if (!showUnreadsCategory) {
-                return channelIds;
+        getCurrentChannelId,
+        getAllChannels,
+        (state: GlobalState) => canCreateDMGMChannel(state),
+        (channelIds, unreadChannelIdsSet, showUnreadsCategory, currentChannelId, allChannels, hasPermissions) => {
+            let filtered = channelIds;
+
+            if (showUnreadsCategory) {
+                filtered = filtered.filter((id) => !unreadChannelIdsSet.has(id));
             }
 
-            const filtered = channelIds.filter((id) => !unreadChannelIdsSet.has(id));
+            filtered = filtered.filter((id) => {
+                const channel = allChannels[id];
+                if (!channel) {
+                    return true;
+                }
+                return !shouldHideDMGMChannel(hasPermissions, channel, currentChannelId);
+            });
 
             return filtered.length === channelIds.length ? channelIds : filtered;
         },

@@ -7,6 +7,8 @@ import type {Dispatch} from 'redux';
 
 import type {Emoji} from '@mattermost/types/emojis';
 
+import {canAddReactions} from 'mattermost-redux/selectors/entities/reactions';
+
 import {toggleReaction} from 'actions/post_actions';
 import {getEmojiMap} from 'selectors/emojis';
 import {getCurrentLocale} from 'selectors/i18n';
@@ -14,6 +16,10 @@ import {getCurrentLocale} from 'selectors/i18n';
 import type {GlobalState} from 'types/store';
 
 import PostReaction from './post_recent_reactions';
+
+type OwnProps = {
+    channelId?: string;
+};
 
 function mapDispatchToProps(dispatch: Dispatch) {
     return {
@@ -23,14 +29,17 @@ function mapDispatchToProps(dispatch: Dispatch) {
     };
 }
 
-function mapStateToProps(state: GlobalState) {
+function mapStateToProps(state: GlobalState, ownProps: OwnProps) {
     const locale = getCurrentLocale(state);
     const emojiMap = getEmojiMap(state);
     const defaultEmojis = [emojiMap.get('thumbsup'), emojiMap.get('grinning'), emojiMap.get('white_check_mark')] as Emoji[];
 
+    const canAdd = ownProps.channelId ? canAddReactions(state, ownProps.channelId) : false;
+
     return {
         defaultEmojis,
         locale,
+        canAddReactions: canAdd,
     };
 }
 
