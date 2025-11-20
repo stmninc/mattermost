@@ -34,8 +34,7 @@ describe('components/sidebar/sidebar_category', () => {
         touchedInviteMembersButton: false,
         currentUserId: '',
         isAdmin: false,
-        canCreateDirectChannel: true,
-        canCreateGroupChannel: true,
+        canCreateDMGM: true,
         actions: {
             setCategoryCollapsed: jest.fn(),
             setCategorySorting: jest.fn(),

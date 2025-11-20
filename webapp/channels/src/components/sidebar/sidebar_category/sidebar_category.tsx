@@ -44,8 +44,7 @@ type Props = {
     draggingState: DraggingState;
     currentUserId: string;
     isAdmin: boolean;
-    canCreateDirectChannel: boolean;
-    canCreateGroupChannel: boolean;
+    canCreateDMGM: boolean;
     actions: {
         setCategoryCollapsed: (categoryId: string, collapsed: boolean) => void;
         setCategorySorting: (categoryId: string, sorting: CategorySorting) => void;
@@ -247,7 +246,7 @@ export default class SidebarCategory extends React.PureComponent<Props, State> {
             return null;
         }
 
-        if (category.type === CategoryTypes.DIRECT_MESSAGES && !this.props.canCreateDirectChannel && !this.props.canCreateGroupChannel) {
+        if (category.type === CategoryTypes.DIRECT_MESSAGES && !this.props.canCreateDMGM) {
             return null;
         }
 
@@ -276,7 +275,7 @@ export default class SidebarCategory extends React.PureComponent<Props, State> {
             const addHelpLabel = localizeMessage({id: 'sidebar.createDirectMessage', defaultMessage: 'Create new direct message'});
 
             let directMessageAddButton: JSX.Element | null = null;
-            if (this.props.canCreateDirectChannel || this.props.canCreateGroupChannel) {
+            if (this.props.canCreateDMGM) {
                 directMessageAddButton = (
                     <WithTooltip
                         title={

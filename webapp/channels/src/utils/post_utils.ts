@@ -17,17 +17,23 @@ import type {Reaction} from '@mattermost/types/reactions';
 import type {UserProfile} from '@mattermost/types/users';
 
 import {Client4} from 'mattermost-redux/client';
-import {General, Permissions, Posts} from 'mattermost-redux/constants';
+import {Permissions, Posts} from 'mattermost-redux/constants';
 import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getAllGroupsForReferenceByName} from 'mattermost-redux/selectors/entities/groups';
 import {isPostFlagged, makeGetReactionsForPost} from 'mattermost-redux/selectors/entities/posts';
 import {getTeammateNameDisplaySetting, isCollapsedThreadsEnabled} from 'mattermost-redux/selectors/entities/preferences';
-import {haveIChannelPermission, haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
+import {haveIChannelPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentTeamId, getTeam} from 'mattermost-redux/selectors/entities/teams';
 import {makeGetDisplayName, getCurrentUserId, getUser, getUsersByUsername} from 'mattermost-redux/selectors/entities/users';
 import type {UserMentionKey} from 'mattermost-redux/selectors/entities/users';
+
+import {
+    canInteractWithDMGMChannel,
+    canPostInDMGMChannel as canPostInDMGMChannelUtil,
+    canCreateDMGMChannel as canCreateDMGMChannelUtil,
+} from 'utils/dm_gm_permissions';
 import {getUserIdFromChannelName} from 'mattermost-redux/utils/channel_utils';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
 import * as PostListUtils from 'mattermost-redux/utils/post_list';
@@ -96,45 +102,12 @@ export function getImageSrc(src: string, hasImageProxy = false): string {
     return src;
 }
 
-function canInteractWithDMGMChannel(state: GlobalState, channel?: Channel): boolean {
-    if (!channel) {
-        return true;
-    }
-
-    const isDM = channel.type === General.DM_CHANNEL;
-    const isGM = channel.type === General.GM_CHANNEL;
-
-    if (!isDM && !isGM) {
-        return true;
-    }
-
-    if (!state.entities?.roles?.roles) {
-        return false;
-    }
-
-    if (isDM) {
-        return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-    }
-
-    if (isGM) {
-        return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
-    }
-
-    return true;
-}
-
 export function canPostInDMGMChannel(state: GlobalState, channel?: Channel): boolean {
-    return canInteractWithDMGMChannel(state, channel);
+    return canPostInDMGMChannelUtil(state, channel);
 }
 
 export function canCreateDMGMChannel(state: GlobalState): boolean {
-    if (!state.entities?.roles?.roles) {
-        return false;
-    }
-
-    const canCreateDM = haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-    const canCreateGM = haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
-    return canCreateDM || canCreateGM;
+    return canCreateDMGMChannelUtil(state);
 }
 
 export function canDeletePost(state: GlobalState, post: Post, channel?: Channel): boolean {
@@ -148,7 +121,7 @@ export function canDeletePost(state: GlobalState, post: Post, channel?: Channel)
         return false;
     }
 
-    if (!canPostInDMGMChannel(state, targetChannel)) {
+    if (!canPostInDMGMChannelUtil(state, targetChannel)) {
         return false;
     }
 
@@ -168,7 +141,7 @@ export function canEditPost(
 ): boolean {
     const targetChannel = channel ?? getChannel(state, post.channel_id);
 
-    if (!canPostInDMGMChannel(state, targetChannel)) {
+    if (!canPostInDMGMChannelUtil(state, targetChannel)) {
         return false;
     }
 

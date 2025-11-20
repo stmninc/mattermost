@@ -25,24 +25,15 @@ import {shouldShowUnreadsCategory, isCollapsedThreadsEnabled} from 'mattermost-r
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
 
-import {canCreateDMGMChannel} from 'utils/post_utils';
-
 import type {DraggingState, GlobalState} from 'types/store';
+
+import {
+    canCreateDMGMChannel,
+    shouldHideDMGMChannel,
+} from 'utils/dm_gm_permissions';
 
 export function isUnreadFilterEnabled(state: GlobalState): boolean {
     return state.views.channelSidebar.unreadFilterEnabled && !shouldShowUnreadsCategory(state);
-}
-
-function shouldHideDMGMChannel(hasPermissions: boolean, channel: Channel, currentChannelId: string): boolean {
-    if (channel.id === currentChannelId) {
-        return false;
-    }
-
-    if (!hasPermissions && (channel.type === General.DM_CHANNEL || channel.type === General.GM_CHANNEL)) {
-        return true;
-    }
-
-    return false;
 }
 
 export const getCategoriesForCurrentTeam: (state: GlobalState) => ChannelCategory[] = (() => {

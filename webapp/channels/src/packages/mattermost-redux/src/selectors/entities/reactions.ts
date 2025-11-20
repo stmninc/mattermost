@@ -3,29 +3,12 @@
 
 import type {GlobalState} from '@mattermost/types/store';
 
-import {General, Permissions} from 'mattermost-redux/constants';
+import {Permissions} from 'mattermost-redux/constants';
+
+import {canInteractWithDMGMChannel} from 'utils/dm_gm_permissions';
 
 import {getChannel} from './channels';
-import {haveIChannelPermission, haveISystemPermission} from './roles';
-
-function canInteractWithDMGMChannelForReactions(state: GlobalState, channel: {type: string}): boolean {
-    const isDM = channel.type === General.DM_CHANNEL;
-    const isGM = channel.type === General.GM_CHANNEL;
-
-    if (!isDM && !isGM) {
-        return true;
-    }
-
-    if (isDM) {
-        return haveISystemPermission(state, {permission: Permissions.CREATE_DIRECT_CHANNEL});
-    }
-
-    if (isGM) {
-        return haveISystemPermission(state, {permission: Permissions.CREATE_GROUP_CHANNEL});
-    }
-
-    return true;
-}
+import {haveIChannelPermission} from './roles';
 
 export function canAddReactions(state: GlobalState, channelId: string) {
     const channel = getChannel(state, channelId);
@@ -34,7 +17,7 @@ export function canAddReactions(state: GlobalState, channelId: string) {
         return false;
     }
 
-    if (!canInteractWithDMGMChannelForReactions(state, channel)) {
+    if (!canInteractWithDMGMChannel(state, channel)) {
         return false;
     }
 
@@ -48,7 +31,7 @@ export function canRemoveReactions(state: GlobalState, channelId: string) {
         return false;
     }
 
-    if (!canInteractWithDMGMChannelForReactions(state, channel)) {
+    if (!canInteractWithDMGMChannel(state, channel)) {
         return false;
     }
 

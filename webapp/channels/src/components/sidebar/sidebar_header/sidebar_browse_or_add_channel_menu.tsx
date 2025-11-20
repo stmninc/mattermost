@@ -25,8 +25,7 @@ type Props = {
     onCreateNewChannelClick: () => void;
     canJoinPublicChannel: boolean;
     onBrowseChannelClick: () => void;
-    canCreateDirectChannel: boolean;
-    canCreateGroupChannel: boolean;
+    canCreateDMGM: boolean;
     onOpenDirectMessageClick: () => void;
     canCreateCustomGroups: boolean;
     onCreateNewUserGroupClick: () => void;
@@ -79,7 +78,7 @@ export default function SidebarBrowserOrAddChannelMenu(props: Props) {
     }
 
     let createDirectMessageMenuItem: JSX.Element | null = null;
-    if (props.canCreateDirectChannel || props.canCreateGroupChannel) {
+    if (props.canCreateDMGM) {
         createDirectMessageMenuItem = (
             <Menu.Item
                 id='openDirectMessageMenuItem'

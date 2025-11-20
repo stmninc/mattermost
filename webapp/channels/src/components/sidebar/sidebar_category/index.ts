@@ -34,8 +34,7 @@ function makeMapStateToProps() {
             draggingState: getDraggingState(state),
             currentUserId: getCurrentUserId(state),
             isAdmin: isAdmin(getCurrentUser(state).roles),
-            canCreateDirectChannel: canCreateDMGM,
-            canCreateGroupChannel: canCreateDMGM,
+            canCreateDMGM,
         };
     };
 }
