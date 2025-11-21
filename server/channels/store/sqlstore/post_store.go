@@ -2818,14 +2818,13 @@ func (s *SqlPostStore) likeSearchPostsForUser(rctx request.CTX, paramsList []*mo
 
 //nolint:unparam
 func (s *SqlPostStore) SearchPostsForUser(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.PostSearchResults, error) {
-	// Since we don't support paging for DB search, we just return nothing for later pages
-	if page > 0 {
-	} else if false {
-		return model.MakePostSearchResults(model.NewPostList(), nil), nil
-	}
-
 	if true {
 		return s.likeSearchPostsForUser(rctx, paramsList, userId, teamId, page, perPage)
+	}
+
+	// Since we don't support paging for DB search, we just return nothing for later pages
+	if page > 0 {
+		return model.MakePostSearchResults(model.NewPostList(), nil), nil
 	}
 
 	if err := model.IsSearchParamsListValid(paramsList); err != nil {
