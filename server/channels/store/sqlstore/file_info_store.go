@@ -530,21 +530,65 @@ func (fs SqlFileInfoStore) PermanentDeleteByUser(rctx request.CTX, userId string
 	return rowsAffected, nil
 }
 
-func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.FileInfoList, error) {
+func (fs SqlFileInfoStore) likesearch(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.FileInfoList, error) {
 	if err := model.IsSearchParamsListValid(paramsList); err != nil {
 		return nil, err
 	}
 
 	limit := uint64(perPage)
-	if perPage <= 0 {
+	if perPage <= 0  || 60 < perPage {
 		limit = 60
 	}
 
+	// Fetch channel IDs separately first, then user them directly in the main query
+	// Build query to fetch channel IDs that match user scope
+	channelQuery := fs.getQueryBuilder().
+		Select("DISTINCT Channels.Id").
+		From("Channels").
+		LeftJoin("ChannelMembers ON Channels.Id = ChannelMembers.ChannelId")
+
+	if teamId != "" {
+		channelQuery = channelQuery.Where(sq.Or{sq.Eq{"Channels.TeamId": teamId}, sq.Eq{"Channels.TeamId": ""}})
+	}
+
+	// Use the first params for common channel filters
+	params := paramsList[0]
+
+	if !params.IncludeDeletedChannels {
+		channelQuery = channelQuery.Where(sq.Eq{"Channels.DeleteAt": 0})
+	}
+	if !params.SearchWithoutUserId {
+		channelQuery = channelQuery.Where(sq.Eq{"ChannelMembers.UserId": userId})
+	}
+	if len(params.InChannels) != 0 {
+		channelQuery = channelQuery.Where(sq.Eq{"Channels.Id": params.InChannels})
+	}
+	if len(params.ExcludedChannels) != 0 {
+		channelQuery = channelQuery.Where(sq.NotEq{"Channels.Id": params.ExcludedChannels})
+	}
+
+	// Execute the channel ID query
+	channelQueryStr, channelQueryArgs, err := channelQuery.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build channel query")
+	}
+
+	var channelIds []string
+	if err := fs.GetSearchReplicaX().Select(&channelIds, channelQueryStr, channelQueryArgs...); err != nil {
+		return nil, errors.Wrap(err, "failed to fetch channel IDs")
+	}
+
+	// If no channels are found, return empty list early
+	if len(channelIds) == 0 {
+		list := model.NewFileInfoList()
+		list.MakeNonNil()
+		return list, nil
+	}
+
+	// Build main query using the fetched channel IDs
 	query := fs.getQueryBuilder().
 		Select(fs.queryFields...).
 		From("FileInfo").
-		LeftJoin("Channels as C ON C.Id=FileInfo.ChannelId").
-		LeftJoin("ChannelMembers as CM ON C.Id=CM.ChannelId").
 		Where(sq.Eq{"FileInfo.DeleteAt": 0}).
 		Where(sq.Or{
 			sq.Eq{"FileInfo.CreatorId": model.BookmarkFileOwner},
@@ -557,24 +601,8 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 		query = query.Offset(uint64(page) * limit)
 	}
 
-	if teamId != "" {
-		query = query.Where(sq.Or{sq.Eq{"C.TeamId": teamId}, sq.Eq{"C.TeamId": ""}})
-	}
-
 	for _, params := range paramsList {
 		params.Terms = removeNonAlphaNumericUnquotedTerms(params.Terms, " ")
-
-		if !params.IncludeDeletedChannels {
-			query = query.Where(sq.Eq{"C.DeleteAt": 0})
-		}
-
-		if !params.SearchWithoutUserId {
-			query = query.Where(sq.Eq{"CM.UserId": userId})
-		}
-
-		if len(params.InChannels) != 0 {
-			query = query.Where(sq.Eq{"C.Id": params.InChannels})
-		}
 
 		if len(params.Extensions) != 0 {
 			query = query.Where(sq.Eq{"FileInfo.Extension": params.Extensions})
@@ -582,10 +610,6 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 
 		if len(params.ExcludedExtensions) != 0 {
 			query = query.Where(sq.NotEq{"FileInfo.Extension": params.ExcludedExtensions})
-		}
-
-		if len(params.ExcludedChannels) != 0 {
-			query = query.Where(sq.NotEq{"C.Id": params.ExcludedChannels})
 		}
 
 		if len(params.FromUsers) != 0 {
@@ -702,7 +726,138 @@ func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchPa
 			}
 
 			query = query.Where(likeConditions)
-		} else if false {
+		}
+	}
+
+	queryString, args, err := query.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "file_info_tosql")
+	}
+
+	list := model.NewFileInfoList()
+
+	items := []fileInfoWithChannelID{}
+	err = fs.GetSearchReplicaX().Select(&items, queryString, args...)
+	if err != nil {
+		rctx.Logger().Warn("Query error searching files.", mlog.String("error", trimInput(err.Error())))
+		// Don't return the error to the caller as it is of no use to the user. Instead return an empty set of search results.
+	} else {
+		for _, item := range items {
+			info := item.ToModel()
+			list.AddFileInfo(info)
+			list.AddOrder(info.Id)
+		}
+	}
+	list.MakeNonNil()
+	return list, nil
+}
+
+func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.FileInfoList, error) {
+	if true {
+	return fs.likesearch(rctx, paramsList, userId, teamId, page, perPage)
+	}
+
+	// Since we don't support paging for DB search, we just return nothing for later pages
+	if page > 0 {
+		return model.NewFileInfoList(), nil
+	}
+	if err := model.IsSearchParamsListValid(paramsList); err != nil {
+		return nil, err
+	}
+	query := fs.getQueryBuilder().
+		Select(fs.queryFields...).
+		From("FileInfo").
+		LeftJoin("Channels as C ON C.Id=FileInfo.ChannelId").
+		LeftJoin("ChannelMembers as CM ON C.Id=CM.ChannelId").
+		Where(sq.Eq{"FileInfo.DeleteAt": 0}).
+		Where(sq.Or{
+			sq.Eq{"FileInfo.CreatorId": model.BookmarkFileOwner},
+			sq.NotEq{"FileInfo.PostId": ""},
+		}).
+		OrderBy("FileInfo.CreateAt DESC").
+		Limit(100)
+
+	if teamId != "" {
+		query = query.Where(sq.Or{sq.Eq{"C.TeamId": teamId}, sq.Eq{"C.TeamId": ""}})
+	}
+
+	for _, params := range paramsList {
+		params.Terms = removeNonAlphaNumericUnquotedTerms(params.Terms, " ")
+
+		if !params.IncludeDeletedChannels {
+			query = query.Where(sq.Eq{"C.DeleteAt": 0})
+		}
+
+		if !params.SearchWithoutUserId {
+			query = query.Where(sq.Eq{"CM.UserId": userId})
+		}
+
+		if len(params.InChannels) != 0 {
+			query = query.Where(sq.Eq{"C.Id": params.InChannels})
+		}
+
+		if len(params.Extensions) != 0 {
+			query = query.Where(sq.Eq{"FileInfo.Extension": params.Extensions})
+		}
+
+		if len(params.ExcludedExtensions) != 0 {
+			query = query.Where(sq.NotEq{"FileInfo.Extension": params.ExcludedExtensions})
+		}
+
+		if len(params.ExcludedChannels) != 0 {
+			query = query.Where(sq.NotEq{"C.Id": params.ExcludedChannels})
+		}
+
+		if len(params.FromUsers) != 0 {
+			query = query.Where(sq.Eq{"FileInfo.CreatorId": params.FromUsers})
+		}
+
+		if len(params.ExcludedUsers) != 0 {
+			query = query.Where(sq.NotEq{"FileInfo.CreatorId": params.ExcludedUsers})
+		}
+
+		// handle after: before: on: filters
+		if params.OnDate != "" {
+			onDateStart, onDateEnd := params.GetOnDateMillis()
+			query = query.Where(sq.Expr("FileInfo.CreateAt BETWEEN ? AND ?", strconv.FormatInt(onDateStart, 10), strconv.FormatInt(onDateEnd, 10)))
+		} else {
+			if params.ExcludedDate != "" {
+				excludedDateStart, excludedDateEnd := params.GetExcludedDateMillis()
+				query = query.Where(sq.Expr("FileInfo.CreateAt NOT BETWEEN ? AND ?", strconv.FormatInt(excludedDateStart, 10), strconv.FormatInt(excludedDateEnd, 10)))
+			}
+
+			if params.AfterDate != "" {
+				afterDate := params.GetAfterDateMillis()
+				query = query.Where(sq.GtOrEq{"FileInfo.CreateAt": strconv.FormatInt(afterDate, 10)})
+			}
+
+			if params.BeforeDate != "" {
+				beforeDate := params.GetBeforeDateMillis()
+				query = query.Where(sq.LtOrEq{"FileInfo.CreateAt": strconv.FormatInt(beforeDate, 10)})
+			}
+
+			if params.ExcludedAfterDate != "" {
+				afterDate := params.GetExcludedAfterDateMillis()
+				query = query.Where(sq.Lt{"FileInfo.CreateAt": strconv.FormatInt(afterDate, 10)})
+			}
+
+			if params.ExcludedBeforeDate != "" {
+				beforeDate := params.GetExcludedBeforeDateMillis()
+				query = query.Where(sq.Gt{"FileInfo.CreateAt": strconv.FormatInt(beforeDate, 10)})
+			}
+		}
+
+		terms := params.Terms
+		excludedTerms := params.ExcludedTerms
+
+		for _, c := range fs.specialSearchChars() {
+			terms = strings.Replace(terms, c, " ", -1)
+			excludedTerms = strings.Replace(excludedTerms, c, " ", -1)
+		}
+
+		if terms == "" && excludedTerms == "" {
+			// we've already confirmed that we have a channel or user to search for
+		} else if fs.DriverName() == model.DatabaseDriverPostgres {
 			// Parse text for wildcards
 			if wildcard, err := regexp.Compile(`\*($| )`); err == nil {
 				terms = wildcard.ReplaceAllLiteralString(terms, ":* ")
