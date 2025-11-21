@@ -530,18 +530,20 @@ func (fs SqlFileInfoStore) PermanentDeleteByUser(rctx request.CTX, userId string
 	return rowsAffected, nil
 }
 
+/*
+This function wraps Search() to enable LIKE search using pg_bigm index.
+*/
 func (fs SqlFileInfoStore) likesearch(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.FileInfoList, error) {
 	if err := model.IsSearchParamsListValid(paramsList); err != nil {
 		return nil, err
 	}
 
 	limit := uint64(perPage)
-	if perPage <= 0  || 60 < perPage {
+	if perPage <= 0 || 60 < perPage {
 		limit = 60
 	}
 
 	// Fetch channel IDs separately first, then user them directly in the main query
-	// Build query to fetch channel IDs that match user scope
 	channelQuery := fs.getQueryBuilder().
 		Select("DISTINCT Channels.Id").
 		From("Channels").
@@ -567,18 +569,16 @@ func (fs SqlFileInfoStore) likesearch(rctx request.CTX, paramsList []*model.Sear
 		channelQuery = channelQuery.Where(sq.NotEq{"Channels.Id": params.ExcludedChannels})
 	}
 
-	// Execute the channel ID query
 	channelQueryStr, channelQueryArgs, err := channelQuery.ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build channel query")
 	}
 
 	var channelIds []string
-	if err := fs.GetSearchReplicaX().Select(&channelIds, channelQueryStr, channelQueryArgs...); err != nil {
+	if err = fs.GetSearchReplicaX().Select(&channelIds, channelQueryStr, channelQueryArgs...); err != nil {
 		return nil, errors.Wrap(err, "failed to fetch channel IDs")
 	}
 
-	// If no channels are found, return empty list early
 	if len(channelIds) == 0 {
 		list := model.NewFileInfoList()
 		list.MakeNonNil()
@@ -675,7 +675,6 @@ func (fs SqlFileInfoStore) likesearch(rctx request.CTX, paramsList []*model.Sear
 			excludedPhrases := quotedStringsRegex.FindAllString(excludedTerms, -1)
 			excludedTerms = quotedStringsRegex.ReplaceAllLiteralString(excludedTerms, " ")
 
-			// Use LIKE search with pg_bigm indexes for FileInfo.Name and FileInfo.Content
 			var likeConditions sq.And
 			var termQuery []sq.Sqlizer
 
@@ -755,7 +754,7 @@ func (fs SqlFileInfoStore) likesearch(rctx request.CTX, paramsList []*model.Sear
 
 func (fs SqlFileInfoStore) Search(rctx request.CTX, paramsList []*model.SearchParams, userId, teamId string, page, perPage int) (*model.FileInfoList, error) {
 	if true {
-	return fs.likesearch(rctx, paramsList, userId, teamId, page, perPage)
+		return fs.likesearch(rctx, paramsList, userId, teamId, page, perPage)
 	}
 
 	// Since we don't support paging for DB search, we just return nothing for later pages
