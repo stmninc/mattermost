@@ -594,6 +594,7 @@ func (fs SqlFileInfoStore) likesearch(rctx request.CTX, paramsList []*model.Sear
 			sq.Eq{"FileInfo.CreatorId": model.BookmarkFileOwner},
 			sq.NotEq{"FileInfo.PostId": ""},
 		}).
+		Where(sq.Eq{"FileInfo.ChannelId": channelIds}).
 		OrderBy("FileInfo.CreateAt DESC").
 		Limit(limit)
 
