@@ -257,9 +257,9 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 		baseQuery = s.generateLikeSearchQueryForPosts(baseQuery, params, phrases, excludedPhrases, hashtagTerms, terms, excludedTerms)
 	}
 
-	inQuery := s.getSubQueryBuilder().Select("Id").
+	inQuery := s.getSubQueryBuilder().Select("Channels.Id").
 		From("Channels, ChannelMembers").
-		Where("Id = ChannelId")
+		Where("Channels.Id = ChannelMembers.ChannelId")
 
 	if !params.IncludeDeletedChannels {
 		inQuery = inQuery.Where("Channels.DeleteAt = 0")
@@ -278,7 +278,18 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 		return nil, err
 	}
 
-	baseQuery = baseQuery.Where(fmt.Sprintf("ChannelId IN (%s)", inQueryClause), inQueryClauseArgs...)
+	var channelIds []string
+	if err := s.GetSearchReplicaX().Select(&channelIds, inQueryClause, inQueryClauseArgs...); err != nil {
+		mlog.Warn("Failed to fetch channel IDs for search", mlog.String("error", trimInput(err.Error())))
+		return nil, err
+	}
+
+	if len(channelIds) == 0 {
+		list.MakeNonNil()
+		return list, nil
+	}
+
+	baseQuery = baseQuery.Where(sq.Eq{"ChannelId": channelIds})
 
 	searchQuery, searchQueryArgs, err := baseQuery.ToSql()
 	if err != nil {
