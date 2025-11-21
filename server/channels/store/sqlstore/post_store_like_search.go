@@ -186,7 +186,7 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 	}
 
 	limit := uint64(perPage)
-	if perPage <= 0 {
+	if perPage <= 0 || 60 < perPage {
 		limit = 60
 	}
 
@@ -279,9 +279,8 @@ func (s *SqlPostStore) likesearch(teamId string, userId string, paramsList []*mo
 	}
 
 	var channelIds []string
-	if err := s.GetSearchReplicaX().Select(&channelIds, inQueryClause, inQueryClauseArgs...); err != nil {
+	if err = s.GetSearchReplicaX().Select(&channelIds, inQueryClause, inQueryClauseArgs...); err != nil {
 		mlog.Warn("Failed to fetch channel IDs for search", mlog.String("error", trimInput(err.Error())))
-		return nil, err
 	}
 
 	if len(channelIds) == 0 {
