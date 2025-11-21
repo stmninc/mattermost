@@ -860,6 +860,10 @@ func (api *PluginAPI) GetPostsForChannel(channelID string, page, perPage int) (*
 func (api *PluginAPI) UpdatePost(post *model.Post) (*model.Post, *model.AppError) {
 	post, appErr := api.app.UpdatePost(api.ctx, post, &model.UpdatePostOptions{SafeUpdate: false})
 	if post != nil {
+		if err := api.app.SendNotificationCallEnd(api.ctx, post); err != nil {
+			// Log the error, but don't fail the request since the post was already updated.
+			api.logger.Error("Failed to send call end notification", mlog.String("post_id", post.Id), mlog.Err(err))
+		}
 		post = post.ForPlugin()
 	}
 	return post, appErr
