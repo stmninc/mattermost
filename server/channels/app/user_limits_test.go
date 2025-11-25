@@ -41,7 +41,7 @@ func TestUpdateActiveWithUserLimits(t *testing.T) {
 
 			// Mock user count at hard limit
 			mockUserStore := storemocks.UserStore{}
-			mockUserStore.On("Count", mock.Anything).Return(int64(5000), nil) // At 5000 hard limit
+			mockUserStore.On("Count", mock.Anything).Return(int64(100000), nil) // At 100000 hard limit
 			mockStore := th.App.Srv().Store().(*storemocks.Store)
 			mockStore.On("User").Return(&mockUserStore)
 
@@ -67,7 +67,7 @@ func TestUpdateActiveWithUserLimits(t *testing.T) {
 
 			// Mock user count to exceed hard limit
 			mockUserStore := storemocks.UserStore{}
-			mockUserStore.On("Count", mock.Anything).Return(int64(6000), nil) // Over 5000 hard limit
+			mockUserStore.On("Count", mock.Anything).Return(int64(100001), nil) // Over 100000 hard limit
 			mockStore := th.App.Srv().Store().(*storemocks.Store)
 			mockStore.On("User").Return(&mockUserStore)
 
