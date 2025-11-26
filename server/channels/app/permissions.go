@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/mattermost/mattermost/server/public/model"
-	"github.com/mattermost/mattermost/server/public/shared/request"
 )
 
 const permissionsExportBatchSize = 100
@@ -150,58 +149,4 @@ func (a *App) ExportPermissions(w io.Writer) error {
 
 	_, err = w.Write(schemeExport)
 	return err
-}
-
-func (a *App) CheckDMGMChannelPermissions(c request.CTX, channel *model.Channel, userID string) *model.AppError {
-	session := c.Session()
-	if session == nil || session.Id == "" {
-		return nil // No session means no DM/GM permission check needed
-	}
-
-	// If channel is nil, skip DM/GM permission check
-	if channel == nil {
-		return nil
-	}
-
-	// Check if the user is a bot - bots should be allowed to post in DM/GM channels
-	if userID != "" {
-		user, err := a.GetUser(userID)
-		if err != nil {
-			if err.StatusCode != http.StatusNotFound {
-				return err
-			}
-			// User not found, so not a bot. Continue to permission checks.
-		} else if user.IsBot {
-			return nil
-		}
-	}
-
-	// System admins always have permission to DM/GM channels
-	if a.SessionHasPermissionTo(*session, model.PermissionManageSystem) {
-		return nil
-	}
-
-	switch channel.Type {
-	case model.ChannelTypeDirect:
-		if !a.SessionHasPermissionTo(*session, model.PermissionCreateDirectChannel) {
-			return model.NewAppError(
-				"CheckDMGMChannelPermissions",
-				"api.context.permissions.app_error",
-				nil,
-				"",
-				http.StatusForbidden,
-			)
-		}
-	case model.ChannelTypeGroup:
-		if !a.SessionHasPermissionTo(*session, model.PermissionCreateGroupChannel) {
-			return model.NewAppError(
-				"CheckDMGMChannelPermissions",
-				"api.context.permissions.app_error",
-				nil,
-				"",
-				http.StatusForbidden,
-			)
-		}
-	}
-	return nil
 }
