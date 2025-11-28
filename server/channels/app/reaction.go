@@ -52,6 +52,11 @@ func (a *App) SaveReactionForPost(c request.CTX, reaction *model.Reaction) (*mod
 	if channel.DeleteAt > 0 {
 		return nil, model.NewAppError("SaveReactionForPost", "api.reaction.save.archived_channel.app_error", nil, "", http.StatusForbidden)
 	}
+
+	if permErr := a.CheckDMGMChannelPermissions(c, channel, reaction.UserId); permErr != nil {
+		return nil, permErr
+	}
+
 	// Pre-populating the channelID to save a DB call in store.
 	reaction.ChannelId = post.ChannelId
 	reaction, nErr := a.Srv().Store().Reaction().Save(reaction)
