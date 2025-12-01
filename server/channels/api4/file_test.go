@@ -1440,8 +1440,7 @@ func TestSearchFilesInTeam(t *testing.T) {
 	fileInfos2, _, err := client.SearchFilesWithParams(context.Background(), th.BasicTeam.Id, &searchParams)
 	require.NoError(t, err)
 	// We don't support paging for DB search yet, modify this when we do.
-	// Modified to support pagination within likesearch(), which replaces search().
-	require.Len(t, fileInfos2.Order, 2, "Wrong number of fileInfos")
+	require.Len(t, fileInfos2.Order, 3, "Wrong number of fileInfos")
 	assert.Equal(t, fileInfos.Order[0], fileInfos2.Order[0])
 	assert.Equal(t, fileInfos.Order[1], fileInfos2.Order[1])
 
@@ -1456,8 +1455,7 @@ func TestSearchFilesInTeam(t *testing.T) {
 	fileInfos2, _, err = client.SearchFilesWithParams(context.Background(), th.BasicTeam.Id, &searchParams)
 	require.NoError(t, err)
 	// We don't support paging for DB search yet, modify this when we do.
-	// Modified to support pagination within likesearch(), which replaces search().
-	assert.Equal(t, fileInfos.Order[2], fileInfos2.Order[0])
+	require.Empty(t, fileInfos2.Order, "Wrong number of fileInfos")
 
 	fileInfos, _, err = client.SearchFiles(context.Background(), th.BasicTeam.Id, "search", false)
 	require.NoError(t, err)
