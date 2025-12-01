@@ -129,8 +129,6 @@ var searchFileInfoStoreTests = []searchTest{
 		Name: "Should discard a wildcard if it's not placed immediately by text",
 		Fn:   testFileInfoSearchDiscardWildcardAlone,
 		Tags: []string{EngineAll},
-		// LIKE search for pg_bigm does not distinguish between exact matches and partial matches in this test case.
-		Skip: true,
 	},
 	{
 		Name: "Should support terms with dash",
