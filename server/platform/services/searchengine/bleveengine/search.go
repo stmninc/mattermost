@@ -174,6 +174,11 @@ func (b *BleveEngine) SearchPosts(channels model.ChannelList, searchParams []*mo
 						messageQ := bleve.NewWildcardQuery(term)
 						messageQ.SetField("Message")
 						termQueries = append(termQueries, messageQ)
+					} else if len(term) >= 4 && term[0] == '"' && term[len(term)-1] == '"' && strings.HasPrefix(term[1:], "@") && strings.Contains(term, "-") {
+						unquotedTerm := term[1 : len(term)-1]
+						messageQ := bleve.NewMatchPhraseQuery(unquotedTerm)
+						messageQ.SetField("Message")
+						termQueries = append(termQueries, messageQ)
 					} else {
 						terms = append(terms, term)
 					}
