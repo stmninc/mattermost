@@ -93,7 +93,7 @@ export function getThreadsForCurrentTeam({before = '', after = '', unread = fals
 
 export function getThreadCounts(userId: string, teamId: string): ActionFuncAsync {
     return async (dispatch) => {
-        const response = await dispatch(fetchThreads(userId, teamId, {totalsOnly: true, threadsOnly: false}));
+        const response = await dispatch(fetchThreads(userId, teamId, {unread: true, totalsOnly: true, threadsOnly: false}));
 
         if (response.error) {
             return response;
