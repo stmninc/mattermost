@@ -147,7 +147,10 @@ func (s *SqlThreadStore) getTotalThreadsQuery(userId, teamId string, opts model.
 	}
 
 	if !opts.Deleted {
-		query = query.Where(sq.Eq{"COALESCE(Threads.ThreadDeleteAt, 0)": 0})
+		query = query.Where(sq.Or{
+			sq.Eq{"Threads.ThreadDeleteAt": nil},
+			sq.Eq{"Threads.ThreadDeleteAt": 0},
+		})
 	}
 
 	return query
