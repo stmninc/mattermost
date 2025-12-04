@@ -404,7 +404,10 @@ func (s *SqlThreadStore) GetTeamsUnreadForUser(userID string, teamIDs []string, 
 		sq.Eq{"ThreadMemberships.UserId": userID},
 		sq.Eq{"ThreadMemberships.Following": true},
 		sq.Eq{"Threads.ThreadTeamId": teamIDs},
-		sq.Eq{"COALESCE(Threads.ThreadDeleteAt, 0)": 0},
+		sq.Or{
+			sq.Eq{"Threads.ThreadDeleteAt": nil},
+			sq.Eq{"Threads.ThreadDeleteAt": 0},
+		},
 	}
 
 	var eg errgroup.Group
