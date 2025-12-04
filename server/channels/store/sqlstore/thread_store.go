@@ -214,7 +214,10 @@ func (s *SqlThreadStore) GetTotalUnreadMentions(userId, teamId string, opts mode
 	}
 
 	if !opts.Deleted {
-		query = query.Where(sq.Eq{"COALESCE(Threads.ThreadDeleteAt, 0)": 0})
+		query = query.Where(sq.Or{
+			sq.Eq{"Threads.ThreadDeleteAt": nil},
+			sq.Eq{"Threads.ThreadDeleteAt": 0},
+		})
 	}
 
 	err := s.GetReplica().GetBuilder(&totalUnreadMentions, query)
