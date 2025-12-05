@@ -11,6 +11,7 @@ import (
 
 const (
 	NotificationCallEndMessage = "Call ended"
+	PushSubTypeCallsEnded = "calls_ended"
 )
 
 // SendNotificationCallEnd sends a notification to mobile app users when a call ends
@@ -53,7 +54,7 @@ func (a *App) SendNotificationCallEnd(c request.CTX, post *model.Post) *model.Ap
 	notification := &model.PushNotification{
 		Version:     model.PushMessageV2,
 		Type:        model.PushTypeMessage,
-		SubType:     model.PushSubTypeCalls,
+		SubType:     PushSubTypeCallsEnded,
 		TeamId:      channel.TeamId,
 		ChannelId:   post.ChannelId,
 		PostId:      post.Id,
