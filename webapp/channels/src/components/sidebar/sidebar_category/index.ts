@@ -9,6 +9,7 @@ import type {ChannelCategory} from '@mattermost/types/channel_categories';
 
 import {setCategoryCollapsed, setCategorySorting} from 'mattermost-redux/actions/channel_categories';
 import {savePreferences} from 'mattermost-redux/actions/preferences';
+import {canCreateDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getCurrentUser, getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 import {isAdmin} from 'mattermost-redux/utils/user_utils';
 
@@ -26,11 +27,13 @@ function makeMapStateToProps() {
     const getChannelIdsForCategory = makeGetFilteredChannelIdsForCategory();
 
     return (state: GlobalState, ownProps: OwnProps) => {
+        const canCreateDMGM = canCreateDMGMChannel(state);
         return {
             channelIds: getChannelIdsForCategory(state, ownProps.category),
             draggingState: getDraggingState(state),
             currentUserId: getCurrentUserId(state),
             isAdmin: isAdmin(getCurrentUser(state).roles),
+            canCreateDMGM,
         };
     };
 }

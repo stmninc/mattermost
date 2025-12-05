@@ -25,6 +25,7 @@ type Props = {
     onCreateNewChannelClick: () => void;
     canJoinPublicChannel: boolean;
     onBrowseChannelClick: () => void;
+    canCreateDMGM: boolean;
     onOpenDirectMessageClick: () => void;
     canCreateCustomGroups: boolean;
     onCreateNewUserGroupClick: () => void;
@@ -76,20 +77,23 @@ export default function SidebarBrowserOrAddChannelMenu(props: Props) {
         );
     }
 
-    const createDirectMessageMenuItem = (
-        <Menu.Item
-            id='openDirectMessageMenuItem'
-            onClick={props.onOpenDirectMessageClick}
-            leadingElement={<AccountOutlineIcon size={18}/>}
-            labels={(
-                <FormattedMessage
-                    id='sidebarLeft.browserOrCreateChannelMenu.openDirectMessageMenuItem.primaryLabel'
-                    defaultMessage='Open a direct message'
-                />
-            )}
-            aria-haspopup='true'
-        />
-    );
+    let createDirectMessageMenuItem: JSX.Element | null = null;
+    if (props.canCreateDMGM) {
+        createDirectMessageMenuItem = (
+            <Menu.Item
+                id='openDirectMessageMenuItem'
+                onClick={props.onOpenDirectMessageClick}
+                leadingElement={<AccountOutlineIcon size={18}/>}
+                labels={(
+                    <FormattedMessage
+                        id='sidebarLeft.browserOrCreateChannelMenu.openDirectMessageMenuItem.primaryLabel'
+                        defaultMessage='Open a direct message'
+                    />
+                )}
+                aria-haspopup='true'
+            />
+        );
+    }
 
     let createUserGroupMenuItem: JSX.Element | null = null;
     if (props.canCreateCustomGroups) {

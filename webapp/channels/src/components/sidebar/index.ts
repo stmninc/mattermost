@@ -7,6 +7,7 @@ import type {Dispatch} from 'redux';
 
 import {fetchMyCategories} from 'mattermost-redux/actions/channel_categories';
 import Permissions from 'mattermost-redux/constants/permissions';
+import {canCreateDMGMChannel} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {isCustomGroupsEnabled} from 'mattermost-redux/selectors/entities/preferences';
 import {haveICurrentChannelPermission, haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 import {getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
@@ -40,6 +41,8 @@ function mapStateToProps(state: GlobalState) {
         canJoinPublicChannel = haveICurrentChannelPermission(state, Permissions.JOIN_PUBLIC_CHANNELS);
     }
 
+    const canCreateDMGM = canCreateDMGMChannel(state);
+
     const canCreateCustomGroups = isCustomGroupsEnabled(state) && haveISystemPermission(state, {permission: Permissions.CREATE_CUSTOM_GROUP});
 
     return {
@@ -47,6 +50,7 @@ function mapStateToProps(state: GlobalState) {
         canCreatePrivateChannel,
         canCreatePublicChannel,
         canJoinPublicChannel,
+        canCreateDMGM,
         isOpen: getIsLhsOpen(state),
         unreadFilterEnabled,
         isMobileView: getIsMobileView(state),

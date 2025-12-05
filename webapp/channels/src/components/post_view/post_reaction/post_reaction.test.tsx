@@ -14,9 +14,6 @@ describe('components/post_view/PostReaction', () => {
     const baseProps = {
         channelId: 'current_channel_id',
         postId: 'post_id_1',
-        teamId: 'current_team_id',
-        getDotMenuRef: jest.fn(),
-        showIcon: false,
         showEmojiPicker: false,
         setShowEmojiPicker: jest.fn(),
         actions: {

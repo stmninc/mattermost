@@ -27,6 +27,7 @@ describe('components/channel_view', () => {
         enableWebSocketEventScope: false,
         isChannelBookmarksEnabled: false,
         missingChannelRole: false,
+        canPostInDMGM: true,
     };
 
     it('Should match snapshot with base props', () => {

@@ -20,6 +20,7 @@ import {Client4} from 'mattermost-redux/client';
 import {Permissions, Posts} from 'mattermost-redux/constants';
 import {createSelector} from 'mattermost-redux/selectors/create_selector';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
+import {canPostInDMGMChannel as canPostInDMGMChannelUtil, canCreateDMGMChannel as canCreateDMGMChannelUtil} from 'mattermost-redux/selectors/entities/dm_gm_permissions';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getAllGroupsForReferenceByName} from 'mattermost-redux/selectors/entities/groups';
 import {isPostFlagged, makeGetReactionsForPost} from 'mattermost-redux/selectors/entities/posts';
@@ -96,19 +97,33 @@ export function getImageSrc(src: string, hasImageProxy = false): string {
     return src;
 }
 
+export function canPostInDMGMChannel(state: GlobalState, channel?: Channel): boolean {
+    return canPostInDMGMChannelUtil(state, channel);
+}
+
+export function canCreateDMGMChannel(state: GlobalState): boolean {
+    return canCreateDMGMChannelUtil(state);
+}
+
 export function canDeletePost(state: GlobalState, post: Post, channel?: Channel): boolean {
     if (post.type === Constants.PostTypes.FAKE_PARENT_DELETED) {
         return false;
     }
 
-    if (channel && channel.delete_at !== 0) {
+    const targetChannel = channel ?? getChannel(state, post.channel_id);
+
+    if (targetChannel && targetChannel.delete_at !== 0) {
+        return false;
+    }
+
+    if (!canPostInDMGMChannelUtil(state, targetChannel)) {
         return false;
     }
 
     if (isPostOwner(state, post)) {
-        return haveIChannelPermission(state, channel && channel.team_id, post.channel_id, Permissions.DELETE_POST);
+        return haveIChannelPermission(state, targetChannel?.team_id, post.channel_id, Permissions.DELETE_POST);
     }
-    return haveIChannelPermission(state, channel && channel.team_id, post.channel_id, Permissions.DELETE_OTHERS_POSTS);
+    return haveIChannelPermission(state, targetChannel?.team_id, post.channel_id, Permissions.DELETE_OTHERS_POSTS);
 }
 
 export function canEditPost(
@@ -119,7 +134,21 @@ export function canEditPost(
     channel?: Channel,
     userId?: string,
 ): boolean {
-    return canEditPostRedux(state, config, license, channel?.team_id ?? '', channel?.id ?? '', userId ?? '', post);
+    const targetChannel = channel ?? getChannel(state, post.channel_id);
+
+    if (!canPostInDMGMChannelUtil(state, targetChannel)) {
+        return false;
+    }
+
+    return canEditPostRedux(
+        state,
+        config,
+        license,
+        targetChannel?.team_id ?? '',
+        targetChannel?.id ?? '',
+        userId ?? '',
+        post,
+    );
 }
 
 export function shouldShowDotMenu(state: GlobalState, post: Post, channel: Channel): boolean {
