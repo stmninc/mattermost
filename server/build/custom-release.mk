@@ -43,6 +43,17 @@ customize-assets:
 		echo ".hfroute-header { visibility: hidden !important; }" >> "$${target_css}"; \
 	fi
 
+	@echo "hiding ID/password login form..."
+	grep -l "login-body-card-form" $(CUSTOMIZE_SOURCE_DIR)/*.css | while read -r css_file; do \
+		if [ -n "$${css_file}" ]; then \
+			echo "-> Found file: $${css_file}. Appending login form hiding rules..."; \
+			echo ".login-body-card-form { display: none !important; } .login-body-card-form-divider { display: none !important; } .login-body-alternate-link { display: none !important; }" >> "$${css_file}"; \
+		else \
+			echo "::error title=Hiding login form Error::login-body-card-form pattern not found in any CSS file."; \
+			exit 1; \
+		fi; \
+	done
+
 	@echo "hiding loading screen icon..."
 	@target_css=$$(grep -l "LoadingAnimation__compass" $(CUSTOMIZE_SOURCE_DIR)/*.css 2>/dev/null | head -n 1); \
 	if [ -z "$${target_css}" ]; then \
