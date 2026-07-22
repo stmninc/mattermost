@@ -149,6 +149,8 @@ const PostOptions = (props: Props): JSX.Element => {
     if (showRecentlyUsedReactions) {
         const showMoreReactions = props.isExpanded ||
             props.location === 'CENTER' ||
+            props.location === Locations.RHS_ROOT ||
+            props.location === Locations.RHS_COMMENT ||
             (document.getElementById('sidebar-right')?.getBoundingClientRect().width ?? 0) > Constants.SIDEBAR_MINIMUM_WIDTH;
 
         showRecentReactions = (
