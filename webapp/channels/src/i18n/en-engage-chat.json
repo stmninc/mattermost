@@ -1,3 +1,4 @@
 {
-    "admin.team_channel_settings.convertConfirmModal.toPrivateMessageFirstLine": "When you convert {displayName} to a private channel, history and membership are preserved. Membership in a private channel is by invitation only."
+    "admin.team_channel_settings.convertConfirmModal.toPrivateMessageFirstLine": "When you convert {displayName} to a private channel, history and membership are preserved. Membership in a private channel is by invitation only.",
+    "create_post.default_channel_read_only": "This is the default channel and cannot be used."
 }
