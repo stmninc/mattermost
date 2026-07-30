@@ -164,4 +164,53 @@ func TestIsChannelAccessible(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("Read-only Town Square", func(t *testing.T) {
+		townSquare, err := th.App.GetChannelByName(th.Context, model.DefaultChannelName, th.BasicTeam.Id, false)
+		require.Nil(t, err)
+
+		adminSession, err := th.App.CreateSession(th.Context, &model.Session{
+			UserId: th.SystemAdminUser.Id,
+			Roles:  model.SystemUserRoleId + " " + model.SystemAdminRoleId,
+		})
+		require.Nil(t, err)
+		ctxWithAdminSession := th.Context.WithSession(adminSession)
+
+		t.Run("disabled: everyone can access town-square", func(t *testing.T) {
+			t.Setenv(model.TownSquareReadOnlyEnvVar, "")
+			model.ResetTownSquareReadOnlyCache()
+			accessible, err := th.App.IsChannelAccessible(ctxWithSession, townSquare.Id)
+			require.Nil(t, err)
+			require.True(t, accessible)
+		})
+
+		t.Run("enabled", func(t *testing.T) {
+			t.Setenv(model.TownSquareReadOnlyEnvVar, "true")
+			model.ResetTownSquareReadOnlyCache()
+			defer model.ResetTownSquareReadOnlyCache()
+
+			testCases := []struct {
+				name     string
+				ctx      request.CTX
+				expected bool
+			}{
+				{"regular user cannot post to town-square", ctxWithSession, false},
+				{"system admin can post to town-square", ctxWithAdminSession, true},
+				{"bot can post to town-square", ctxWithBotSession, true},
+			}
+			for _, tc := range testCases {
+				t.Run(tc.name, func(t *testing.T) {
+					accessible, err := th.App.IsChannelAccessible(tc.ctx, townSquare.Id)
+					require.Nil(t, err)
+					require.Equal(t, tc.expected, accessible)
+				})
+			}
+
+			t.Run("other public channel remains accessible", func(t *testing.T) {
+				accessible, err := th.App.IsChannelAccessible(ctxWithSession, publicChannel.Id)
+				require.Nil(t, err)
+				require.True(t, accessible)
+			})
+		})
+	})
 }

@@ -1,3 +1,4 @@
 {
-    "admin.team_channel_settings.convertConfirmModal.toPrivateMessageFirstLine": "{displayName}を非公開チャンネルに変換しても、履歴とメンバーシップは保持されます。非公開チャンネルのメンバーシップは招待制です。"
+    "admin.team_channel_settings.convertConfirmModal.toPrivateMessageFirstLine": "{displayName}を非公開チャンネルに変換しても、履歴とメンバーシップは保持されます。非公開チャンネルのメンバーシップは招待制です。",
+    "create_post.default_channel_read_only": "デフォルトチャンネルのため利用できません"
 }

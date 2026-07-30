@@ -14,7 +14,9 @@ import (
 // based on the full validation logic including DM/GM restrictions and exceptions.
 // The user is derived from the session in the provided context.
 // It returns true if accessible, false if not.
-// Open and Private channels are always accessible.
+// Open and Private channels are always accessible, except the default channel
+// (Town Square) which is read-only for non-admin/non-bot users when
+// ENGAGECHAT_TOWNSQUARE_READONLY is enabled.
 // DM and Group channels are subject to permission and exception checks.
 func (a *App) IsChannelAccessible(rctx request.CTX, channelID string) (bool, *model.AppError) {
 	session := rctx.Session()
@@ -58,6 +60,11 @@ func (a *App) IsChannelAccessible(rctx request.CTX, channelID string) (bool, *mo
 	case model.ChannelTypeGroup:
 		hasPermission = a.SessionHasPermissionTo(*session, model.PermissionCreateGroupChannel)
 	default:
+		// Read-only Town Square: only bots and system admins (already returned true above)
+		// may post to the default channel. Everyone else is denied.
+		if model.IsTownSquareReadOnlyEnabled() && channel.Name == model.DefaultChannelName {
+			return false, nil
+		}
 		// Open and Private channels are always accessible.
 		return true, nil
 	}
