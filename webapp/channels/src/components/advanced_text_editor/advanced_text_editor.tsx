@@ -170,7 +170,6 @@ const AdvancedTextEditor = ({
     const channel = useSelector((state: GlobalState) => getChannelSelector(state, channelId));
     const channelDisplayName = channel?.display_name || '';
     const channelType = channel?.type || '';
-    const isDefaultChannel = channel?.name === Constants.DEFAULT_CHANNEL;
     const isChannelShared = channel?.shared;
     const draftFromStore = useSelector((state: GlobalState) => getDraftSelector(state, channelId, rootId, storageKey));
     const badConnection = useSelector((state: GlobalState) => connectionErrorCount(state) > 1);
@@ -236,10 +235,6 @@ const AdvancedTextEditor = ({
     const channelAvailable = isAvailableUnofficialChannel(channelId);
     const readOnlyChannel = !canPost || !channelAvailable;
 
-    // Only the default channel made read-only by ENGAGECHAT_TOWNSQUARE_READONLY
-    // (server accessibility check) shows the dedicated message. Users who merely
-    // lack CREATE_POST permission keep the generic read-only message.
-    const isDefaultChannelReadOnly = isDefaultChannel && !channelAvailable;
     const hasDraftMessage = Boolean(draft.message);
     const showFormattingBar = !isFormattingBarHidden && !readOnlyChannel;
     const enableSharedChannelsDMs = useSelector((state: GlobalState) => getFeatureFlagValue(state, 'EnableSharedChannelsDMs') === 'true');
@@ -689,12 +684,7 @@ const AdvancedTextEditor = ({
             {channelDisplayName},
         );
     } else if (readOnlyChannel) {
-        createMessage = isDefaultChannelReadOnly ? formatMessage(
-            {
-                id: 'create_post.default_channel_read_only',
-                defaultMessage: 'This is the default channel and cannot be used.',
-            },
-        ) : formatMessage(
+        createMessage = formatMessage(
             {
                 id: 'create_post.read_only',
                 defaultMessage: 'This channel is read-only. Only members with permission can post here.',
