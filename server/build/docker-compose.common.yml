@@ -5,7 +5,12 @@ x-logging: &default-logging
 
 services:
   postgres:
-    image: "postgres:14"
+    # image: "postgres:14"
+    image: mm-postgres:14-pg_bigm
+    pull_policy: build
+    build:
+      context: ./
+      dockerfile: Dockerfile.postgres-pgbigm
     logging: *default-logging
     restart: always
     networks:

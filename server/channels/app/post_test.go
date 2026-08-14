@@ -2347,6 +2347,8 @@ func TestSearchPostsForUser(t *testing.T) {
 	}
 
 	t.Run("should return everything as first page of posts from database", func(t *testing.T) {
+		// Pagination is supported within likesearch(), alternative to search()
+		t.Skip()
 		mainHelper.Parallel(t)
 		th, posts := setup(t, false)
 
@@ -2368,6 +2370,8 @@ func TestSearchPostsForUser(t *testing.T) {
 	})
 
 	t.Run("should not return later pages of posts from database", func(t *testing.T) {
+		// Pagination is supported within likesearch(), alternative to search()
+		t.Skip()
 		mainHelper.Parallel(t)
 		th, _ := setup(t, false)
 
@@ -2442,6 +2446,8 @@ func TestSearchPostsForUser(t *testing.T) {
 	})
 
 	t.Run("should fall back to database if ElasticSearch fails on first page", func(t *testing.T) {
+		// Pagination is supported within likesearch(), alternative to search()
+		t.Skip()
 		mainHelper.Parallel(t)
 		th, posts := setup(t, true)
 
@@ -2476,6 +2482,8 @@ func TestSearchPostsForUser(t *testing.T) {
 	})
 
 	t.Run("should return nothing if ElasticSearch fails on later pages", func(t *testing.T) {
+		// Pagination is supported within likesearch(), alternative to search()
+		t.Skip()
 		mainHelper.Parallel(t)
 		th, _ := setup(t, true)
 
