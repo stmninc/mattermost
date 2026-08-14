@@ -419,7 +419,7 @@ func completeOAuth(c *Context, w http.ResponseWriter, r *http.Request) {
 
 		isOAuthUser := user.IsOAuthUser()
 
-		session, err := c.App.DoLogin(c.AppContext, w, r, user, "", isMobile, isOAuthUser, false)
+		session, err := c.App.DoLogin(c.AppContext, w, r, user, "", "", isMobile, isOAuthUser, false)
 		if err != nil {
 			err.Translate(c.AppContext.T)
 			c.Logger.Error(err.Error())
@@ -667,7 +667,7 @@ func loginByIntune(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.LogAuditWithUserId(user.Id, "obtained user")
 
 	isMobile := req.DeviceId != ""
-	session, err := c.App.DoLogin(c.AppContext, w, r, user, req.DeviceId, isMobile, true, false)
+	session, err := c.App.DoLogin(c.AppContext, w, r, user, req.DeviceId, "", isMobile, true, false)
 	if err != nil {
 		c.Err = err
 		return

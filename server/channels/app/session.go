@@ -277,8 +277,8 @@ func (a *App) RevokeSession(rctx request.CTX, session *model.Session) *model.App
 	return nil
 }
 
-func (a *App) AttachDeviceId(sessionID string, deviceID string, expiresAt int64) *model.AppError {
-	_, err := a.Srv().Store().Session().UpdateDeviceId(sessionID, deviceID, expiresAt)
+func (a *App) AttachDeviceId(sessionID string, deviceID string, voipDeviceID string, expiresAt int64) *model.AppError {
+	_, err := a.Srv().Store().Session().UpdateDeviceId(sessionID, deviceID, voipDeviceID, expiresAt)
 	if err != nil {
 		return model.NewAppError("AttachDeviceId", "app.session.update_device_id.app_error", nil, "", http.StatusInternalServerError).Wrap(err)
 	}
