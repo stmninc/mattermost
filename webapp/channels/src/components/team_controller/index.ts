@@ -6,6 +6,7 @@ import type {ConnectedProps} from 'react-redux';
 import type {RouteComponentProps} from 'react-router-dom';
 
 import {fetchAllMyTeamsChannels, fetchAllMyChannelMembers, fetchChannelsAndMembers, unsetActiveChannelOnServer} from 'mattermost-redux/actions/channels';
+import {getMissingProfilesByIds} from 'mattermost-redux/actions/users';
 import {getCurrentChannelId} from 'mattermost-redux/selectors/entities/channels';
 import {getLicense, getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getCurrentTeamId, getMyTeams} from 'mattermost-redux/selectors/entities/teams';
@@ -59,6 +60,7 @@ const mapDispatchToProps = {
     initializeTeam,
     joinTeam,
     unsetActiveChannelOnServer,
+    getMissingProfilesByIds,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

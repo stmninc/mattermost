@@ -2,6 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React from 'react';
+import * as reactRedux from 'react-redux';
 
 import type {ChannelType} from '@mattermost/types/channels';
 
@@ -20,6 +21,17 @@ jest.mock('components/sidebar/sidebar_channel/sidebar_channel_link', () => {
 });
 
 describe('components/sidebar/sidebar_channel/sidebar_base_channel', () => {
+    let useSelectorMock: jest.SpyInstance;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        useSelectorMock = jest.spyOn(reactRedux, 'useSelector').mockReturnValue(false);
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     const baseProps = {
         channel: {
             id: 'channel_id',
@@ -47,6 +59,8 @@ describe('components/sidebar/sidebar_channel/sidebar_base_channel', () => {
     };
 
     test('should change icon when channel is official', async () => {
+        useSelectorMock.mockReturnValue(true);
+
         const props = {
             ...baseProps,
             isOfficial: true,

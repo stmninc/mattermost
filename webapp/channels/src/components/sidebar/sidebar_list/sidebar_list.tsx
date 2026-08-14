@@ -50,6 +50,7 @@ type Props = WrappedComponentProps & {
     hasUnreadThreads: boolean;
     currentStaticPageId: string;
     staticPages: StaticPage[];
+    shouldRender?: boolean;
 
     handleOpenMoreDirectChannelsModal: (e: Event) => void;
     onDragStart: (initial: DragStart) => void;
@@ -120,7 +121,7 @@ export class SidebarList extends React.PureComponent<Props, State> {
         }
 
         // reset the scrollbar upon switching teams
-        if (this.props.currentTeam !== prevProps.currentTeam) {
+        if (this.props.currentTeam !== prevProps.currentTeam && this.scrollbar.current) {
             this.scrollbar.current!.scrollTo({top: 0});
         }
 
@@ -162,6 +163,9 @@ export class SidebarList extends React.PureComponent<Props, State> {
     };
 
     handleScrollAnimationUpdate = (spring: Spring) => {
+        if (!this.scrollbar.current) {
+            return;
+        }
         const val = spring.getCurrentValue();
         this.scrollbar.current!.scrollTo?.({top: val});
     };
@@ -176,6 +180,10 @@ export class SidebarList extends React.PureComponent<Props, State> {
 
     scrollToChannel = (channelId: string | null | undefined, scrollingToUnread = false) => {
         if (!channelId) {
+            return;
+        }
+
+        if (!this.scrollbar.current) {
             return;
         }
 
@@ -214,6 +222,10 @@ export class SidebarList extends React.PureComponent<Props, State> {
     };
 
     scrollToPosition = (scrollEnd: number) => {
+        if (!this.scrollbar.current) {
+            return;
+        }
+
         // Stop the current animation before scrolling
         this.scrollAnimation.setCurrentValue(this.scrollbar.current!.scrollTop).setAtRest();
 
@@ -221,6 +233,10 @@ export class SidebarList extends React.PureComponent<Props, State> {
     };
 
     updateUnreadIndicators = () => {
+        if (!this.scrollbar.current) {
+            return;
+        }
+
         if (this.props.draggingState.state) {
             this.setState({
                 showTopUnread: false,
@@ -528,12 +544,14 @@ export class SidebarList extends React.PureComponent<Props, State> {
                         extraClass='nav-pills__unread-indicator-bottom'
                         content={below}
                     />
+                    {this.props.shouldRender !== false &&
                     <Scrollbars
                         ref={this.scrollbar}
                         onScroll={this.onScroll}
                     >
                         {channelList}
                     </Scrollbars>
+                    }
                 </div>
             </>
         );
