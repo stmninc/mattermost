@@ -15,17 +15,21 @@ exports[`components/TextBox should match snapshot with additional, optional prop
         some test text
       </div>
     </div>
-    <textarea
-      class="form-control custom-textarea textbox-edit-area custom-textarea--emoji-picker bad-connection"
-      data-testid="suggestion-box"
-      disabled=""
-      id="someid"
-      placeholder="placeholder text"
-      readonly=""
-      style="visibility: hidden;"
+    <div
+      style="position: relative;"
     >
-      some test text
-    </textarea>
+      <textarea
+        class="form-control custom-textarea textbox-edit-area custom-textarea--emoji-picker bad-connection"
+        data-testid="suggestion-box"
+        disabled=""
+        id="someid"
+        placeholder="placeholder text"
+        readonly=""
+        style="visibility: hidden;"
+      >
+        some test text
+      </textarea>
+    </div>
   </div>
 </div>
 `;
@@ -45,16 +49,20 @@ exports[`components/TextBox should match snapshot with required props 1`] = `
         some test text
       </div>
     </div>
-    <textarea
-      class="form-control custom-textarea textbox-edit-area"
-      data-testid="suggestion-box"
-      id="someid"
-      placeholder="placeholder text"
-      readonly=""
-      style="visibility: visible;"
+    <div
+      style="position: relative;"
     >
-      some test text
-    </textarea>
+      <textarea
+        class="form-control custom-textarea textbox-edit-area"
+        data-testid="suggestion-box"
+        id="someid"
+        placeholder="placeholder text"
+        readonly=""
+        style="visibility: visible;"
+      >
+        some test text
+      </textarea>
+    </div>
   </div>
 </div>
 `;
@@ -74,16 +82,20 @@ exports[`components/TextBox should throw error when new property is too long 1`]
         some test text that exceeds char limit
       </div>
     </div>
-    <textarea
-      class="form-control custom-textarea textbox-edit-area"
-      data-testid="suggestion-box"
-      id="someid"
-      placeholder="placeholder text"
-      readonly=""
-      style="visibility: visible;"
+    <div
+      style="position: relative;"
     >
-      some test text that exceeds char limit
-    </textarea>
+      <textarea
+        class="form-control custom-textarea textbox-edit-area"
+        data-testid="suggestion-box"
+        id="someid"
+        placeholder="placeholder text"
+        readonly=""
+        style="visibility: visible;"
+      >
+        some test text that exceeds char limit
+      </textarea>
+    </div>
   </div>
 </div>
 `;
@@ -103,16 +115,20 @@ exports[`components/TextBox should throw error when value is too long 1`] = `
         some test text that exceeds char limit
       </div>
     </div>
-    <textarea
-      class="form-control custom-textarea textbox-edit-area"
-      data-testid="suggestion-box"
-      id="someid"
-      placeholder="placeholder text"
-      readonly=""
-      style="visibility: visible;"
+    <div
+      style="position: relative;"
     >
-      some test text that exceeds char limit
-    </textarea>
+      <textarea
+        class="form-control custom-textarea textbox-edit-area"
+        data-testid="suggestion-box"
+        id="someid"
+        placeholder="placeholder text"
+        readonly=""
+        style="visibility: visible;"
+      >
+        some test text that exceeds char limit
+      </textarea>
+    </div>
   </div>
 </div>
 `;

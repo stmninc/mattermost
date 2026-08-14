@@ -78,42 +78,46 @@ exports[`components/EditChannelHeaderModal edit direct message channel 1`] = `
                     </p>
                   </div>
                   <div
-                    class=""
+                    style="position: relative;"
                   >
                     <div
-                      class="input-wrapper"
+                      class=""
                     >
-                      <div>
-                        <textarea
-                          aria-autocomplete="list"
-                          aria-controls="suggestionList"
-                          aria-expanded="false"
-                          autocomplete="off"
-                          class="form-control custom-textarea textbox-edit-area"
-                          data-testid="edit_textbox"
-                          dir="auto"
-                          height="0"
-                          id="edit_textbox"
-                          placeholder="Enter the Channel Header"
-                          role="textbox"
-                          rows="1"
-                          spellcheck="true"
-                          style="overflow-y: hidden;"
-                        >
-                          Fake Channel
-                        </textarea>
-                        <div
-                          style="height: 0px; overflow: hidden;"
-                        >
-                          <div
-                            aria-hidden="true"
+                      <div
+                        class="input-wrapper"
+                      >
+                        <div>
+                          <textarea
+                            aria-autocomplete="list"
+                            aria-controls="suggestionList"
+                            aria-expanded="false"
+                            autocomplete="off"
                             class="form-control custom-textarea textbox-edit-area"
+                            data-testid="edit_textbox"
                             dir="auto"
-                            disabled=""
-                            id="edit_textbox-reference"
-                            style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            height="0"
+                            id="edit_textbox"
+                            placeholder="Enter the Channel Header"
+                            role="textbox"
+                            rows="1"
+                            spellcheck="true"
+                            style="overflow-y: hidden;"
                           >
                             Fake Channel
+                          </textarea>
+                          <div
+                            style="height: 0px; overflow: hidden;"
+                          >
+                            <div
+                              aria-hidden="true"
+                              class="form-control custom-textarea textbox-edit-area"
+                              dir="auto"
+                              disabled=""
+                              id="edit_textbox-reference"
+                              style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            >
+                              Fake Channel
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -274,42 +278,46 @@ exports[`components/EditChannelHeaderModal error with intl message 1`] = `
                     </p>
                   </div>
                   <div
-                    class=""
+                    style="position: relative;"
                   >
                     <div
-                      class="input-wrapper"
+                      class=""
                     >
-                      <div>
-                        <textarea
-                          aria-autocomplete="list"
-                          aria-controls="suggestionList"
-                          aria-expanded="false"
-                          autocomplete="off"
-                          class="form-control custom-textarea textbox-edit-area"
-                          data-testid="edit_textbox"
-                          dir="auto"
-                          height="0"
-                          id="edit_textbox"
-                          placeholder="Enter the Channel Header"
-                          role="textbox"
-                          rows="1"
-                          spellcheck="true"
-                          style="overflow-y: hidden;"
-                        >
-                          New header
-                        </textarea>
-                        <div
-                          style="height: 0px; overflow: hidden;"
-                        >
-                          <div
-                            aria-hidden="true"
+                      <div
+                        class="input-wrapper"
+                      >
+                        <div>
+                          <textarea
+                            aria-autocomplete="list"
+                            aria-controls="suggestionList"
+                            aria-expanded="false"
+                            autocomplete="off"
                             class="form-control custom-textarea textbox-edit-area"
+                            data-testid="edit_textbox"
                             dir="auto"
-                            disabled=""
-                            id="edit_textbox-reference"
-                            style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            height="0"
+                            id="edit_textbox"
+                            placeholder="Enter the Channel Header"
+                            role="textbox"
+                            rows="1"
+                            spellcheck="true"
+                            style="overflow-y: hidden;"
                           >
                             New header
+                          </textarea>
+                          <div
+                            style="height: 0px; overflow: hidden;"
+                          >
+                            <div
+                              aria-hidden="true"
+                              class="form-control custom-textarea textbox-edit-area"
+                              dir="auto"
+                              disabled=""
+                              id="edit_textbox-reference"
+                              style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            >
+                              New header
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -480,42 +488,46 @@ exports[`components/EditChannelHeaderModal error without intl message 1`] = `
                     </p>
                   </div>
                   <div
-                    class=""
+                    style="position: relative;"
                   >
                     <div
-                      class="input-wrapper"
+                      class=""
                     >
-                      <div>
-                        <textarea
-                          aria-autocomplete="list"
-                          aria-controls="suggestionList"
-                          aria-expanded="false"
-                          autocomplete="off"
-                          class="form-control custom-textarea textbox-edit-area"
-                          data-testid="edit_textbox"
-                          dir="auto"
-                          height="0"
-                          id="edit_textbox"
-                          placeholder="Enter the Channel Header"
-                          role="textbox"
-                          rows="1"
-                          spellcheck="true"
-                          style="overflow-y: hidden;"
-                        >
-                          New header
-                        </textarea>
-                        <div
-                          style="height: 0px; overflow: hidden;"
-                        >
-                          <div
-                            aria-hidden="true"
+                      <div
+                        class="input-wrapper"
+                      >
+                        <div>
+                          <textarea
+                            aria-autocomplete="list"
+                            aria-controls="suggestionList"
+                            aria-expanded="false"
+                            autocomplete="off"
                             class="form-control custom-textarea textbox-edit-area"
+                            data-testid="edit_textbox"
                             dir="auto"
-                            disabled=""
-                            id="edit_textbox-reference"
-                            style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            height="0"
+                            id="edit_textbox"
+                            placeholder="Enter the Channel Header"
+                            role="textbox"
+                            rows="1"
+                            spellcheck="true"
+                            style="overflow-y: hidden;"
                           >
                             New header
+                          </textarea>
+                          <div
+                            style="height: 0px; overflow: hidden;"
+                          >
+                            <div
+                              aria-hidden="true"
+                              class="form-control custom-textarea textbox-edit-area"
+                              dir="auto"
+                              disabled=""
+                              id="edit_textbox-reference"
+                              style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            >
+                              New header
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -686,42 +698,46 @@ exports[`components/EditChannelHeaderModal should match snapshot, init 1`] = `
                     </p>
                   </div>
                   <div
-                    class=""
+                    style="position: relative;"
                   >
                     <div
-                      class="input-wrapper"
+                      class=""
                     >
-                      <div>
-                        <textarea
-                          aria-autocomplete="list"
-                          aria-controls="suggestionList"
-                          aria-expanded="false"
-                          autocomplete="off"
-                          class="form-control custom-textarea textbox-edit-area"
-                          data-testid="edit_textbox"
-                          dir="auto"
-                          height="0"
-                          id="edit_textbox"
-                          placeholder="Enter the Channel Header"
-                          role="textbox"
-                          rows="1"
-                          spellcheck="true"
-                          style="overflow-y: hidden;"
-                        >
-                          Fake Channel
-                        </textarea>
-                        <div
-                          style="height: 0px; overflow: hidden;"
-                        >
-                          <div
-                            aria-hidden="true"
+                      <div
+                        class="input-wrapper"
+                      >
+                        <div>
+                          <textarea
+                            aria-autocomplete="list"
+                            aria-controls="suggestionList"
+                            aria-expanded="false"
+                            autocomplete="off"
                             class="form-control custom-textarea textbox-edit-area"
+                            data-testid="edit_textbox"
                             dir="auto"
-                            disabled=""
-                            id="edit_textbox-reference"
-                            style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            height="0"
+                            id="edit_textbox"
+                            placeholder="Enter the Channel Header"
+                            role="textbox"
+                            rows="1"
+                            spellcheck="true"
+                            style="overflow-y: hidden;"
                           >
                             Fake Channel
+                          </textarea>
+                          <div
+                            style="height: 0px; overflow: hidden;"
+                          >
+                            <div
+                              aria-hidden="true"
+                              class="form-control custom-textarea textbox-edit-area"
+                              dir="auto"
+                              disabled=""
+                              id="edit_textbox-reference"
+                              style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            >
+                              Fake Channel
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -882,42 +898,46 @@ exports[`components/EditChannelHeaderModal submitted 1`] = `
                     </p>
                   </div>
                   <div
-                    class=""
+                    style="position: relative;"
                   >
                     <div
-                      class="input-wrapper"
+                      class=""
                     >
-                      <div>
-                        <textarea
-                          aria-autocomplete="list"
-                          aria-controls="suggestionList"
-                          aria-expanded="false"
-                          autocomplete="off"
-                          class="form-control custom-textarea textbox-edit-area"
-                          data-testid="edit_textbox"
-                          dir="auto"
-                          height="0"
-                          id="edit_textbox"
-                          placeholder="Enter the Channel Header"
-                          role="textbox"
-                          rows="1"
-                          spellcheck="true"
-                          style="overflow-y: hidden;"
-                        >
-                          New header
-                        </textarea>
-                        <div
-                          style="height: 0px; overflow: hidden;"
-                        >
-                          <div
-                            aria-hidden="true"
+                      <div
+                        class="input-wrapper"
+                      >
+                        <div>
+                          <textarea
+                            aria-autocomplete="list"
+                            aria-controls="suggestionList"
+                            aria-expanded="false"
+                            autocomplete="off"
                             class="form-control custom-textarea textbox-edit-area"
+                            data-testid="edit_textbox"
                             dir="auto"
-                            disabled=""
-                            id="edit_textbox-reference"
-                            style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            height="0"
+                            id="edit_textbox"
+                            placeholder="Enter the Channel Header"
+                            role="textbox"
+                            rows="1"
+                            spellcheck="true"
+                            style="overflow-y: hidden;"
                           >
                             New header
+                          </textarea>
+                          <div
+                            style="height: 0px; overflow: hidden;"
+                          >
+                            <div
+                              aria-hidden="true"
+                              class="form-control custom-textarea textbox-edit-area"
+                              dir="auto"
+                              disabled=""
+                              id="edit_textbox-reference"
+                              style="height: auto; width: auto; display: inline-block; position: relative; transform: translateY(-100%); word-break: break-word;"
+                            >
+                              New header
+                            </div>
                           </div>
                         </div>
                       </div>
