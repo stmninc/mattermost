@@ -148,6 +148,9 @@ func (a *App) sendPushNotificationToAllSessions(rctx request.CTX, msg *model.Pus
 		)
 	}
 
+	// sentVoipDeviceIDs tracks unique VoipDeviceIDs to prevent duplicate incoming call notifications
+	sentVoipDeviceIDs := make(map[string]struct{})
+
 	for _, session := range sessions {
 		// Don't send notifications to this session if it's expired or we want to skip it
 		if session.IsExpired() || (skipSessionId != "" && skipSessionId == session.Id) {
@@ -167,6 +170,12 @@ func (a *App) sendPushNotificationToAllSessions(rctx request.CTX, msg *model.Pus
 		deviceID := session.DeviceId
 		if msg.SubType == model.PushSubTypeCalls && session.VoipDeviceId != "" {
 			deviceID = session.VoipDeviceId
+			// For incoming calls, ensure we only send once per VoIP deviceID
+			if _, exists := sentVoipDeviceIDs[deviceID]; exists {
+				continue
+			}
+			// Record the VoIP deviceID before attempting to send, preventing retries even if the send fails
+			sentVoipDeviceIDs[deviceID] = struct{}{}
 		}
 		tmpMessage.SetDeviceIdAndPlatform(deviceID)
 		tmpMessage.AckId = model.NewId()
