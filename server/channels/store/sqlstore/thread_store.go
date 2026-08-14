@@ -158,7 +158,10 @@ func (s *SqlThreadStore) getTotalThreadsQuery(userId, teamId string, opts model.
 	}
 
 	if !opts.Deleted {
-		query = query.Where(sq.Eq{"COALESCE(Threads.ThreadDeleteAt, 0)": 0})
+		query = query.Where(sq.Or{
+			sq.Eq{"Threads.ThreadDeleteAt": nil},
+			sq.Eq{"Threads.ThreadDeleteAt": 0},
+		})
 	}
 
 	return query
@@ -226,7 +229,10 @@ func (s *SqlThreadStore) GetTotalUnreadMentions(userId, teamId string, opts mode
 	}
 
 	if !opts.Deleted {
-		query = query.Where(sq.Eq{"COALESCE(Threads.ThreadDeleteAt, 0)": 0})
+		query = query.Where(sq.Or{
+			sq.Eq{"Threads.ThreadDeleteAt": nil},
+			sq.Eq{"Threads.ThreadDeleteAt": 0},
+		})
 	}
 
 	err := s.GetReplica().GetBuilder(&totalUnreadMentions, query)
@@ -415,7 +421,10 @@ func (s *SqlThreadStore) GetTeamsUnreadForUser(userID string, teamIDs []string, 
 		sq.Eq{"ThreadMemberships.UserId": userID},
 		sq.Eq{"ThreadMemberships.Following": true},
 		sq.Eq{"Threads.ThreadTeamId": teamIDs},
-		sq.Eq{"COALESCE(Threads.ThreadDeleteAt, 0)": 0},
+		sq.Or{
+			sq.Eq{"Threads.ThreadDeleteAt": nil},
+			sq.Eq{"Threads.ThreadDeleteAt": 0},
+		},
 		channelMembershipPredicate(),
 	}
 

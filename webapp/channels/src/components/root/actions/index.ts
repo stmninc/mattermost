@@ -15,7 +15,7 @@ import {getMyTeamMembers, getMyTeams, getMyTeamUnreads} from 'mattermost-redux/a
 import {getMe, getProfiles} from 'mattermost-redux/actions/users';
 import {Client4} from 'mattermost-redux/client';
 import {General} from 'mattermost-redux/constants';
-import {isCollapsedThreadsEnabled, getIsOnboardingFlowEnabled} from 'mattermost-redux/selectors/entities/preferences';
+import {getIsOnboardingFlowEnabled} from 'mattermost-redux/selectors/entities/preferences';
 import {getActiveTeamsList} from 'mattermost-redux/selectors/entities/teams';
 import {checkIsFirstAdmin, getCurrentUser, isCurrentUserSystemAdmin} from 'mattermost-redux/selectors/entities/users';
 
@@ -68,7 +68,7 @@ export function loadConfigAndMe(): ThunkActionFunc<Promise<{isLoaded: boolean; i
                 dispatch(getMyTeamMembers()),
             ]);
 
-            dispatch(getMyTeamUnreads(isCollapsedThreadsEnabled(getState())));
+            dispatch(getMyTeamUnreads(false));
             dispatch(getServerLimits());
         } catch (error) {
             dispatch(logError(error as ServerError));

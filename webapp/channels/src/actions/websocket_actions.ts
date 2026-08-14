@@ -298,7 +298,7 @@ export function reconnect() {
         }
 
         const crtEnabled = isCollapsedThreadsEnabled(state);
-        dispatch(TeamActions.getMyTeamUnreads(crtEnabled));
+        dispatch(TeamActions.getMyTeamUnreads(false));
         if (crtEnabled) {
             const teams = getMyTeams(state);
             syncThreads(currentTeamId, currentUserId);
