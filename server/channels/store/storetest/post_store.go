@@ -1432,7 +1432,10 @@ func testPostStoreDelete(t *testing.T, rctx request.CTX, ss store.Store) {
 
 		beforeDeleteTime := updatedRootPost.UpdateAt
 
-		time.Sleep(2 * time.Millisecond)
+		// Sleep 1ms to ensure a distinct UpdateAt timestamp after Delete.
+		// Blacksmith runners execute operations faster than 1ms, causing
+		// GetMillis() to return the same value before and after the operation.
+		time.Sleep(time.Millisecond)
 
 		// Delete the reply previous to last
 		err = ss.Post().Delete(rctx, replyPost2.Id, model.GetMillis(), "")

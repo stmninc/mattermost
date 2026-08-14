@@ -1857,11 +1857,17 @@ func TestMarkChannelAsUnreadFromPost(t *testing.T) {
 	th.AddUserToChannel(t, u2, pc1)
 
 	p1 := th.CreatePost(t, c1)
+	// Sleep 1ms between post creations to ensure distinct CreateAt timestamps.
+	// Blacksmith runners are fast enough that consecutive CreatePost calls can
+	// return the same millisecond, making MsgCount calculations non-deterministic.
+	time.Sleep(time.Millisecond)
 	p2 := th.CreatePost(t, c1)
+	time.Sleep(time.Millisecond)
 	p3 := th.CreatePost(t, c1)
 
 	pp1 := th.CreatePost(t, pc1)
 	require.NotNil(t, pp1)
+	time.Sleep(time.Millisecond)
 	pp2 := th.CreatePost(t, pc1)
 
 	unread, appErr := th.App.GetChannelUnread(th.Context, c1.Id, u1.Id)

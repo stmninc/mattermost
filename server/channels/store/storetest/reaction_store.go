@@ -156,7 +156,10 @@ func testReactionDelete(t *testing.T, rctx request.CTX, ss store.Store) {
 
 		firstUpdateAt := result.Posts[post.Id].UpdateAt
 
-		time.Sleep(2 * time.Millisecond)
+		// Sleep 1ms to ensure a distinct UpdateAt timestamp after Delete.
+		// Blacksmith runners execute operations faster than 1ms, causing
+		// GetMillis() to return the same value before and after the operation.
+		time.Sleep(time.Millisecond)
 
 		_, nErr = ss.Reaction().Delete(reaction)
 		require.NoError(t, nErr)
