@@ -16,6 +16,7 @@ import {openModal} from 'actions/views/modals';
 import LocalStorageStore from 'stores/local_storage_store';
 
 import JoinPrivateChannelModal from 'components/join_private_channel_modal';
+import BuildingIcon from 'components/widgets/icons/building_icon';
 
 import Constants, {ModalIdentifiers} from 'utils/constants';
 import * as Utils from 'utils/utils';
@@ -23,6 +24,7 @@ import * as Utils from 'utils/utils';
 import type {ActionFuncAsync, GlobalState} from 'types/store';
 
 import {getHistory} from './browser_history';
+import {isOfficialTunagChannel} from './official_channel_utils';
 import {cleanUpUrlable} from './url';
 
 export function canManageMembers(state: GlobalState, channel: Channel) {
@@ -97,6 +99,10 @@ export function getArchiveIconClassName(channelType?: ChannelType | string): str
 export function getChannelIconComponent(channel?: Channel) {
     if (isArchivedChannel(channel)) {
         return getArchiveIconComponent(channel?.type);
+    }
+
+    if (isOfficialTunagChannel(channel)) {
+        return BuildingIcon;
     }
 
     if (channel?.type === Constants.PRIVATE_CHANNEL) {
