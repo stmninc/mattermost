@@ -289,7 +289,7 @@ func TestOfficialChannelValidation(t *testing.T) {
 		_, err = th.SystemAdminClient.UpdateChannelRoles(context.Background(), officialChannel.Id, testUser.Id, newRoles)
 		require.Error(t, err)
 		if appErr, ok := err.(*model.AppError); ok {
-			require.Equal(t, "api.channel.update_member_roles.official_channel.forbidden", appErr.Id)
+			require.Equal(t, "api.channel.official_channel.forbidden", appErr.Id)
 		} else {
 			t.Fatalf("Expected AppError, got %T", err)
 		}
