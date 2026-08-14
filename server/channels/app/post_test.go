@@ -2318,6 +2318,13 @@ func TestSearchPostsForUser(t *testing.T) {
 
 		posts := make([]*model.Post, 7)
 		for i := 0; i < cap(posts); i++ {
+			// Sleep 1ms to ensure distinct CreateAt timestamps between posts.
+			// Blacksmith runners are fast enough that consecutive CreatePost calls
+			// can return the same millisecond, making GetPostsByIds (sorted by
+			// CreateAt DESC) return results in non-deterministic order.
+			if i > 0 {
+				time.Sleep(time.Millisecond)
+			}
 			post, _, err := th.App.CreatePost(th.Context, &model.Post{
 				UserId:    th.BasicUser.Id,
 				ChannelId: th.BasicChannel.Id,

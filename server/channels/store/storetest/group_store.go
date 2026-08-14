@@ -733,8 +733,9 @@ func testGroupStoreUpdate(t *testing.T, rctx request.CTX, ss store.Store) {
 	require.Contains(t, err.Error(), "unique constraint: Name")
 
 	// Cannot update CreateAt
-	time.Sleep(2 * time.Millisecond)
-	someVal := model.GetMillis()
+	// Add 1000ms to ensure someVal differs from d1.CreateAt even on fast runners
+	// where GetMillis() may return the same value as when d1 was created.
+	someVal := model.GetMillis() + 1000
 	d1.CreateAt = someVal
 	d3, err := ss.Group().Update(d1)
 	require.NoError(t, err)
