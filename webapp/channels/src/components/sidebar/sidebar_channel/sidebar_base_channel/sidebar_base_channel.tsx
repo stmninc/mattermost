@@ -8,6 +8,7 @@ import type {Channel} from '@mattermost/types/channels';
 
 import LeaveChannelModal from 'components/leave_channel_modal';
 import SidebarChannelLink from 'components/sidebar/sidebar_channel/sidebar_channel_link';
+import BuildingIcon from 'components/widgets/icons/building_icon';
 
 import Constants, {ModalIdentifiers} from 'utils/constants';
 
@@ -24,6 +25,7 @@ const SidebarBaseChannel = ({
     channel,
     currentTeamName,
     actions,
+    isOfficial,
 }: Props) => {
     const intl = useIntl();
 
@@ -44,7 +46,9 @@ const SidebarBaseChannel = ({
         channelLeaveHandler = handleLeavePrivateChannel;
     }
 
-    const channelIcon = (
+    const channelIcon = isOfficial ? (
+        <BuildingIcon/>
+    ) : (
         <SidebarBaseChannelIcon
             channelType={channel.type}
         />

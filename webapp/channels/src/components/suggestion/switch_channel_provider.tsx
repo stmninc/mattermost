@@ -56,12 +56,14 @@ import usePrefixedIds, {joinIds} from 'components/common/hooks/usePrefixedIds';
 import CustomStatusEmoji from 'components/custom_status/custom_status_emoji';
 import ProfilePicture from 'components/profile_picture';
 import SharedChannelIndicator from 'components/shared_channel_indicator';
+import BuildingIcon from 'components/widgets/icons/building_icon';
 import BotTag from 'components/widgets/tag/bot_tag';
 import GuestTag from 'components/widgets/tag/guest_tag';
 
 import {getArchiveIconClassName} from 'utils/channel_utils';
 import {Constants, StoragePrefixes} from 'utils/constants';
 import {getIntl} from 'utils/i18n';
+import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 import * as Utils from 'utils/utils';
 
 import type {GlobalState} from 'types/store';
@@ -145,6 +147,8 @@ export const SwitchChannelSuggestion = React.forwardRef<HTMLLIElement, Props>(({
 
     const currentUserId = useSelector(getCurrentUserId);
 
+    const isOfficial = useSelector((state: GlobalState) => isRealChannel(channel) && isOfficialTunagChannel(channel, state));
+
     const ids = usePrefixedIds(id, {
         name: null,
         channelType: null,
@@ -210,6 +214,12 @@ export const SwitchChannelSuggestion = React.forwardRef<HTMLLIElement, Props>(({
                 })}
             >
                 <i className='icon icon-pencil-outline'/>
+            </span>
+        );
+    } else if (isOfficial) {
+        icon = (
+            <span className='suggestion-list__icon suggestion-list__icon--large'>
+                <BuildingIcon size={16}/>
             </span>
         );
     } else if (channel.type === Constants.OPEN_CHANNEL) {

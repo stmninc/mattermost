@@ -70,6 +70,7 @@ describe('components/sidebar/sidebar_channel/sidebar_base_channel', () => {
             leaveChannel: jest.fn(),
             openModal: jest.fn(),
         },
+        isOfficial: false,
     };
 
     test('should match snapshot', () => {
