@@ -24,8 +24,11 @@ import type Provider from 'components/suggestion/provider';
 import SuggestionBox from 'components/suggestion/suggestion_box';
 import type SuggestionBoxComponent from 'components/suggestion/suggestion_box/suggestion_box';
 import SuggestionList from 'components/suggestion/suggestion_list';
+import {generateDisplayValueFromRawValue, updateStateWhenSuggestionSelected, updateStateWhenOnChanged, resetState, calculateMentionPositions} from 'components/textbox/util';
 
 import * as Utils from 'utils/utils';
+
+import {renderMentionOverlay} from './highlight';
 
 import type {TextboxElement} from './index';
 
@@ -74,16 +77,31 @@ export type Props = {
     defaultAgent?: Agent;
     hasLabels?: boolean;
     hasError?: boolean;
+    usersByUsername?: Record<string, UserProfile>;
+    teammateNameDisplay?: string;
+    isAdvanced?: boolean;
 };
 
 const VISIBLE = {visibility: 'visible'} as const;
 const HIDDEN = {visibility: 'hidden'} as const;
+
+interface TextboxState {
+    displayValue: string;
+    rawValue: string;
+    mentionHighlights: Array<{start: number; end: number; username: string}>;
+}
 
 export default class Textbox extends React.PureComponent<Props> {
     private readonly suggestionProviders: Provider[];
     private readonly wrapper: React.RefObject<HTMLDivElement>;
     private readonly message: React.RefObject<SuggestionBoxComponent>;
     private readonly preview: React.RefObject<HTMLDivElement>;
+
+    state: TextboxState = {
+        displayValue: '',
+        rawValue: '',
+        mentionHighlights: [],
+    };
 
     static defaultProps = {
         supportsCommands: true,
@@ -131,6 +149,14 @@ export default class Textbox extends React.PureComponent<Props> {
         this.wrapper = React.createRef();
         this.message = React.createRef();
         this.preview = React.createRef();
+
+        const displayValue = generateDisplayValueFromRawValue(props.value, props.usersByUsername, props.teammateNameDisplay);
+
+        this.state = {
+            displayValue,
+            rawValue: props.value,
+            mentionHighlights: calculateMentionPositions(props.value, displayValue, props.usersByUsername, props.teammateNameDisplay),
+        };
     }
 
     componentDidMount() {
@@ -140,7 +166,18 @@ export default class Textbox extends React.PureComponent<Props> {
     }
 
     handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        this.props.onChange(e);
+        if (!this.props.isAdvanced) {
+            this.props.onChange(e);
+            return;
+        }
+        updateStateWhenOnChanged(
+            this.state.rawValue,
+            this.props.usersByUsername,
+            this.props.teammateNameDisplay,
+            this.setState.bind(this),
+            e,
+            this.props.onChange,
+        );
     };
 
     updateSuggestions(prevProps: Props) {
@@ -210,6 +247,9 @@ export default class Textbox extends React.PureComponent<Props> {
             this.preview.current?.focus();
         }
         this.updateSuggestions(prevProps);
+        if (this.props.isAdvanced) {
+            resetState(prevProps, this.setState.bind(this), this.props.value, this.state.rawValue, this.props.usersByUsername, this.props.teammateNameDisplay);
+        }
     }
 
     checkMessageLength = (message: string) => {
@@ -278,6 +318,26 @@ export default class Textbox extends React.PureComponent<Props> {
         return this.props.preview ? HIDDEN : VISIBLE;
     };
 
+    getRawValue = () => {
+        return this.state.rawValue;
+    };
+
+    handleSuggestionSelected = (item: any) => {
+        if (this.props.isAdvanced) {
+            const textBox = this.getInputBox();
+            const textBoxValue = textBox?.value || '';
+            updateStateWhenSuggestionSelected(
+                item,
+                textBoxValue,
+                this.getRawValue(),
+                this.props.usersByUsername,
+                this.props.teammateNameDisplay,
+                this.setState.bind(this),
+                textBox,
+            );
+        }
+    };
+
     render() {
         let textboxClassName = 'form-control custom-textarea textbox-edit-area';
         if (this.props.emojiEnabled) {
@@ -313,36 +373,40 @@ export default class Textbox extends React.PureComponent<Props> {
                         imageProps={{hideUtilities: true}}
                     />
                 </div>
-                <SuggestionBox
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    ref={this.message}
-                    id={this.props.id}
-                    className={textboxClassName}
-                    spellCheck='true'
-                    placeholder={this.props.createMessage}
-                    onChange={this.handleChange}
-                    onKeyPress={this.handleKeyPress}
-                    onKeyDown={this.handleKeyDown}
-                    onMouseUp={this.handleMouseUp}
-                    onKeyUp={this.handleKeyUp}
-                    onCompositionUpdate={this.props.onCompositionUpdate}
-                    onBlur={this.handleBlur}
-                    onFocus={this.props.onFocus}
-                    onHeightChange={this.props.onHeightChange}
-                    onWidthChange={this.props.onWidthChange}
-                    onPaste={this.props.onPaste}
-                    style={this.getStyle()}
-                    inputComponent={this.props.inputComponent}
-                    listComponent={this.props.suggestionList}
-                    listPosition={this.props.suggestionListPosition}
-                    providers={this.suggestionProviders}
-                    value={this.props.value}
-                    disabled={this.props.disabled}
-                    contextId={this.props.channelId}
-                    openWhenEmpty={this.props.openWhenEmpty}
-                    alignWithTextbox={this.props.alignWithTextbox}
-                />
+                <div style={{position: 'relative'}}>
+                    <SuggestionBox
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-ignore
+                        ref={this.message}
+                        id={this.props.id}
+                        className={textboxClassName}
+                        spellCheck='true'
+                        placeholder={this.props.createMessage}
+                        onChange={this.handleChange}
+                        onKeyPress={this.handleKeyPress}
+                        onKeyDown={this.handleKeyDown}
+                        onMouseUp={this.handleMouseUp}
+                        onKeyUp={this.handleKeyUp}
+                        onCompositionUpdate={this.props.onCompositionUpdate}
+                        onBlur={this.handleBlur}
+                        onFocus={this.props.onFocus}
+                        onHeightChange={this.props.onHeightChange}
+                        onWidthChange={this.props.onWidthChange}
+                        onPaste={this.props.onPaste}
+                        style={this.getStyle()}
+                        inputComponent={this.props.inputComponent}
+                        listComponent={this.props.suggestionList}
+                        listPosition={this.props.suggestionListPosition}
+                        providers={this.suggestionProviders}
+                        value={this.props.isAdvanced ? this.state.displayValue : this.props.value}
+                        disabled={this.props.disabled}
+                        contextId={this.props.channelId}
+                        openWhenEmpty={this.props.openWhenEmpty}
+                        alignWithTextbox={this.props.alignWithTextbox}
+                        onItemSelected={this.handleSuggestionSelected}
+                    />
+                    {!this.props.preview && this.props.isAdvanced && renderMentionOverlay(this.getInputBox() ?? null, this.state.mentionHighlights, this.state.displayValue)}
+                </div>
             </div>
         );
     }

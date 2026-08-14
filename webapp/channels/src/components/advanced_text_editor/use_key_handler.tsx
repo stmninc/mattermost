@@ -6,6 +6,7 @@ import {useCallback, useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 
 import type {SchedulingInfo} from '@mattermost/types/schedule_post';
+import type {UserProfile} from '@mattermost/types/users';
 
 import {getBool} from 'mattermost-redux/selectors/entities/preferences';
 
@@ -16,6 +17,7 @@ import {getIsRhsExpanded} from 'selectors/rhs';
 
 import type {TextboxElement} from 'components/textbox';
 import type TextboxClass from 'components/textbox/textbox';
+import {convertDisplayPositionToRawPosition} from 'components/textbox/util';
 
 import Constants, {A11yClassNames, Locations, Preferences} from 'utils/constants';
 import * as Keyboard from 'utils/keyboard';
@@ -48,6 +50,9 @@ const useKeyHandler = (
     toggleEmojiPicker: () => void,
     isInEditMode?: boolean,
     onCancel?: () => void,
+    getCurrentRawValue?: () => string,
+    usersByUsername?: Record<string, UserProfile>,
+    teammateNameDisplay?: string,
 ): [
         (e: React.KeyboardEvent<TextboxElement>) => void,
         (e: React.KeyboardEvent<TextboxElement>) => void,
@@ -206,10 +211,23 @@ const useKeyHandler = (
         }
 
         const {
-            selectionStart,
-            selectionEnd,
-            value,
+            selectionStart: displaySelectionStart,
+            selectionEnd: displaySelectionEnd,
         } = e.target as TextboxElement;
+
+        const value = getCurrentRawValue?.() || '';
+        const selectionStart = convertDisplayPositionToRawPosition(
+            displaySelectionStart || 0,
+            value,
+            usersByUsername,
+            teammateNameDisplay,
+        );
+        const selectionEnd = convertDisplayPositionToRawPosition(
+            displaySelectionEnd || 0,
+            value,
+            usersByUsername,
+            teammateNameDisplay,
+        );
 
         if (ctrlKeyCombo && !caretIsWithinCodeBlock) {
             if (allowHistoryNavigation && Keyboard.isKeyPressed(e, KeyCodes.UP)) {
@@ -366,19 +384,33 @@ const useKeyHandler = (
         toggleShowPreview,
         isInEditMode,
         location,
+        getCurrentRawValue,
+        usersByUsername,
+        teammateNameDisplay,
     ]);
 
     // Register paste events
     useEffect(() => {
         function onPaste(event: ClipboardEvent) {
-            pasteHandler(event, location, draft.message, isNonFormattedPaste.current, isInEditMode);
+            const caretPosition = (event.target as HTMLTextAreaElement).selectionStart;
+
+            pasteHandler(
+                event,
+                location,
+                draft.message,
+                isNonFormattedPaste.current,
+                isInEditMode,
+                caretPosition,
+                usersByUsername,
+                teammateNameDisplay,
+            );
         }
 
         document.addEventListener('paste', onPaste);
         return () => {
             document.removeEventListener('paste', onPaste);
         };
-    }, [location, draft.message, isInEditMode]);
+    }, [location, draft.message, isInEditMode, usersByUsername, teammateNameDisplay]);
 
     const reactToLastMessage = useCallback((e: KeyboardEvent) => {
         e.preventDefault();
