@@ -10,6 +10,10 @@ import {TestHelper} from '../../../utils/test_helper';
 
 import CallButton, {isUserInCall} from './index';
 
+jest.mock('utils/available_unofficial_channel', () => ({
+    isAvailableUnofficialChannel: jest.fn().mockReturnValue(true),
+}));
+
 describe('isUserInCall', () => {
     test('missing state', () => {
         expect(isUserInCall({

@@ -13,6 +13,7 @@ import type {Channel, ChannelMembership} from '@mattermost/types/channels';
 import Menu from 'components/widgets/menu/menu';
 import MenuWrapper from 'components/widgets/menu/menu_wrapper';
 
+import {isAvailableUnofficialChannel} from 'utils/available_unofficial_channel';
 import {Constants} from 'utils/constants';
 
 import type {CallButtonAction} from 'types/store/plugins';
@@ -42,7 +43,7 @@ export default function CallButton({pluginCallComponents, currentChannel, channe
         prevSidebarOpen.current = sidebarOpen;
     }, [sidebarOpen]);
 
-    if (pluginCallComponents.length === 0) {
+    if (pluginCallComponents.length === 0 || !isAvailableUnofficialChannel(currentChannel?.id || '')) {
         return null;
     }
 

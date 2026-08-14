@@ -19,6 +19,10 @@ jest.mock('actions/user_actions', () => ({
 
 const mockCanUserDirectMessage = canUserDirectMessage as jest.MockedFunction<typeof canUserDirectMessage>;
 
+jest.mock('utils/available_unofficial_channel', () => ({
+    isAvailableDMGMChannel: jest.fn().mockReturnValue(true),
+}));
+
 describe('components/ProfilePopoverOtherUserRow', () => {
     const baseProps = {
         user: TestHelper.getUserMock({id: 'user1'}),

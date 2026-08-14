@@ -42,6 +42,7 @@ import MoveThreadModal from 'components/move_thread_modal';
 import ChannelPermissionGate from 'components/permissions_gates/channel_permission_gate';
 
 import {createBurnOnReadDeleteModalHandlers} from 'hooks/useBurnOnReadDeleteModal';
+import {isAvailableUnofficialChannel} from 'utils/available_unofficial_channel';
 import {Locations, ModalIdentifiers, Constants} from 'utils/constants';
 import DelayedAction from 'utils/delayed_action';
 import * as Keyboard from 'utils/keyboard';
@@ -825,7 +826,7 @@ export class DotMenuClass extends React.PureComponent<Props, State> {
                         isDestructive={true}
                     />
                 }
-                {showDelete &&
+                {showDelete && isAvailableUnofficialChannel(this.props.post.channel_id) && this.state.canDelete &&
                     <Menu.Item
                         id={`delete_post_${this.props.post.id}`}
                         data-testid={`delete_post_${this.props.post.id}`}

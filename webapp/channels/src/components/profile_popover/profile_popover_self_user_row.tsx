@@ -10,6 +10,7 @@ import {openModal} from 'actions/views/modals';
 import UserSettingsModal from 'components/user_settings/modal';
 import WithTooltip from 'components/with_tooltip';
 
+import {isAvailableDMGMChannel} from 'utils/available_unofficial_channel';
 import {ModalIdentifiers} from 'utils/constants';
 
 type Props = {
@@ -66,21 +67,23 @@ const ProfilePopoverSelfUserRow = ({
                     defaultMessage='Edit Profile'
                 />
             </button>
-            <WithTooltip
-                title={formatMessage({id: 'user_profile.send.dm.yourself', defaultMessage: 'Send yourself a message'})}
-            >
-                <button
-                    type='button'
-                    className='btn btn-icon btn-sm'
-                    onClick={handleShowDirectChannel}
-                    aria-label={formatMessage({id: 'user_profile.send.dm.yourself', defaultMessage: 'Send yourself a message'})}
+            {isAvailableDMGMChannel() && (
+                <WithTooltip
+                    title={formatMessage({id: 'user_profile.send.dm.yourself', defaultMessage: 'Send yourself a message'})}
                 >
-                    <i
-                        className='icon icon-send'
-                        aria-hidden='true'
-                    />
-                </button>
-            </WithTooltip>
+                    <button
+                        type='button'
+                        className='btn btn-icon btn-sm'
+                        onClick={handleShowDirectChannel}
+                        aria-label={formatMessage({id: 'user_profile.send.dm.yourself', defaultMessage: 'Send yourself a message'})}
+                    >
+                        <i
+                            className='icon icon-send'
+                            aria-hidden='true'
+                        />
+                    </button>
+                </WithTooltip>
+            )}
         </div>
     );
 };

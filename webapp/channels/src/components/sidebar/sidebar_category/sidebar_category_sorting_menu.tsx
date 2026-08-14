@@ -27,6 +27,7 @@ import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
 
 import * as Menu from 'components/menu';
 
+import {isAvailableDMGMChannel} from 'utils/available_unofficial_channel';
 import Constants from 'utils/constants';
 
 type Props = {
@@ -207,7 +208,7 @@ const SidebarCategorySortingMenu = ({
                 {sortDirectMessagesMenuItem}
                 {showMessagesCountMenuItem}
                 <Menu.Separator/>
-                {openDirectMessageMenuItem}
+                {isAvailableDMGMChannel() && openDirectMessageMenuItem}
             </Menu.Container>
         </div>
     );

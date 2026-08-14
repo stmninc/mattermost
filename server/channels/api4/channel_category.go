@@ -33,6 +33,8 @@ func getCategoriesForTeamForUser(c *Context, w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	c.App.FilterSidebarCategories(c.AppContext, categories)
+
 	categoriesJSON, err := json.Marshal(categories)
 	if err != nil {
 		c.Err = model.NewAppError("getCategoriesForTeamForUser", "api.marshal_error", nil, "", http.StatusInternalServerError).Wrap(err)
