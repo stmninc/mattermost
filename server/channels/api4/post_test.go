@@ -4625,7 +4625,8 @@ func TestSearchPosts(t *testing.T) {
 	posts2, _, err := client.SearchPostsWithParams(context.Background(), th.BasicTeam.Id, &searchParams)
 	require.NoError(t, err)
 	// We don't support paging for DB search yet, modify this when we do.
-	require.Len(t, posts2.Order, 3, "Wrong number of posts")
+	// Modified to support pagination within likesearch(), which replaces search().
+	require.Len(t, posts2.Order, 2, "Wrong number of posts")
 	assert.Equal(t, posts.Order[0], posts2.Order[0])
 	assert.Equal(t, posts.Order[1], posts2.Order[1])
 
@@ -4640,7 +4641,8 @@ func TestSearchPosts(t *testing.T) {
 	posts2, _, err = client.SearchPostsWithParams(context.Background(), th.BasicTeam.Id, &searchParams)
 	require.NoError(t, err)
 	// We don't support paging for DB search yet, modify this when we do.
-	require.Empty(t, posts2.Order, "Wrong number of posts")
+	// Modified to support pagination within likesearch(), which replaces search().
+	assert.Equal(t, posts.Order[2], posts2.Order[0])
 
 	posts, _, err = client.SearchPosts(context.Background(), th.BasicTeam.Id, "search", false)
 	require.NoError(t, err)

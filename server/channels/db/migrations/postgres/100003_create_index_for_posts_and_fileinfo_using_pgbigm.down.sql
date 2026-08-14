@@ -1,0 +1,14 @@
+-- morph:nontransactional
+--
+-- [ Notice on Migration Splitting ]
+-- Split former 100003 into 100003-100006 to comply with linter rules
+-- (requiring 1 operation per file for CONCURRENTLY).
+-- Filename 100003 remains unchanged to prevent errors in applied DBs,
+-- causing a mismatch with its single-operation content.
+--
+-- Behavior:
+-- - Existing Tenants: 100004-100006 are bypassed via IF NOT EXISTS,
+--   updating only db_migrations history.
+-- - New Tenants: 100003-100006 execute sequentially,
+--   creating all indexes safely via CONCURRENTLY.
+DROP INDEX CONCURRENTLY IF EXISTS idx_posts_hashtags_lower;
