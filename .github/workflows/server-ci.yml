@@ -32,8 +32,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-      actions: write
-      id-token: write  # for chainguard (FIPS base image pull)
     outputs:
       version: ${{ steps.calculate.outputs.GO_VERSION }}
       gomod-changed: ${{ steps.changed-files.outputs.any_changed }}
@@ -168,7 +166,7 @@ jobs:
   test-postgres-normal-fips:
     # Always run on pushes to master/release branches.
     # For PRs, run when the branch name contains "fips" or any go.mod was changed.
-    if: github.event_name == 'push' || contains(github.head_ref, 'fips') || needs.go.outputs.gomod-changed == 'true'
+    if: false # Always skip since FIPS is not required in this repo
     name: Postgres FIPS (shard ${{ matrix.shard }})
     needs: go
     strategy:
@@ -232,7 +230,7 @@ jobs:
   test-mmctl-fips:
     name: Run mmctl tests (FIPS)
     # Skip FIPS testing for forks, which won't have docker login credentials.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    if: false # Always skip since FIPS is not required in this repo
     needs: go
     uses: ./.github/workflows/mmctl-test-template.yml
     secrets: inherit

@@ -1432,6 +1432,8 @@ func testPostStoreDelete(t *testing.T, rctx request.CTX, ss store.Store) {
 
 		beforeDeleteTime := updatedRootPost.UpdateAt
 
+		time.Sleep(2 * time.Millisecond)
+
 		// Delete the reply previous to last
 		err = ss.Post().Delete(rctx, replyPost2.Id, model.GetMillis(), "")
 		require.NoError(t, err)

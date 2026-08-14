@@ -2325,6 +2325,7 @@ func TestSearchPostsForUser(t *testing.T) {
 			}, th.BasicChannel, model.CreatePostFlags{SetOnline: true})
 
 			require.Nil(t, err)
+			time.Sleep(2 * time.Millisecond)
 
 			posts[i] = post
 		}
@@ -2988,12 +2989,14 @@ func TestCountMentionsFromPost(t *testing.T) {
 			Message:   fmt.Sprintf("@%s", user2.Username),
 		}, channel, model.CreatePostFlags{SetOnline: true})
 		require.Nil(t, err)
+		time.Sleep(2 * time.Millisecond)
 		post2, _, err := th.App.CreatePost(th.Context, &model.Post{
 			UserId:    user1.Id,
 			ChannelId: channel.Id,
 			Message:   "test2",
 		}, channel, model.CreatePostFlags{SetOnline: true})
 		require.Nil(t, err)
+		time.Sleep(2 * time.Millisecond)
 		_, _, err = th.App.CreatePost(th.Context, &model.Post{
 			UserId:    user1.Id,
 			ChannelId: channel.Id,

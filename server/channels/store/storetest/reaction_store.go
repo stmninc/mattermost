@@ -156,6 +156,8 @@ func testReactionDelete(t *testing.T, rctx request.CTX, ss store.Store) {
 
 		firstUpdateAt := result.Posts[post.Id].UpdateAt
 
+		time.Sleep(2 * time.Millisecond)
+
 		_, nErr = ss.Reaction().Delete(reaction)
 		require.NoError(t, nErr)
 
