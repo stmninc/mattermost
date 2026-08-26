@@ -35,7 +35,7 @@ func TestOfficialChannelValidation(t *testing.T) {
 	officialAdmin := th.CreateUser(t)
 	officialAdminPassword := officialAdmin.Password
 	officialAdmin.Username = officialAdminUsername
-	var err error
+
 	_, appErr := th.App.UpdateUser(th.Context, officialAdmin, false)
 	require.Nil(t, appErr)
 	_, _, appErr = th.App.AddUserToTeam(th.Context, th.BasicTeam.Id, officialAdmin.Id, "")
@@ -46,7 +46,7 @@ func TestOfficialChannelValidation(t *testing.T) {
 	require.Nil(t, appErr)
 
 	// Create official channel (created by official admin)
-	_, _, err = th.Client.Login(context.Background(), officialAdmin.Email, officialAdminPassword)
+	_, _, err := th.Client.Login(context.Background(), officialAdmin.Email, officialAdminPassword)
 	require.NoError(t, err)
 	officialChannel := &model.Channel{
 		DisplayName: "Official Test Channel",
@@ -290,6 +290,7 @@ func TestOfficialChannelValidation(t *testing.T) {
 		require.Error(t, err)
 		if appErr, ok := err.(*model.AppError); ok {
 			require.Equal(t, "api.channel.official_channel.forbidden", appErr.Id)
+			require.Equal(t, http.StatusForbidden, appErr.StatusCode)
 		} else {
 			t.Fatalf("Expected AppError, got %T", err)
 		}
@@ -382,6 +383,40 @@ func TestOfficialChannelValidation(t *testing.T) {
 		updatedTemp.DisplayName = "Updated by regular user"
 		_, _, err = th.Client.UpdateChannel(context.Background(), &updatedTemp)
 		assert.NoError(t, err, "Should handle non-existent creator gracefully")
+	})
+
+	t.Run("updateChannelPrivacy - Official Channel Restriction", func(t *testing.T) {
+		// Grant permissions for regular users to convert channel privacy
+		th.AddPermissionToRole(t, model.PermissionConvertPublicChannelToPrivate.Id, model.SystemUserRoleId)
+		th.AddPermissionToRole(t, model.PermissionConvertPrivateChannelToPublic.Id, model.SystemUserRoleId)
+
+		// 1. Official Channel Privacy Update Restrictions (Should fail)
+		// 1-a. System admin trying to change official channel privacy
+		_, resp, err := th.SystemAdminClient.UpdateChannelPrivacy(context.Background(), officialChannel.Id, model.ChannelTypePrivate)
+		require.Error(t, err)
+		CheckForbiddenStatus(t, resp)
+
+		// 1-b. Regular user trying to change official channel privacy
+		th.LoginBasic(t)
+		_, resp, err = th.Client.UpdateChannelPrivacy(context.Background(), officialChannel.Id, model.ChannelTypePrivate)
+		require.Error(t, err)
+		CheckForbiddenStatus(t, resp)
+
+		// 1-c. Official admin trying to change official channel privacy
+		_, _, err = th.Client.Login(context.Background(), officialAdmin.Email, officialAdminPassword)
+		require.NoError(t, err)
+		_, resp, err = th.Client.UpdateChannelPrivacy(context.Background(), officialChannel.Id, model.ChannelTypePrivate)
+		require.Error(t, err)
+		CheckForbiddenStatus(t, resp)
+
+		// 2. Regular Channel Privacy Update (Should succeed)
+		// 2-a. System admin trying to change regular channel privacy
+		_, _, err = th.SystemAdminClient.UpdateChannelPrivacy(context.Background(), regularChannel.Id, model.ChannelTypePrivate)
+		assert.NoError(t, err)
+
+		// 2-b. System admin trying to change regular channel privacy back to public
+		_, _, err = th.SystemAdminClient.UpdateChannelPrivacy(context.Background(), regularChannel.Id, model.ChannelTypeOpen)
+		assert.NoError(t, err)
 	})
 }
 

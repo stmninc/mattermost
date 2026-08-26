@@ -19,7 +19,7 @@ import KeyboardShortcutSequence, {
 } from 'components/keyboard_shortcuts/keyboard_shortcuts_sequence';
 import WithTooltip from 'components/with_tooltip';
 
-import {isAvailableDMGMChannel} from 'utils/available_unofficial_channel';
+import {isAvailableDMOrGMChannel} from 'utils/available_unofficial_channel';
 import Constants, {A11yCustomEventTypes, DraggingStateTypes, DraggingStates} from 'utils/constants';
 import {isKeyPressed} from 'utils/keyboard';
 
@@ -294,7 +294,7 @@ export default class SidebarCategory extends React.PureComponent<Props, State> {
                         category={category}
                         handleOpenDirectMessagesModal={this.handleOpenDirectMessagesModal}
                     />
-                    {isAvailableDMGMChannel() && (
+                    {isAvailableDMOrGMChannel() && (
                         <WithTooltip
                             title={
                                 <>

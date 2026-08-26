@@ -64,8 +64,14 @@ func (a *App) CreatePostAsUser(rctx request.CTX, post *model.Post, currentSessio
 		return nil, false, model.NewAppError("createPost", "api.post.create_post.can_not_post_in_restricted_dm.error", nil, "", http.StatusBadRequest)
 	}
 
-	if permErr := a.CheckChannelPermissions(rctx, channel, post.UserId); permErr != nil {
-		return nil, false, permErr
+	if session := rctx.Session(); session.Id != "" {
+		accessible, permErr := a.IsChannelAccessible(rctx, channel.Id)
+		if permErr != nil {
+			return nil, false, permErr
+		}
+		if !accessible {
+			return nil, false, model.NewAppError("CreatePostAsUser", "api.context.permissions.app_error", nil, "", http.StatusForbidden)
+		}
 	}
 
 	rp, isMemberForPreviews, err := a.CreatePost(rctx, post, channel, model.CreatePostFlags{TriggerWebhooks: true, SetOnline: setOnline})
@@ -852,8 +858,14 @@ func (a *App) UpdatePost(rctx request.CTX, receivedUpdatedPost *model.Post, upda
 		return nil, false, err
 	}
 
-	if permErr := a.CheckChannelPermissions(rctx, channel, oldPost.UserId); permErr != nil {
-		return nil, false, permErr
+	if session := rctx.Session(); session.Id != "" {
+		accessible, permErr := a.IsChannelAccessible(rctx, channel.Id)
+		if permErr != nil {
+			return nil, false, permErr
+		}
+		if !accessible {
+			return nil, false, model.NewAppError("UpdatePost", "api.context.permissions.app_error", nil, "", http.StatusForbidden)
+		}
 	}
 
 	newPost := oldPost.Clone()
@@ -1220,8 +1232,14 @@ func (a *App) PatchPost(rctx request.CTX, postID string, patch *model.PostPatch,
 		return nil, false, model.NewAppError("PatchPost", "api.post.patch_post.can_not_update_post_in_restricted_dm.error", nil, "", http.StatusBadRequest)
 	}
 
-	if permErr := a.CheckChannelPermissions(rctx, channel, post.UserId); permErr != nil {
-		return nil, false, permErr
+	if session := rctx.Session(); session.Id != "" {
+		accessible, permErr := a.IsChannelAccessible(rctx, channel.Id)
+		if permErr != nil {
+			return nil, false, permErr
+		}
+		if !accessible {
+			return nil, false, model.NewAppError("PatchPost", "api.context.permissions.app_error", nil, "", http.StatusForbidden)
+		}
 	}
 
 	if ok, _ := a.HasPermissionToChannel(rctx, post.UserId, post.ChannelId, model.PermissionUseChannelMentions); !ok {
@@ -1899,8 +1917,14 @@ func (a *App) DeletePost(rctx request.CTX, postID, deleteByID string) (*model.Po
 		return nil, err
 	}
 
-	if permErr := a.CheckChannelPermissions(rctx, channel, post.UserId); permErr != nil {
-		return nil, permErr
+	if session := rctx.Session(); session.Id != "" {
+		accessible, permErr := a.IsChannelAccessible(rctx, channel.Id)
+		if permErr != nil {
+			return nil, permErr
+		}
+		if !accessible {
+			return nil, model.NewAppError("DeletePost", "api.context.permissions.app_error", nil, "", http.StatusForbidden)
+		}
 	}
 
 	err = a.Srv().Store().Post().Delete(rctx, postID, model.GetMillis(), deleteByID)

@@ -1,0 +1,73 @@
+  "/api/v4/engage_chat/roles":
+    post:
+      tags:
+        - engage_chat
+      summary: Enable custom roles
+      description: |
+        Enables a list of custom roles by name. If the roles do not exist, they will be created. If they are soft-deleted, they will be restored.
+
+        The request body should be a JSON array of role names.
+        `["system_engage_admin", "team_engage_admin"]`
+
+        ##### Permissions
+        Must have `manage_roles` permission.
+      operationId: EnableCustomRoles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: Custom roles enabled successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  "/api/v4/engage_chat/channels/{channel_id}/accessible":
+    get:
+      tags:
+        - engage_chat
+      summary: Check if a channel is accessible
+      description: |
+        Checks whether the current user has access to the specified channel,
+        based on DM/GM restrictions and custom role exceptions.
+
+        ##### Permissions
+        Must be authenticated.
+      operationId: GetChannelAccessible
+      parameters:
+        - name: channel_id
+          in: path
+          description: Channel ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel accessibility status.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_accessible:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"

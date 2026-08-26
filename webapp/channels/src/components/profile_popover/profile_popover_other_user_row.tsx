@@ -15,7 +15,7 @@ import {canUserDirectMessage} from 'actions/user_actions';
 import ProfilePopoverAddToChannel from 'components/profile_popover/profile_popover_add_to_channel';
 import ProfilePopoverCallButtonWrapper from 'components/profile_popover/profile_popover_call_button_wrapper';
 
-import {isAvailableDMGMChannel} from 'utils/available_unofficial_channel';
+import {isAvailableDMChannel} from 'utils/available_unofficial_channel';
 
 type Props = {
     user: UserProfile;
@@ -88,7 +88,7 @@ const ProfilePopoverOtherUserRow = ({
 
     // For remote users, we need to check permissions; for local users, always show
     const isRemoteUser = Boolean(user.remote_id);
-    const shouldShowButton = (!isRemoteUser || (isSharedChannelsDMsEnabled && canMessage !== null)) && isAvailableDMGMChannel();
+    const shouldShowButton = (!isRemoteUser || (isSharedChannelsDMsEnabled && canMessage !== null)) && isAvailableDMChannel();
 
     return (
         <div className='user-popover__bottom-row-container'>
