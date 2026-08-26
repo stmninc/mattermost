@@ -7,6 +7,8 @@ import type {MMReduxAction} from 'mattermost-redux/action_types';
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import type * as MMReduxTypes from 'mattermost-redux/types/actions';
 
+import type {EngageChatState} from 'reducers/engage_chat';
+
 import type {PluginsState} from './plugins';
 import type {StorageState} from './storage';
 import type {ViewsState} from './views';
@@ -21,6 +23,7 @@ export type GlobalState = BaseGlobalState & {
     plugins: PluginsState;
     storage: StorageState;
     views: ViewsState;
+    engageChat?: EngageChatState;
 };
 
 /**

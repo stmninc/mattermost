@@ -56,6 +56,7 @@ type Store struct {
 	SharedChannelStore              mocks.SharedChannelStore
 	ProductNoticesStore             mocks.ProductNoticesStore
 	DraftStore                      mocks.DraftStore
+	EngageChatStore                 mocks.EngageChatStore
 	logger                          mlog.LoggerIFace
 	NotifyAdminStore                mocks.NotifyAdminStore
 	PostPriorityStore               mocks.PostPriorityStore
@@ -105,6 +106,7 @@ func (s *Store) Emoji() store.EmojiStore                           { return &s.E
 func (s *Store) Thread() store.ThreadStore                         { return &s.ThreadStore }
 func (s *Store) Status() store.StatusStore                         { return &s.StatusStore }
 func (s *Store) FileInfo() store.FileInfoStore                     { return &s.FileInfoStore }
+func (s *Store) EngageChat() store.EngageChatStore                 { return &s.EngageChatStore }
 func (s *Store) UploadSession() store.UploadSessionStore           { return &s.UploadSessionStore }
 func (s *Store) Reaction() store.ReactionStore                     { return &s.ReactionStore }
 func (s *Store) Job() store.JobStore                               { return &s.JobStore }
@@ -224,6 +226,7 @@ func (s *Store) AssertExpectations(t mock.TestingT) bool {
 		&s.ProductNoticesStore,
 		&s.SharedChannelStore,
 		&s.DraftStore,
+		&s.EngageChatStore,
 		&s.NotifyAdminStore,
 		&s.PostPriorityStore,
 		&s.PostAcknowledgementStore,

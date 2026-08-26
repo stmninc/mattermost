@@ -36,6 +36,7 @@ type RetryLayer struct {
 	DesktopTokensStore              store.DesktopTokensStore
 	DraftStore                      store.DraftStore
 	EmojiStore                      store.EmojiStore
+	EngageChatStore                 store.EngageChatStore
 	FileInfoStore                   store.FileInfoStore
 	GroupStore                      store.GroupStore
 	JobStore                        store.JobStore
@@ -141,6 +142,10 @@ func (s *RetryLayer) Draft() store.DraftStore {
 
 func (s *RetryLayer) Emoji() store.EmojiStore {
 	return s.EmojiStore
+}
+
+func (s *RetryLayer) EngageChat() store.EngageChatStore {
+	return s.EngageChatStore
 }
 
 func (s *RetryLayer) FileInfo() store.FileInfoStore {
@@ -384,6 +389,11 @@ type RetryLayerDraftStore struct {
 
 type RetryLayerEmojiStore struct {
 	store.EmojiStore
+	Root *RetryLayer
+}
+
+type RetryLayerEngageChatStore struct {
+	store.EngageChatStore
 	Root *RetryLayer
 }
 
@@ -5009,6 +5019,48 @@ func (s *RetryLayerEmojiStore) Search(name string, prefixOnly bool, limit int) (
 	tries := 0
 	for {
 		result, err := s.EmojiStore.Search(name, prefixOnly, limit)
+		if err == nil {
+			return result, nil
+		}
+		if !isRepeatableError(err) {
+			return result, err
+		}
+		tries++
+		if tries >= 3 {
+			err = errors.Wrap(err, "giving up after 3 consecutive repeatable transaction failures")
+			return result, err
+		}
+		timepkg.Sleep(100 * timepkg.Millisecond)
+	}
+
+}
+
+func (s *RetryLayerEngageChatStore) HasDMChannelBotMember(channelID string) (bool, error) {
+
+	tries := 0
+	for {
+		result, err := s.EngageChatStore.HasDMChannelBotMember(channelID)
+		if err == nil {
+			return result, nil
+		}
+		if !isRepeatableError(err) {
+			return result, err
+		}
+		tries++
+		if tries >= 3 {
+			err = errors.Wrap(err, "giving up after 3 consecutive repeatable transaction failures")
+			return result, err
+		}
+		timepkg.Sleep(100 * timepkg.Millisecond)
+	}
+
+}
+
+func (s *RetryLayerEngageChatStore) HasDMGMChannelMemberWithEngageAdmin(channelID string) (bool, error) {
+
+	tries := 0
+	for {
+		result, err := s.EngageChatStore.HasDMGMChannelMemberWithEngageAdmin(channelID)
 		if err == nil {
 			return result, nil
 		}
@@ -18287,6 +18339,7 @@ func New(childStore store.Store) *RetryLayer {
 	newStore.DesktopTokensStore = &RetryLayerDesktopTokensStore{DesktopTokensStore: childStore.DesktopTokens(), Root: &newStore}
 	newStore.DraftStore = &RetryLayerDraftStore{DraftStore: childStore.Draft(), Root: &newStore}
 	newStore.EmojiStore = &RetryLayerEmojiStore{EmojiStore: childStore.Emoji(), Root: &newStore}
+	newStore.EngageChatStore = &RetryLayerEngageChatStore{EngageChatStore: childStore.EngageChat(), Root: &newStore}
 	newStore.FileInfoStore = &RetryLayerFileInfoStore{FileInfoStore: childStore.FileInfo(), Root: &newStore}
 	newStore.GroupStore = &RetryLayerGroupStore{GroupStore: childStore.Group(), Root: &newStore}
 	newStore.JobStore = &RetryLayerJobStore{JobStore: childStore.Job(), Root: &newStore}

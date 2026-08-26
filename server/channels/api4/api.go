@@ -175,6 +175,9 @@ type Routes struct {
 	PropertyFields *mux.Router // 'api/v4/properties/groups/{group_name:[a-z][a-z0-9_]*}/{object_type:[a-z]+}/fields'
 	PropertyField  *mux.Router // 'api/v4/properties/groups/{group_name:[a-z][a-z0-9_]*}/{object_type:[a-z]+}/fields/{field_id:[A-Za-z0-9]+}'
 	PropertyValues *mux.Router // 'api/v4/properties/groups/{group_name:[a-z][a-z0-9_]*}/{object_type:[a-z]+}/values/{target_id:[A-Za-z0-9]+}'
+
+	EngageChat        *mux.Router // 'api/v4/engage_chat'
+	EngageChatChannel *mux.Router // 'api/v4/engage_chat/channels/{channel_id:[A-Za-z0-9]+}'
 }
 
 type API struct {
@@ -336,6 +339,9 @@ func Init(srv *app.Server) (*API, error) {
 	api.BaseRoutes.PropertyField = api.BaseRoutes.PropertyFields.PathPrefix("/{field_id:[A-Za-z0-9]+}").Subrouter()
 	api.BaseRoutes.PropertyValues = api.BaseRoutes.Properties.PathPrefix("/groups/{group_name:[a-z][a-z0-9_]*}/{object_type:[a-z]+}/values/{target_id:[A-Za-z0-9]+}").Subrouter()
 
+	api.BaseRoutes.EngageChat = api.BaseRoutes.APIRoot.PathPrefix("/engage_chat").Subrouter()
+	api.BaseRoutes.EngageChatChannel = api.BaseRoutes.EngageChat.PathPrefix("/channels/{channel_id:[A-Za-z0-9]+}").Subrouter()
+
 	api.InitUser()
 	api.InitBot()
 	api.InitTeam()
@@ -394,6 +400,7 @@ func Init(srv *app.Server) (*API, error) {
 	api.InitContentFlagging()
 	api.InitAgents()
 	api.InitProperties()
+	api.InitEngageChat()
 
 	// If we allow testing then listen for manual testing URL hits
 	if *srv.Config().ServiceSettings.EnableTesting {

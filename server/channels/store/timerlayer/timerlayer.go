@@ -35,6 +35,7 @@ type TimerLayer struct {
 	DesktopTokensStore              store.DesktopTokensStore
 	DraftStore                      store.DraftStore
 	EmojiStore                      store.EmojiStore
+	EngageChatStore                 store.EngageChatStore
 	FileInfoStore                   store.FileInfoStore
 	GroupStore                      store.GroupStore
 	JobStore                        store.JobStore
@@ -140,6 +141,10 @@ func (s *TimerLayer) Draft() store.DraftStore {
 
 func (s *TimerLayer) Emoji() store.EmojiStore {
 	return s.EmojiStore
+}
+
+func (s *TimerLayer) EngageChat() store.EngageChatStore {
+	return s.EngageChatStore
 }
 
 func (s *TimerLayer) FileInfo() store.FileInfoStore {
@@ -383,6 +388,11 @@ type TimerLayerDraftStore struct {
 
 type TimerLayerEmojiStore struct {
 	store.EmojiStore
+	Root *TimerLayer
+}
+
+type TimerLayerEngageChatStore struct {
+	store.EngageChatStore
 	Root *TimerLayer
 }
 
@@ -4124,6 +4134,38 @@ func (s *TimerLayerEmojiStore) Search(name string, prefixOnly bool, limit int) (
 			success = "true"
 		}
 		s.Root.Metrics.ObserveStoreMethodDuration("EmojiStore.Search", success, elapsed)
+	}
+	return result, err
+}
+
+func (s *TimerLayerEngageChatStore) HasDMChannelBotMember(channelID string) (bool, error) {
+	start := time.Now()
+
+	result, err := s.EngageChatStore.HasDMChannelBotMember(channelID)
+
+	elapsed := float64(time.Since(start)) / float64(time.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if err == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EngageChatStore.HasDMChannelBotMember", success, elapsed)
+	}
+	return result, err
+}
+
+func (s *TimerLayerEngageChatStore) HasDMGMChannelMemberWithEngageAdmin(channelID string) (bool, error) {
+	start := time.Now()
+
+	result, err := s.EngageChatStore.HasDMGMChannelMemberWithEngageAdmin(channelID)
+
+	elapsed := float64(time.Since(start)) / float64(time.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if err == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("EngageChatStore.HasDMGMChannelMemberWithEngageAdmin", success, elapsed)
 	}
 	return result, err
 }
@@ -14471,6 +14513,7 @@ func New(childStore store.Store, metrics einterfaces.MetricsInterface) *TimerLay
 	newStore.DesktopTokensStore = &TimerLayerDesktopTokensStore{DesktopTokensStore: childStore.DesktopTokens(), Root: &newStore}
 	newStore.DraftStore = &TimerLayerDraftStore{DraftStore: childStore.Draft(), Root: &newStore}
 	newStore.EmojiStore = &TimerLayerEmojiStore{EmojiStore: childStore.Emoji(), Root: &newStore}
+	newStore.EngageChatStore = &TimerLayerEngageChatStore{EngageChatStore: childStore.EngageChat(), Root: &newStore}
 	newStore.FileInfoStore = &TimerLayerFileInfoStore{FileInfoStore: childStore.FileInfo(), Root: &newStore}
 	newStore.GroupStore = &TimerLayerGroupStore{GroupStore: childStore.Group(), Root: &newStore}
 	newStore.JobStore = &TimerLayerJobStore{JobStore: childStore.Job(), Root: &newStore}

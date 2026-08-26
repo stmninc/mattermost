@@ -23,6 +23,7 @@ type StoreResult[T any] struct {
 }
 
 type Store interface {
+	EngageChat() EngageChatStore
 	Team() TeamStore
 	Channel() ChannelStore
 	Post() PostStore
@@ -529,6 +530,11 @@ type BotStore interface {
 	Save(bot *model.Bot) (*model.Bot, error)
 	Update(bot *model.Bot) (*model.Bot, error)
 	PermanentDelete(userID string) error
+}
+
+type EngageChatStore interface {
+	HasDMGMChannelMemberWithEngageAdmin(channelID string) (bool, error)
+	HasDMChannelBotMember(channelID string) (bool, error)
 }
 
 type SessionStore interface {

@@ -369,6 +369,26 @@ func (_m *Store) Emoji() store.EmojiStore {
 	return r0
 }
 
+// EngageChat provides a mock function with no fields
+func (_m *Store) EngageChat() store.EngageChatStore {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for EngageChat")
+	}
+
+	var r0 store.EngageChatStore
+	if rf, ok := ret.Get(0).(func() store.EngageChatStore); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(store.EngageChatStore)
+		}
+	}
+
+	return r0
+}
+
 // FileInfo provides a mock function with no fields
 func (_m *Store) FileInfo() store.FileInfoStore {
 	ret := _m.Called()
