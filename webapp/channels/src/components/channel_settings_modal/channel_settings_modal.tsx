@@ -25,6 +25,7 @@ import {isChannelAccessControlEnabled} from 'selectors/general';
 import {focusElement} from 'utils/a11y_utils';
 import Constants from 'utils/constants';
 import {isMinimumEnterpriseAdvancedLicense} from 'utils/license_utils';
+import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 
 import type {GlobalState} from 'types/store';
 
@@ -137,6 +138,7 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
     const shouldShowAccessRulesTab = channelAdminABACControlEnabled && canManageChannelAccessRules && channel.type === Constants.PRIVATE_CHANNEL && !channel.group_constrained;
 
     const shouldShowArchiveTab = channel.name !== Constants.DEFAULT_CHANNEL &&
+        !isOfficialTunagChannel(channel) && // hide archive for official TUNAG channels
         ((channel.type === Constants.PRIVATE_CHANNEL && canArchivePrivateChannels) ||
         (channel.type === Constants.OPEN_CHANNEL && canArchivePublicChannels));
 

@@ -10,6 +10,8 @@ import type {Channel} from '@mattermost/types/channels';
 import CopyButton from 'components/copy_button';
 import Markdown from 'components/markdown';
 
+import {isOfficialTunagChannel} from 'utils/official_channel_utils';
+
 import EditableArea from './components/editable_area';
 import LineLimiter from './components/linelimiter';
 
@@ -90,7 +92,7 @@ const AboutAreaChannel = ({channel, canEditChannelProperties, actions}: Props) =
         <>
             <ChannelName>
                 <EditableArea
-                    editable={canEditChannelProperties}
+                    editable={canEditChannelProperties && !isOfficialTunagChannel(channel)}
                     content={<div>{channel.display_name}</div>}
                     onEdit={actions.editChannelName}
                     editTooltip={formatMessage({id: 'channel_info_rhs.about_area.edit_channel_name', defaultMessage: 'Rename channel'})}

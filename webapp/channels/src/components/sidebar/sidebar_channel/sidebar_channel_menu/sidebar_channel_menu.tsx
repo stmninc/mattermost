@@ -26,6 +26,7 @@ import * as Menu from 'components/menu';
 import WithTooltip from 'components/with_tooltip';
 
 import Constants, {ModalIdentifiers} from 'utils/constants';
+import {isOfficialTunagChannel} from 'utils/official_channel_utils';
 import {canPopout, isChannelPopoutWindow} from 'utils/popouts/popout_windows';
 import {copyToClipboard} from 'utils/utils';
 
@@ -261,7 +262,7 @@ const SidebarChannelMenu = ({
     }
 
     let leaveChannelMenuItem: JSX.Element | null = null;
-    if (channel.name !== Constants.DEFAULT_CHANNEL) {
+    if (channel.name !== Constants.DEFAULT_CHANNEL && !isOfficialTunagChannel(channel)) {
         let leaveChannelText = (
             <FormattedMessage
                 id='sidebar_left.sidebar_channel_menu.leaveChannel'

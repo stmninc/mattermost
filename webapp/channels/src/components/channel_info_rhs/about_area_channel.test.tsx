@@ -7,10 +7,15 @@ import type {Channel} from '@mattermost/types/channels';
 import type {DeepPartial} from '@mattermost/types/utilities';
 
 import {renderWithContext, screen, fireEvent} from 'tests/react_testing_utils';
+import * as officialChannelUtils from 'utils/official_channel_utils';
 
 import type {GlobalState} from 'types/store';
 
 import AboutAreaChannel from './about_area_channel';
+
+jest.mock('utils/official_channel_utils', () => ({
+    isOfficialTunagChannel: jest.fn(),
+}));
 
 const initialState: DeepPartial<GlobalState> = {
     entities: {
@@ -167,5 +172,31 @@ describe('channel_info_rhs/about_area_channel', () => {
         const editButtons = screen.getAllByLabelText('Edit');
         fireEvent.click(editButtons[0]);
         expect(props.actions.editChannelName).toHaveBeenCalled();
+    });
+
+    test('should not display edit button for channel name if it is an official channel', () => {
+        (officialChannelUtils.isOfficialTunagChannel as jest.Mock).mockReturnValue(true);
+        const props = {
+            ...defaultProps,
+            actions: {
+                ...defaultProps.actions,
+                editChannelName: jest.fn(),
+            },
+        };
+
+        renderWithContext(
+            <AboutAreaChannel
+                {...props}
+            />,
+            initialState,
+        );
+
+        const channelNameText = screen.getByText('My Channel');
+        const channelNameEditableArea = channelNameText.parentElement?.parentElement;
+        expect(channelNameEditableArea?.querySelector('.icon-pencil-outline')).not.toBeInTheDocument();
+
+        // three are displayed by default: channelName, channelPurpose, channelHeader
+        const editButtons = screen.getAllByLabelText('Edit');
+        expect(editButtons.length).toBe(2);
     });
 });

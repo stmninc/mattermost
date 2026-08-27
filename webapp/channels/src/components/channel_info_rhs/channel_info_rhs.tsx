@@ -243,6 +243,7 @@ const ChannelInfoRhs = ({
                         </ArchivedNoticeContainer>
                     )}
                     <TopButtons
+                        channel={channel}
                         channelType={channel.type}
                         channelURL={channelURL}
                         isFavorite={isFavorite}
