@@ -196,6 +196,8 @@ export type ViewsState = {
         newCategoryIds: string[];
         multiSelectedChannelIds: string[];
         lastSelectedChannel: string;
+        initChannelsLoaded: boolean;
+        initChannelMembershipsLoaded: boolean;
     };
 
     addChannelCtaDropdown: {
