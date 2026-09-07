@@ -47,8 +47,8 @@ customize-assets:
 			-e "s|$${icon_str}|\"span\",\{\}|g" \
 			-e 's/external-login-button-label//g' \
 			"$${file}"; \
-		if grep -q -E "$${icon_str}" "$${file}"; then \
-			echo "::error title=Removing GitLab icon Verification Error::Failed to replace GitLab icon in $${file}."; \
+		if grep -q "generic_icons.login.gitlab" "$${file}"; then \
+			echo "::error title=Removing GitLab icon Verification Error::Failed to replace GitLab icon in $${file}. Upstream code might have changed."; \
 			exit 1; \
 		fi; \
 	done
