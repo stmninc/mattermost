@@ -36,7 +36,7 @@ customize-assets:
 	@echo "removing GitLab icon from login screen..."
 	@icon_str='"svg",\{width:"[0-9]+",height:"[0-9]+",viewBox:"0 0 [0-9]+ [0-9]+",fill:"none",xmlns:"http:\/\/www\.w3\.org\/2000\/svg","aria-label":t\(\{id:"generic_icons\.login\.gitlab",defaultMessage:"Gitlab Icon"\}\)\}'; \
 	echo "icon_str: $${icon_str}"; \
-	gitlab_files=$$(grep -l "generic_icons.login.gitlab" $(CUSTOMIZE_SOURCE_DIR)/*.js 2>/dev/null); \
+	gitlab_files=$$(grep -l 'id:"generic_icons\.login\.gitlab"' $(CUSTOMIZE_SOURCE_DIR)/*.js 2>/dev/null); \
 	if [ -z "$${gitlab_files}" ]; then \
 		echo "::error title=Removing GitLab icon Error::GitLab icon pattern not found in any JS file. Upstream code might have changed."; \
 		exit 1; \
@@ -47,7 +47,7 @@ customize-assets:
 			-e "s|$${icon_str}|\"span\",\{\}|g" \
 			-e 's/external-login-button-label//g' \
 			"$${file}"; \
-		if grep -q "generic_icons.login.gitlab" "$${file}"; then \
+		if grep -q 'id:"generic_icons\.login\.gitlab"' "$${file}"; then \
 			echo "::error title=Removing GitLab icon Verification Error::Failed to replace GitLab icon in $${file}. Upstream code might have changed."; \
 			exit 1; \
 		fi; \
